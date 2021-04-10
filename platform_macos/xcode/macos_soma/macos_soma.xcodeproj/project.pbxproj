@@ -1,0 +1,79 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXFileReference section */
+		B2F57E8D261C8EC600C40A30 /* macos_main_copy.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main_copy.mm; path = ../../macos_main_copy.mm; sourceTree = "<group>"; };
+		B2F57E8E261C8EC600C40A30 /* macos_fox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_fox.cpp; path = ../../macos_fox.cpp; sourceTree = "<group>"; };
+		B2F57E8F261C8EC600C40A30 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../macos_main.mm; sourceTree = "<group>"; };
+		B2F57E90261C8EC600C40A30 /* macos_fox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_fox.h; path = ../../macos_fox.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		B2F57E86261C8E7D00C40A30 = {
+			isa = PBXGroup;
+			children = (
+				B2F57E8E261C8EC600C40A30 /* macos_fox.cpp */,
+				B2F57E90261C8EC600C40A30 /* macos_fox.h */,
+				B2F57E8D261C8EC600C40A30 /* macos_main_copy.mm */,
+				B2F57E8F261C8EC600C40A30 /* macos_main.mm */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		B2F57E87261C8E7D00C40A30 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1240;
+			};
+			buildConfigurationList = B2F57E8A261C8E7D00C40A30 /* Build configuration list for PBXProject "macos_soma" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B2F57E86261C8E7D00C40A30;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		B2F57E8B261C8E7D00C40A30 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		B2F57E8C261C8E7D00C40A30 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B2F57E8A261C8E7D00C40A30 /* Build configuration list for PBXProject "macos_soma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B2F57E8B261C8E7D00C40A30 /* Debug */,
+				B2F57E8C261C8E7D00C40A30 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B2F57E87261C8E7D00C40A30 /* Project object */;
+}

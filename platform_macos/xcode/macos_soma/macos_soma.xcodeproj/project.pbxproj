@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		B2D6693E2621BC5300C05067 /* macos_soma.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_soma.cpp; path = ../../macos_soma.cpp; sourceTree = "<group>"; };
 		B2F57E8D261C8EC600C40A30 /* macos_main_copy.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main_copy.mm; path = ../../macos_main_copy.mm; sourceTree = "<group>"; };
 		B2F57E8E261C8EC600C40A30 /* macos_fox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_fox.cpp; path = ../../macos_fox.cpp; sourceTree = "<group>"; };
 		B2F57E8F261C8EC600C40A30 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../macos_main.mm; sourceTree = "<group>"; };
@@ -21,6 +22,7 @@
 				B2F57E90261C8EC600C40A30 /* macos_fox.h */,
 				B2F57E8D261C8EC600C40A30 /* macos_main_copy.mm */,
 				B2F57E8F261C8EC600C40A30 /* macos_main.mm */,
+				B2D6693E2621BC5300C05067 /* macos_soma.cpp */,
 			);
 			sourceTree = "<group>";
 		};

@@ -1,11 +1,4 @@
-struct macos_opengl_info
-{
-    GLuint TextureID;
-    NSOpenGLContext *OpenGLContext;
-};
-
-@interface fox_app_delegate : NSObject <NSApplicationDelegate, NSWindowDelegate>
-@end
+#include "macos_support.h"
 
 // NOTE : Whenever the application steps into [NSApp Run] method, 
 // we are unable to control the application ourselves. Therfore,
@@ -42,7 +35,7 @@ struct macos_opengl_info
 }
 @end
 
-static CVReturn 
+internal CVReturn 
 DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const CVTimeStamp* outputTime,
                 CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
 {
@@ -51,7 +44,7 @@ DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const 
     return kCVReturnSuccess;
 }
 
-static macos_opengl_info
+internal macos_opengl_info
 PrepareDisplayingWithOpenGL(NSWindow *Window, NSRect *WindowFrameRect,
                     int BufferWidth, int BufferHeight, void *GameBufferMemory)
 {
@@ -110,3 +103,5 @@ PrepareDisplayingWithOpenGL(NSWindow *Window, NSRect *WindowFrameRect,
 
     return Result;
 }
+
+

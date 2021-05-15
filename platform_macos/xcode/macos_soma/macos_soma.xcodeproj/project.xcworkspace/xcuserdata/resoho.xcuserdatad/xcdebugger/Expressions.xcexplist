@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "main:macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "((u32 *)FileMemory)[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "DEBUGMacOSPlatformReadFile(char*):macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "FileStat">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ControllerConnectionDetected(void*, int, void*, __IOHIDDevice*):macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "device">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MacOSInitializeAudio():macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "AudioComponent">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

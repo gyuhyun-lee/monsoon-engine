@@ -7,22 +7,26 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		B2D6693E2621BC5300C05067 /* macos_soma.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_soma.cpp; path = ../../macos_soma.cpp; sourceTree = "<group>"; };
-		B2F57E8D261C8EC600C40A30 /* macos_main_copy.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main_copy.mm; path = ../../macos_main_copy.mm; sourceTree = "<group>"; };
-		B2F57E8E261C8EC600C40A30 /* macos_fox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_fox.cpp; path = ../../macos_fox.cpp; sourceTree = "<group>"; };
-		B2F57E8F261C8EC600C40A30 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../macos_main.mm; sourceTree = "<group>"; };
-		B2F57E90261C8EC600C40A30 /* macos_fox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_fox.h; path = ../../macos_fox.h; sourceTree = "<group>"; };
+		B296A4F12647E74300236E70 /* macos_support.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_support.cpp; path = ../../../code/macos_support.cpp; sourceTree = "<group>"; };
+		B296A4F22647E74300236E70 /* macos_keycode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_keycode.h; path = ../../../code/macos_keycode.h; sourceTree = "<group>"; };
+		B296A4F32647E74300236E70 /* macos_support.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_support.h; path = ../../../code/macos_support.h; sourceTree = "<group>"; };
+		B296A4F42647E74300236E70 /* soma.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = soma.cpp; path = ../../../code/soma.cpp; sourceTree = "<group>"; };
+		B296A4F52647E74300236E70 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = ../../../code/Makefile; sourceTree = "<group>"; };
+		B296A4F62647E74300236E70 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../../code/macos_main.mm; sourceTree = "<group>"; };
+		B296A4F72647E74300236E70 /* soma_platform_independent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = soma_platform_independent.h; path = ../../../code/soma_platform_independent.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		B2F57E86261C8E7D00C40A30 = {
 			isa = PBXGroup;
 			children = (
-				B2F57E8E261C8EC600C40A30 /* macos_fox.cpp */,
-				B2F57E90261C8EC600C40A30 /* macos_fox.h */,
-				B2F57E8D261C8EC600C40A30 /* macos_main_copy.mm */,
-				B2F57E8F261C8EC600C40A30 /* macos_main.mm */,
-				B2D6693E2621BC5300C05067 /* macos_soma.cpp */,
+				B296A4F22647E74300236E70 /* macos_keycode.h */,
+				B296A4F62647E74300236E70 /* macos_main.mm */,
+				B296A4F12647E74300236E70 /* macos_support.cpp */,
+				B296A4F32647E74300236E70 /* macos_support.h */,
+				B296A4F52647E74300236E70 /* Makefile */,
+				B296A4F72647E74300236E70 /* soma_platform_independent.h */,
+				B296A4F42647E74300236E70 /* soma.cpp */,
 			);
 			sourceTree = "<group>";
 		};

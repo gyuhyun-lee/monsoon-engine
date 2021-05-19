@@ -1,7 +1,7 @@
 #include "soma_platform_independent.h"
-
+#include <stdio.h>
 internal void 
-RenderSomething(game_offscreen_buffer *Buffer)
+RenderSomething(game_offscreen_buffer *Buffer, i32 XOffset = 0, i32 YOffset = 0)
 {
     u8 *FirstPixelOfRow = (u8 *)Buffer->Memory;
     for(int Row = 0;
@@ -13,60 +13,54 @@ RenderSomething(game_offscreen_buffer *Buffer)
             Column < Buffer->Width;
             ++Column)
         {
-            if(Column == Buffer->Width/2 ||
-            Row == Buffer->Height/2)
-            {
-                *Pixel++ = (0xffff00ff);
-            }
-            else
-            {
-                *Pixel++ = (0xffffff00);
-            }
+            *Pixel++ = ((XOffset + Column) << 8)|((YOffset + Row) << 16);
         }
 
         FirstPixelOfRow += Buffer->Pitch;
     }
 }
 
-internal void
-FillAudioBuffer(game_audio_buffer *AudioBuffer)
-{
-    // TODO : Sine wave here
-    u32 T = 1.0f;
-    u32 RunningSampleIndex = AudioBuffer->WriteSampleIndex;
-    u32 SamplesToFillCountPad = 160;
-    // TODO : Use the actual dt here to calculate how much do I want to fill
-    u32 SamplesToFillCount = ((1/30.0f) * AudioBuffer->SamplesPerSecond) + SamplesToFillCountPad;
-
-    u32 SquareWavePeriod = (AudioBuffer->SamplesPerSecond/256);
-    u32 HalfSquareWavePeriod = SquareWavePeriod / 2;
-
-    u32 Volume = 3000;
-
-    for(u32 SampleIndex = 0;
-        SampleIndex < SamplesToFillCount;
-        ++SampleIndex)
-    {
-        i16 LeftSampleValue = 1;
-        i16 RightSampleValue = 1;
-        if(RunningSampleIndex%SquareWavePeriod > HalfSquareWavePeriod)
-        {
-            i16 LeftSampleValue = -1;
-            i16 RightSampleValue = -1;
-        }
-        AudioBuffer->Samples[RunningSampleIndex++] = LeftSampleValue * Volume;
-        AudioBuffer->Samples[RunningSampleIndex++] = RightSampleValue * Volume;
-
-        RunningSampleIndex %= AudioBuffer->SampleCount;
-    }
-
-    AudioBuffer->WriteSampleIndex = RunningSampleIndex;
-}
-
 extern "C"
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
-    RenderSomething(OffscreenBuffer);
+    Assert(sizeof(game_state) < Memory->PermanentStorageSize);
 
-    FillAudioBuffer(AudioBuffer);
+    game_state *State = (game_state *)Memory->PermanentStorage;
+
+    State->a = 1;
+
+    RenderSomething(OffscreenBuffer);
+    debug_platform_read_file_result File = PlatformAPI->DEBUGReadEntireFile("/Volumes/work/soma/data/sample.bmp");
+    PlatformAPI->DEBUGWriteEntireFile("/Volumes/work/soma/data/sample_temp.bmp", File.Memory, File.Size);
+}
+
+extern "C"
+GAME_FILL_AUDIO_BUFFER(GameFillAudioBuffer)
+{
+    u32 ToneHz = 256;
+    u32 SamplesToFillCountPad = 0;
+    // TODO : For now, the game is filling each frame worth of audio. But if the frame takes too much time,
+    // there will be a cracking sound because we did not fill the enough audio. What should we do here?
+    u32 SamplesToFillCount = AudioBuffer->ChannelCount * ((dtPerFrame * (r32)AudioBuffer->SamplesPerSecond) + SamplesToFillCountPad);
+
+    u32 SamplesPerOneCycle = (AudioBuffer->SamplesPerSecond/ToneHz); // Per Cycle == Per One Wave Form
+
+    u32 Volume = 1000;
+
+    for(u32 SampleIndex = 0;
+        SampleIndex < SamplesToFillCount;
+        SampleIndex += AudioBuffer->ChannelCount)
+    {
+        r32 t = (2.0f*Pi32*AudioBuffer->RunningSampleIndex)/SamplesPerOneCycle;
+
+        r32 SineValue = sinf(t);
+
+        i16 LeftSampleValue = (i16)(Volume * SineValue);
+        i16 RightSampleValue = LeftSampleValue;
+
+        AudioBuffer->Samples[(AudioBuffer->RunningSampleIndex++)%AudioBuffer->SampleCount] = LeftSampleValue;
+        AudioBuffer->Samples[(AudioBuffer->RunningSampleIndex++)%AudioBuffer->SampleCount] = RightSampleValue;
+    }
+
+    AudioBuffer->IsSoundReady = true;
 }

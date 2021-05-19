@@ -38,7 +38,6 @@
 #define MACOS_CALLBACK static
 
 global_variable b32 IsGameRunning;
-global_variable IOHIDDeviceRef GlobalDevice;
 
 global_variable IOHIDManagerRef HIDManager;
 
@@ -85,13 +84,13 @@ MacOSHandleEvents(NSApplication *App)
     }
 }
 
-internal void *
-DEBUGMacOSPlatformReadFile(char *FileName)
+DEBUG_PLATFORM_READ_FILE(DEBUGMacOSReadFile)
 {
-    void *result = 0;
+    debug_platform_read_file_result Result = {};
 
     int File = open(FileName, O_RDONLY);
-    if(File)
+    int Error = errno;
+    if(File >= 0) // NOTE : If the open() succeded, the return value is non-negative value.
     {
         struct stat FileStat;
         fstat(File , &FileStat); 
@@ -99,51 +98,253 @@ DEBUGMacOSPlatformReadFile(char *FileName)
 
         if(FileSize > 0)
         {
-            result = malloc(FileSize);
-            if(read(File, result, FileSize) == -1)
+            // TODO : NO MORE OS LEVEL ALLOCATION!
+            // Pass this function a memory that it can use so that the function can only
+            // read from it.
+            Result.Size = FileSize;
+            Result.Memory = malloc(Result.Size);
+            if(read(File, Result.Memory, FileSize) == -1)
             {
-                free(result);
+                free(Result.Memory);
+                Result.Size = 0;
             }
         }
+
+        close(File);
     }
 
-    close(File);
-
-    return result;
+    return Result;
 }
 
-internal void
-DEBUGMacOSPlatformWriteFile(char *FileNameToCreate, void *MemoryToWrite, u64 TotalSize)
+DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGMacOSWriteEntireFile)
 {
-    int File = open(FileNameToCreate, O_RDONLY | O_CREAT);
-    if(write(File, MemoryToWrite, TotalSize) == -1)
+    // NOTE : This call will fail if the file already exists.
+    int File = open(FileNameToCreate, O_WRONLY|O_CREAT|O_EXCL, S_IRWXU);
+    if(File >= 0) // NOTE : If the open() succeded, the return value is non-negative value.
     {
-        // TODO : LOG here
+        if(write(File, MemoryToWrite, FileSize) == -1)
+        {
+            // TODO : LOG here
+        }
+
+        close(File);
+    }
+    else
+    {
+        // TODO : File already exists. LOG here.
     }
 }
 
-internal void
-DEBUGMacOSPlatformFreeFileMemory(void *MemoryToFree)
+DEBUG_PLATFORM_FREE_FILE_MEMORY(DEBUGMacOSFreeFileMemory)
 {
     free(MemoryToFree);
 }
 
 MACOS_CALLBACK void
-ControllerInputDetected(void *context, IOReturn result, void *sender, IOHIDValueRef value)
+MacOSDualSenseInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValueRef Value)
+{}
+MACOS_CALLBACK void
+MacOSDualShockInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValueRef Value)
+{}
+MACOS_CALLBACK void
+MacOSXBOXInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValueRef Value)
+{}
+
+internal r32 
+MacOSGetProconStickValue(i32 StickValue, i32 StickMin, i32 StickAverage, i32 StickMax)
 {
-    // TODO : Is there any way to know what controller is the input from?
-    macos_controller *Controllers = (macos_controller *)context;
-    Controllers = 0;
+    r32 Result = 0.0f;
+    Result = 2.0f*((r32)(StickValue - StickAverage)/(StickMax - StickMin));
+    // TODO : Not a particularly good deadzone handling, but as long as I don't get the
+    // official document from nintendo, this will  stay this way.
+    if(Result < -1.0f)
+    {
+        Result = -1.0f;
+    }
+    else if(Result > 1.0f)
+    {
+        Result = 1.0f;
+    }
+    else if(Result < 0.1f && Result > -0.1f)
+    {
+        Result = 0.0f;
+    }
 
-    Controllers->AButton = 1; 
+    return Result;
+}
 
-    // TODO : Press some buttons from the procon and check what the values are.
-    IOHIDElementRef Element = IOHIDValueGetElement(value);
+MACOS_CALLBACK void
+MacOSProConInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValueRef Value)
+{
+    game_controller *Controller = (game_controller *)Context;
+    IOHIDElementRef Element = IOHIDValueGetElement(Value);
 
-    printf("asdfasdfasd\n");
+    const uint8_t *ValueInByte = IOHIDValueGetBytePtr(Value);
 
-    //// TODO : Can I check this value to know whether I should pull the value more frequently?
-    // IOHIDValueGetTimeStamp(value) 
+    /*
+        NOTE : 
+        Memory Order
+        Value[3] Value[2] Value[1] Value[0]
+
+        ABXY Button -> Value[2]
+
+        _Each values are 12bit_
+        LEFT X - Value6 Bottom Half << 8 | Value5 
+        LEFT Y - Value 7 << 4 | Value6 Top Half >> 4
+        RIGHT X - Value9 Bottom Half << 8 |  Value8
+        RIGHT Y -  Value 10 << 4 | Value9 Top Half >> 4
+
+        Although the Byte Length is 48bytes, only the first 10 bytes are used.
+    */
+
+    u8 Value0 = ValueInByte[0];
+    u8 Value1 = ValueInByte[1];
+    u8 Value2 = ValueInByte[2];
+    u8 Value3 = ValueInByte[3];
+    u8 Value4 = ValueInByte[4];
+    u8 Value5 = ValueInByte[5];
+    u8 Value6 = ValueInByte[6];
+    u8 Value7 = ValueInByte[7];
+    u8 Value8 = ValueInByte[8];
+    u8 Value9 = ValueInByte[9];
+    u8 Value10 = ValueInByte[10];
+    int ValueInInt = IOHIDValueGetIntegerValue(Value);
+
+    #define LeftStickXMax	3860
+    #define LeftStickXMin	605 
+    #define LeftStickXAverage 2232
+    #define LeftStickYMax	3590
+    #define LeftStickYMin	377
+    #define LeftStickYAverage 1983
+    #define RightStickXMax	3764 
+    #define RightStickXMin	642 
+    #define RightStickXAverage 2203
+    #define RightStickYMax	3776
+    #define RightStickYMin	432 
+    #define RightStickYAverage 2104
+
+    // TODO : Maybe the game can offer a 'calibrate deadzone yourself' kind of option to the user?
+    // For example, by making them to fully spin both sticks so that we can know what's the 
+    // MIN/MAX values are.
+    i32 RightStickX = (((u16)(Value9 & 0b00001111) << 8) | (u16)Value8);
+    i32 RightStickY = (((u16)Value10) << 4) | ((Value6 >> 9) & 0b00001111);
+    i32 LeftStickX = (((u16)(Value6 & 0b00001111) << 8) | (u16)Value5);
+    i32 LeftStickY = (((u16)Value7) << 4) | ((Value6 >> 4) & 0b00001111);
+    //printf("RightStickX : %u, RightStickY : %u\n", RightStickX, RightStickY);
+    //printf("LeftStickX : %u, LeftStickY : %u\n", LeftStickX, LeftStickY);
+
+    Controller->LeftStickX = MacOSGetProconStickValue(LeftStickX, LeftStickXMin, LeftStickXAverage, LeftStickXMax);
+    Controller->LeftStickY = MacOSGetProconStickValue(LeftStickY, LeftStickYMin, LeftStickYAverage, LeftStickYMax);
+    Controller->RightStickX = MacOSGetProconStickValue(RightStickX, RightStickXMin, RightStickXAverage, RightStickXMax);
+    Controller->RightStickY = MacOSGetProconStickValue(RightStickY, RightStickYMin, RightStickYAverage, RightStickYMax);
+
+    printf("LeftStickX : %.6f, LeftStickY : %.6f, RightStickX : %.6f, RightStickY : %.6f\n", 
+            Controller->LeftStickX, Controller->LeftStickY, Controller->RightStickX, Controller->RightStickY);
+
+    // NOTE : controller min/max getter
+#if 0
+    local_variable u16 RightXMin = 40000;
+    local_variable u16 RightXMax = 0;
+    local_variable u16 RightYMin = 40000;
+    local_variable u16 RightYMax = 0;
+
+    local_variable u16 LeftXMin = 40000;
+    local_variable u16 LeftXMax = 0;
+    local_variable u16 LeftYMin = 40000;
+    local_variable u16 LeftYMax = 0;
+
+    if(RightStickX > RightXMax)
+    {
+        RightXMax = RightStickX;
+    }
+    if(RightStickX < RightXMin)
+    {
+        RightXMin = RightStickX;
+    }
+
+    if(RightStickY > RightYMax)
+    {
+        RightYMax = RightStickY;
+    }
+    if(RightStickY < RightYMin)
+    {
+        RightYMin = RightStickY;
+    }
+
+    if(LeftStickX > LeftXMax)
+    {
+        LeftXMax = LeftStickX;
+    }
+    if(LeftStickX < LeftXMin)
+    {
+        LeftXMin = LeftStickX;
+    }
+
+    if(LeftStickY > LeftYMax)
+    {
+        LeftYMax = LeftStickY;
+    }
+    if(LeftStickY < LeftYMin)
+    {
+        LeftYMin = LeftStickY;
+    }
+#endif
+
+    // TODO : Make all these bit shift as a seperate function 
+    // so that anyone can easily understand what's going on here?
+    Controller->AButton = (((ValueInInt << 12) >> 31) & 1);
+    if(Controller->AButton)
+        printf("AButton\n");
+    Controller->BButton = (((ValueInInt << 13) >> 31) & 1);
+    if(Controller->BButton)
+        printf("BButton\n");
+    Controller->XButton = (((ValueInInt << 14) >> 31) & 1);
+    if(Controller->XButton)
+        printf("XButton\n");
+    Controller->YButton = (((ValueInInt << 15) >> 31) & 1);
+    if(Controller->YButton)
+        printf("YButton\n");
+    Controller->MinusButton = (((ValueInInt << 7) >> 31) & 1);
+    if(Controller->MinusButton)
+        printf("MinusButton\n");
+    Controller->PlusButton = (((ValueInInt << 6) >> 31) & 1);
+    if(Controller->PlusButton)
+        printf("PlusButton\n");
+    Controller->HomeButton = (((ValueInInt << 3) >> 31) & 1);
+    if(Controller->HomeButton)
+        printf("HomeButton\n");
+    Controller->CaptureButton = (((ValueInInt << 2) >> 31) & 1);
+    if(Controller->CaptureButton)
+        printf("CaptureButton\n");
+
+    Controller->LeftShoulder = (((Value4 << 1) >> 7) & 1);
+    if(Controller->LeftShoulder)
+        printf("LButton\n");
+
+    Controller->LeftTrigger = (((Value4 << 0) >> 7) & 1);
+    if(Controller->LeftTrigger)
+        printf("ZLButton\n");
+
+    Controller->RightTrigger = (((ValueInInt << 8) >> 31) & 1);
+    if(Controller->RightTrigger)
+        printf("ZRButton\n");
+
+    Controller->RightShoulder = (((ValueInInt << 9) >> 31) & 1);
+    if(Controller->RightShoulder)
+        printf("RButton\n");
+
+
+    Controller->DPadUp = (((Value4 << 6) >> 7) & 1);
+    if(Controller->DPadUp)
+        printf("DPadUp\n");
+    Controller->DPadDown = (((Value4 << 7) >> 7) & 1);
+    if(Controller->DPadDown)
+        printf("DPadDown\n");
+    Controller->DPadLeft = (((Value4 << 4) >> 7) & 1);
+    if(Controller->DPadLeft)
+        printf("DPadLeft\n");
+    Controller->DPadRight = (((Value4 << 5) >> 7) & 1);
+    
 }
 
 MACOS_CALLBACK void
@@ -155,35 +356,64 @@ DeviceRemovalCallback(void *context, IOReturn result, void *sender)
 MACOS_CALLBACK void 
 ControllerConnectionDetected(void *Context, IOReturn Result, void *Sender, IOHIDDeviceRef Device)
 {
-    CFTypeRef Product = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDProductKey));
-    CFTypeRef Manufacturer = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDManufacturerKey));
-    CFTypeRef SerialNumber = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDSerialNumberKey));
-    CFTypeRef Usage = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDPrimaryUsageKey));
+    game_input *Input = (game_input *)Context;
+    game_controller *Controller = Input->Controllers + Input->ControllerCount++;
+
+    /*
+       https://opensource.apple.com/source/IOHIDFamily/IOHIDFamily-315.7.16/IOHIDFamily/IOHIDUsageTables.h 
+        NOTE : 
+            kHIDPage_GenericDesktop = 0x01
+            kHIDUsage_GD_Joystick = 0x04
+            kHIDUsage_GD_GamePad = 0x05
+    */
     CFTypeRef UsagePage = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDPrimaryUsagePageKey));
+    CFTypeRef Usage = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDPrimaryUsageKey));
 
-    if(IOHIDDeviceConformsTo(Device, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick) == TRUE)
+    if(IOHIDDeviceConformsTo(Device, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick) == TRUE ||
+        IOHIDDeviceConformsTo(Device, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) == TRUE)
     {
-        printf("Wha??\n");
+        CFStringRef ProductKey = (CFStringRef)IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDProductKey));
+        const char *ProducKeyInChar = CFStringGetCStringPtr(ProductKey, kCFStringEncodingUTF8);
+        CFTypeRef Manufacturer = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDManufacturerKey));
+        CFTypeRef SerialNumber = IOHIDDeviceGetProperty(Device, CFSTR(kIOHIDSerialNumberKey));
+
+        if(strcmp(ProducKeyInChar, "Pro Controller") == 0)
+        {
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSProConInputDetected, Controller);  
+            Controller->Connected = 1;
+        }
+        // TODO : These names are totally random for now, as I don't have the controllers..
+        else if(strcmp(ProducKeyInChar, "Dual Shock") == 0)
+        {
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSDualShockInputDetected, Controller);  
+            Controller->Connected = 1;
+        }
+        else if(strcmp(ProducKeyInChar, "Dual Sense") == 0)
+        {
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSDualSenseInputDetected, Controller);  
+            Controller->Connected = 1;
+        }
+        else if(strcmp(ProducKeyInChar, "XBOX") == 0)
+        {
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSXBOXInputDetected, Controller);  
+            Controller->Connected = 1;
+        }
+
+
+        IOHIDDeviceRegisterRemovalCallback(Device, DeviceRemovalCallback, 0);
+
+        IOHIDDeviceScheduleWithRunLoop(Device, 
+                                    CFRunLoopGetCurrent(), 
+                                    kCFRunLoopDefaultMode);
+
+        if(IOHIDDeviceOpen(Device, kIOHIDOptionsTypeNone) == kIOReturnSuccess)
+        {
+            printf("Device Opened\n");
+        }
+        printf("Controller Detected\n");
     }
-
-
-    GlobalDevice = Device;
-
-
-    // TODO : Whether this does not work, or the controller input is not detected properly.
-    //IOHIDDeviceRegisterInputValueCallback(Device, ControllerInputDetected, 0);  
-    IOHIDDeviceRegisterRemovalCallback(Device, DeviceRemovalCallback, 0);
-
-    IOHIDDeviceScheduleWithRunLoop(Device, 
-                                CFRunLoopGetCurrent(), 
-                                kCFRunLoopDefaultMode);
-
-    if(IOHIDDeviceOpen(Device, kIOHIDOptionsTypeNone) == kIOReturnSuccess)
-    {
-        printf("Device Opened\n");
-    }
-    printf("Controller Detected\n");
 }
+
 MACOS_CALLBACK void 
 ControllerRemovalDetected(void *context, IOReturn result, void *sender, IOHIDDeviceRef device)
 {
@@ -192,7 +422,7 @@ ControllerRemovalDetected(void *context, IOReturn result, void *sender, IOHIDDev
 
 // TODO : Support for multiple controllers?
 internal void
-MacOSInitController(macos_controller *Controllers)
+MacOSInitController(game_input *Input)
 {
     HIDManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
 
@@ -202,17 +432,29 @@ MacOSInitController(macos_controller *Controllers)
     @[
         @{@(kIOHIDDeviceUsagePageKey): @(kHIDPage_GenericDesktop), @(kIOHIDDeviceUsageKey): @(kHIDUsage_GD_GamePad)},
         @{@(kIOHIDDeviceUsagePageKey): @(kHIDPage_GenericDesktop), @(kIOHIDDeviceUsageKey): @(kHIDUsage_GD_Joystick)},
-        @{@(kIOHIDDeviceUsagePageKey): @(kHIDPage_GenericDesktop), @(kIOHIDDeviceUsageKey): @(kHIDUsage_GD_Keypad)},
     ]);
 
-    IOHIDManagerRegisterDeviceMatchingCallback(HIDManager, ControllerConnectionDetected, 0);
-    IOHIDManagerRegisterInputValueCallback(HIDManager, ControllerInputDetected, 0); // NOTE : This does not work too...
-    IOHIDManagerRegisterDeviceRemovalCallback(HIDManager, ControllerRemovalDetected, 0);
+    IOHIDManagerRegisterDeviceMatchingCallback(HIDManager, ControllerConnectionDetected, Input);
+    IOHIDManagerRegisterDeviceRemovalCallback(HIDManager, ControllerRemovalDetected, Input);
 
     IOHIDManagerScheduleWithRunLoop(HIDManager,
                                    CFRunLoopGetCurrent(), // TODO : CFRunLoopGetCurrent vs CFRunLoopGetMain ?
                                     kCFRunLoopDefaultMode);
     IOHIDManagerOpen(HIDManager, kIOHIDOptionsTypeNone);
+
+    CFSetRef Devices = IOHIDManagerCopyDevices(HIDManager);
+}
+
+internal void
+ZeroAudio(game_audio_buffer *AudioBuffer)
+{
+    for(u32 SampleIndex = 0;
+        SampleIndex < AudioBuffer->SampleCount;
+        SampleIndex += AudioBuffer->ChannelCount)
+    {
+        AudioBuffer->Samples[SampleIndex] = 0;
+        AudioBuffer->Samples[SampleIndex+1] = 0;
+    }
 }
 
 MACOS_CALLBACK OSStatus
@@ -222,19 +464,61 @@ MacOSRenderAudio(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
                 UInt32 FrameCount, 
                 AudioBufferList *BufferToFill)
 {
-    // TODO : Actually use this audio buffer as source buffer
     game_audio_buffer *SourceBuffer = (game_audio_buffer *)inRefCon;
-
     i16 *DestBuffer = (i16 *)BufferToFill->mBuffers[0].mData;
-    u32 ConsumedSampleIndex = SourceBuffer->ConsumedSampleIndex;
-    for(u32 FrameIndex = 0;
-        FrameIndex < FrameCount;
-        ++FrameIndex)
+    u32 SamplesToFillCount = FrameCount*SourceBuffer->ChannelCount;
+
+    // TODO : Still a bug at the start?
+    if(SourceBuffer->IsSoundReady)
     {
-        DestBuffer[FrameIndex] = SourceBuffer->Samples[ConsumedSampleIndex++];
-        DestBuffer[FrameIndex+1] = SourceBuffer->Samples[ConsumedSampleIndex++];
-        ConsumedSampleIndex %= SourceBuffer->SampleCount;
+        u32 FutureConsumedSampleIndex = SourceBuffer->ConsumedSampleIndex + SamplesToFillCount;
+        u32 RunningSampleIndexInBuffer = SourceBuffer->RunningSampleIndex%SourceBuffer->SampleCount;
+
+        if(SourceBuffer->ConsumedSampleIndex < RunningSampleIndexInBuffer)
+        {
+            if(FutureConsumedSampleIndex > RunningSampleIndexInBuffer)
+            {
+                SamplesToFillCount = RunningSampleIndexInBuffer - SourceBuffer->ConsumedSampleIndex;
+            }
+        }
+        else if(SourceBuffer->ConsumedSampleIndex > RunningSampleIndexInBuffer)
+        {
+            if(FutureConsumedSampleIndex > RunningSampleIndexInBuffer + SourceBuffer->SampleCount)
+            {
+                SamplesToFillCount = RunningSampleIndexInBuffer + SourceBuffer->SampleCount - SourceBuffer->ConsumedSampleIndex;
+            }
+        }
+        else
+        {
+            // TODO : If ConsumnedSampleIndex == RunningSampleIndex, what should we do here?
+            SamplesToFillCount = 0;
+            Assert("Invalid case");
+        }
+
+        for(u32 SampleIndex = 0;
+            SampleIndex < SamplesToFillCount;
+            SampleIndex += SourceBuffer->ChannelCount)
+        {
+            i16 SourceLeft = SourceBuffer->Samples[SourceBuffer->ConsumedSampleIndex++];
+            i16 SourceRight = SourceBuffer->Samples[SourceBuffer->ConsumedSampleIndex++];
+            
+            DestBuffer[SampleIndex] = SourceLeft;
+            DestBuffer[SampleIndex+1] = SourceRight;
+
+            SourceBuffer->ConsumedSampleIndex %= SourceBuffer->SampleCount;
+        }
     }
+    else
+    {
+        for(u32 SampleIndex = 0;
+            SampleIndex < SamplesToFillCount;
+            SampleIndex += SourceBuffer->ChannelCount)
+        {
+            DestBuffer[SampleIndex] = 0;
+            DestBuffer[SampleIndex+1] = 0;
+        }   
+    }
+
 
     OSStatus Error = noErr;
     return Error;
@@ -276,7 +560,6 @@ MacOSInitAudio(game_audio_buffer *AudioBuffer)
                         kAudioUnitScope_Global, 0, 
                         &AudioUnitRenderCallback, sizeof(AudioUnitRenderCallback));
 
-        printf("Audio Unit property set\n");
         if(AudioUnitInitialize(AudioUnit) == noErr)
         {
             printf("Audio Unit initialized\n");
@@ -332,11 +615,13 @@ MacOSGetGameCode(game_code *GameCode, char *FileName)
     if(GameCode->Handle)
     {
         GameCode->UpdateAndRender = (game_update_and_render *)dlsym(GameCode->Handle, "GameUpdateAndRender");
+        GameCode->FillAudioBuffer = (game_fill_audio_buffer *)dlsym(GameCode->Handle, "GameFillAudioBuffer");
         //Error = dlerror();
     }
     else
     {
         GameCode->UpdateAndRender = GameUpdateAndRenderStub;
+        GameCode->FillAudioBuffer = GameFillAudioBufferStub;
         GameCode->LastModifiedTime = 0;
     }
 }
@@ -349,101 +634,113 @@ int main(int argc, char **argv)
     game_code GameCode = {};
     MacOSGetGameCode(&GameCode, DynamicLibraryPath);
 
-    void *FileMemory = DEBUGMacOSPlatformReadFile("/Volumes/work/soma/data/sample.bmp");
+    game_memory GameMemory = {};
+    GameMemory.PermanentStorageSize = Megabytes(4);
+    GameMemory.TransientStorageSize = Gigabytes(1);
+    u64 TotalSize = GameMemory.PermanentStorageSize + GameMemory.TransientStorageSize; 
+    vm_allocate(mach_task_self(), 
+                (vm_address_t *)&GameMemory.PermanentStorage,
+                TotalSize, 
+                VM_FLAGS_ANYWHERE);
+    GameMemory.TransientStorage = (u8 *)GameMemory.PermanentStorage + GameMemory.PermanentStorageSize;
 
-    game_audio_buffer GameAudioBuffer = {};
-    GameAudioBuffer.SamplesPerSecond = 48000;
-    GameAudioBuffer.ChannelCount = 2;
-    // NOTE : Audio Buffer is 3 seconds worth for now. 
-    GameAudioBuffer.SampleCount = 3 * GameAudioBuffer.SamplesPerSecond * GameAudioBuffer.ChannelCount;
-    GameAudioBuffer.Samples = (i16 *)malloc(sizeof(i16) * GameAudioBuffer.SampleCount);
-    MacOSInitAudio(&GameAudioBuffer);
-
-    // TODO : Support multiple controllers?
-    macos_controller Controllers[4];
-    MacOSInitController(Controllers);
-
-    struct mach_timebase_info MachTimeInfo;
-    mach_timebase_info(&MachTimeInfo);
-    r32 NanoSecondPerTick = ((r32)MachTimeInfo.numer/(r32)MachTimeInfo.denom);
-
-    r32 TargetSecondsPerFrame = 1/30.0f;
-    u32 TargetNanoSecondsPerFrame = (u32)(TargetSecondsPerFrame*SecToNanoSec);
-
-    NSApplication *App = [NSApplication sharedApplication]; // Your program should invoke this method as one of the first statements in main();
-    [App setActivationPolicy :NSApplicationActivationPolicyRegular]; // The application is an ordinary app that appears in the Dock and may have a user interface.
-
-    NSMenu *AppMainMenu = [NSMenu alloc];
-    NSMenuItem *MenuItemWithAppName = [NSMenuItem new];
-    [AppMainMenu addItem : MenuItemWithAppName];
-	[NSApp setMainMenu:AppMainMenu];
-    
-    
-	NSMenu *SubMenuOfMenuItemWithAppName = [NSMenu alloc];
-	NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" 
-                    action:@selector(terminate:)  // Decides what will happen when the menu is clicked or selected
-                    keyEquivalent:@"q"];
-	[SubMenuOfMenuItemWithAppName addItem:quitMenuItem];
-	[MenuItemWithAppName setSubmenu:SubMenuOfMenuItemWithAppName];
-
-    macos_offscreen_buffer MacOSBuffer = {};
-	MacOSBuffer.Width = 1920;
-	MacOSBuffer.Height = 1080;
-    MacOSBuffer.BytesPerPixel = 4;
-    MacOSBuffer.Pitch = MacOSBuffer.Width * MacOSBuffer.BytesPerPixel;
-    MacOSBuffer.Memory = malloc(MacOSBuffer.Pitch * MacOSBuffer.Height); // TODO : Put this inside the unified game memory?
-
-    // TODO : Don't know why, but MacOS creates a window with doubled size, so request the window to
-    // be half the size at the first place. Maybe this is because of the high resolution monitor?
-	NSRect WindowFrameRect = NSMakeRect(100.0f, 100.0f, (float)MacOSBuffer.Width/2, (float)MacOSBuffer.Height/2);
-
-	NSWindow *Window = [[NSWindow alloc] initWithContentRect : WindowFrameRect
-											// Apple window styles : https://developer.apple.com/documentation/appkit/nswindow/stylemask
-											styleMask : NSTitledWindowMask|NSWindowStyleMaskClosable|NSWindowStyleMaskResizable
-											backing : NSBackingStoreBuffered 
-											defer : NO];
-
-	NSString *AppName = [[NSProcessInfo processInfo]processName];
-	[Window setTitle:AppName];
-	[Window makeKeyAndOrderFront:0];
-    // [Window toggleFullScreen:0]; // TODO : Fullscreen support?
-
-	fox_app_delegate *appDelegate = [[fox_app_delegate alloc] init];
-	[App setDelegate:appDelegate];
-
-    NSWindow *MainWindow = [App mainWindow];
-
-    macos_opengl_info MacOSOpenGLInfo = {};
-    MacOSOpenGLInfo = PrepareDisplayingWithOpenGL(Window, &WindowFrameRect, MacOSBuffer.Width, MacOSBuffer.Height, MacOSBuffer.Memory); 
-
-    // NOTE : vm_allocate is preferred to be multiple of 4096 bytes
-
-    u8 *GameMemory = 0;
-    u64 GameMemorySize = 4096;
-    // TODO : There are many allocation methods. Make sure this one is the fastest - or does it matter?
-    vm_allocate(mach_task_self(), (vm_address_t *)&GameMemory, GameMemorySize, VM_FLAGS_ANYWHERE); 
-
-    if(GameMemory)
+    if(GameMemory.PermanentStorage && GameMemory.TransientStorage)
     {
-        IsGameRunning = true; // TODO : Put this inside the event handling loop
+        game_platform_api GamePlatformAPI = {};
+        GamePlatformAPI.DEBUGReadEntireFile = DEBUGMacOSReadFile;
+        GamePlatformAPI.DEBUGWriteEntireFile = DEBUGMacOSWriteEntireFile;
+        GamePlatformAPI.DEBUGFreeFileMemory = DEBUGMacOSFreeFileMemory;
+        // TODO : There are many allocation methods. Make sure this one is the fastest - or does it matter?
+
+        game_audio_buffer GameAudioBuffer = {};
+        GameAudioBuffer.SamplesPerSecond = 48000;
+        GameAudioBuffer.ChannelCount = 2;
+        // NOTE : Audio Buffer is 3 seconds worth for now. 
+        GameAudioBuffer.SampleCount = 1 * GameAudioBuffer.SamplesPerSecond * GameAudioBuffer.ChannelCount;
+        GameAudioBuffer.Samples = (i16 *)malloc(sizeof(i16) * GameAudioBuffer.SampleCount);
+
+        ZeroAudio(&GameAudioBuffer);
+        MacOSInitAudio(&GameAudioBuffer);
+
+        // TODO : Unlike Win32, I cannot use GetState() to Get the state of controller - macos controlls these stuff.
+        // Therefore, I cannot use the oldInput - newInput swap scheme like handmade hero. Maybe put a indicator inside
+        // the game_input struct so that I can know which game_input to use inside the controller input callback?
+        game_input Input[2] = {};
+        game_input *NewInput = Input;
+        game_input *OldInput = Input + 1;
+
+        MacOSInitController(Input);
+
+        struct mach_timebase_info MachTimeInfo;
+        mach_timebase_info(&MachTimeInfo);
+        r32 NanoSecondPerTick = ((r32)MachTimeInfo.numer/(r32)MachTimeInfo.denom);
+
+        r32 TargetSecondsPerFrame = 1/30.0f;
+        u32 TargetNanoSecondsPerFrame = (u32)(TargetSecondsPerFrame*SecToNanoSec);
+
+        macos_offscreen_buffer MacOSBuffer = {};
+        MacOSBuffer.Width = 1920;
+        MacOSBuffer.Height = 1080;
+        MacOSBuffer.BytesPerPixel = 4;
+        MacOSBuffer.Pitch = MacOSBuffer.Width * MacOSBuffer.BytesPerPixel;
+        MacOSBuffer.Memory = malloc(MacOSBuffer.Pitch * MacOSBuffer.Height); // TODO : Put this inside the unified game memory?
+
+        NSApplication *App = [NSApplication sharedApplication]; // Your program should invoke this method as one of the first statements in main();
+        [App setActivationPolicy :NSApplicationActivationPolicyRegular]; // The application is an ordinary app that appears in the Dock and may have a user interface.
+
+        NSMenu *AppMainMenu = [NSMenu alloc];
+        NSMenuItem *MenuItemWithAppName = [NSMenuItem new];
+        [AppMainMenu addItem : MenuItemWithAppName];
+        [NSApp setMainMenu:AppMainMenu];
+        
+        
+        NSMenu *SubMenuOfMenuItemWithAppName = [NSMenu alloc];
+        NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" 
+                        action:@selector(terminate:)  // Decides what will happen when the menu is clicked or selected
+                        keyEquivalent:@"q"];
+        [SubMenuOfMenuItemWithAppName addItem:quitMenuItem];
+        [MenuItemWithAppName setSubmenu:SubMenuOfMenuItemWithAppName];
+
+
+        // TODO : Don't know why, but MacOS creates a window with doubled size, so request the window to
+        // be half the size at the first place. Maybe this is because of the high resolution monitor?
+        NSRect WindowFrameRect = NSMakeRect(100.0f, 100.0f, (float)MacOSBuffer.Width/2, (float)MacOSBuffer.Height/2);
+
+        NSWindow *Window = [[NSWindow alloc] initWithContentRect : WindowFrameRect
+                                                // Apple window styles : https://developer.apple.com/documentation/appkit/nswindow/stylemask
+                                                styleMask : NSTitledWindowMask|NSWindowStyleMaskClosable|NSWindowStyleMaskResizable
+                                                backing : NSBackingStoreBuffered 
+                                                defer : NO];
+
+        NSString *AppName = [[NSProcessInfo processInfo]processName];
+        [Window setTitle:AppName];
+        [Window makeKeyAndOrderFront:0];
+        // [Window toggleFullScreen:0]; // TODO : Fullscreen support?
+
+        fox_app_delegate *appDelegate = [[fox_app_delegate alloc] init];
+        [App setDelegate:appDelegate];
+
+        NSWindow *MainWindow = [App mainWindow];
+
+        macos_opengl_info MacOSOpenGLInfo = {};
+        MacOSOpenGLInfo = PrepareDisplayingWithOpenGL(Window, &WindowFrameRect, MacOSBuffer.Width, MacOSBuffer.Height, MacOSBuffer.Memory); 
+
+        IsGameRunning = true;
 
         u64 BeginTime = 0;
 
         [App activateIgnoringOtherApps:YES];
 
+        // NOTE : Here's the game loop
         while(IsGameRunning)
         {
-#if 1
             int DynamicLibraryLock = open("DynamicLibraryLockPath", O_RDONLY);
             if(DynamicLibraryLock != 0)
             {
                 MacOSGetGameCode(&GameCode, DynamicLibraryPath);
             }
-#endif
-            CFSetRef EnumeratedDevices = IOHIDManagerCopyDevices(HIDManager); 
-            MacOSHandleEvents(App);
 
-            // GCController *Controllers = (GCController *)[GCController controllers]; // TODO : Does this only support MFi controllers?
+            MacOSHandleEvents(App);
 
             game_offscreen_buffer GameOffscreenBuffer = {};
             GameOffscreenBuffer.Width = MacOSBuffer.Width;
@@ -452,7 +749,8 @@ int main(int argc, char **argv)
             GameOffscreenBuffer.Pitch = MacOSBuffer.Pitch;
             GameOffscreenBuffer.Memory = MacOSBuffer.Memory;
 
-            GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameAudioBuffer);
+            GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameMemory, &GamePlatformAPI, TargetSecondsPerFrame);
+            GameCode.FillAudioBuffer(&GameAudioBuffer, TargetSecondsPerFrame);
 
             // Rendering loop with OpenGL.
             {
@@ -495,7 +793,7 @@ int main(int argc, char **argv)
             }
 
             EndTime = mach_absolute_time();
-            // TODO : More precise frame rate?
+            // TODO : More precise frame rate
             printf("%f\n", MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick)/SecToNanoSec);
 
             BeginTime = EndTime;

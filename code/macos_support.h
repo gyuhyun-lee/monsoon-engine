@@ -31,34 +31,6 @@ struct macos_opengl_info
  *  5. Open the IOHIDManager, which will get the current & future HIDevices(in our case, the gmaepad and joystick)
  * */
 
-// TODO : Unform support for all types of controllers?
-struct macos_controller
-{
-    IOHIDDeviceRef Controller;
-
-    bool AButton;
-    bool BButton;
-    bool XButton;
-    bool YButton;
-
-    bool DPadRight;
-    bool DPadLeft;
-    bool DPadUp;
-    bool DPadDown;
-
-    i16 LeftStickX;
-    i16 LeftStickY;
-    i16 RightStickX;
-    i16 RighttStickY;
-
-    bool RightShoulder;
-    bool LeftShoulder;
-    u8 RightTrigger;
-    u8 LeftTrigger;
-};
-
-
-
 // NOTE : app delegate is mianly for applicationDidFinishLaunching function,
 // which we are using to go inside our game loop even after the [App Run] call.
 @interface fox_app_delegate : NSObject <NSApplicationDelegate>

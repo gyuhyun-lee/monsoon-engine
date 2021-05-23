@@ -1,4 +1,4 @@
-// NOTE : These are defined inside events.h. I just renamed the prefix only.
+// NOTE : These are defined inside events.h. I just renamed the prefix to MACOS.
 enum {
   MACOS_A                    = 0x00,
   MACOS_S                    = 0x01,

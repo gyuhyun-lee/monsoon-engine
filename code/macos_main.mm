@@ -1,54 +1,52 @@
 /*
     Here are the most basic things to do inside the MACOS platform layer.
-
-    Framerate control
-
-    Gamepad input -> IOHIDManager & IOHIDElement
-
-    unified game memory
+    Framerate control(MORE PRECISE ONE!!)
 
     Sound
 
     more robust input handling. keyboard, mouse..
 
-    live code editing
     input recording
 */
 
-#include <stdio.h> // printf for debugging purpose
 
-#include <sys/stat.h>
 
+#include "soma_platform_independent.h"
+#include "soma.cpp"
+
+#undef internal // NOTE : Cocoa.h is already using internal.. so I need to do this :(
 #include <Cocoa/Cocoa.h> // APPKIT
+#define internal static
+
+#include <stdio.h> // printf for debugging purpose
+#include <sys/stat.h>
 #include <mach/mach_time.h> // mach_absolute_time
 #include <OpenGL/gl.h> // Every opengl related functions
-#include <stdint.h> // int32_t, uint32_t...
 #include <dlfcn.h>  // dlopen, dlsym for loading dylibs
 
 #include <IOKit/hid/IOHIDLib.h> //IOHIDManager, IOHIDElement
 #include <AudioUnit/AudioUnit.h>
 
-#include "soma_platform_independent.h"
 #include "macos_keycode.h"
 #include "macos_support.cpp"
-
-#include "soma.cpp"
-
 
 #define MACOS_CALLBACK static
 
 global_variable b32 IsGameRunning;
+global_variable IOHIDManagerRef HIDManager; // TODO : Any way to get rid of this global variable?
 
-global_variable IOHIDManagerRef HIDManager;
-
-u64 MachTimeDifferenceToNanoSecond(u64 BeginMachTime, u64 EndMachTime, r32 NanoSecondPerTick)
+internal u64 
+MachTimeDifferenceToNanoSecond(u64 BeginMachTime, u64 EndMachTime, r32 NanoSecondPerTick)
 {
     return (u64)(((EndMachTime - BeginMachTime)*NanoSecondPerTick));
 }
 
-void
-MacOSHandleEvents(NSApplication *App)
+internal void
+MacOSHandleEvents(NSApplication *App, game_input_manager *InputManager)
 {
+    game_input_raw *NewInput = InputManager->RawInputs + InputManager->NewInputIndex;
+    game_controller *KeyboardController = NewInput->Controllers + 0;
+
     // TODO : Check if this loop has memory leak.
     while(1)
     {
@@ -60,17 +58,44 @@ MacOSHandleEvents(NSApplication *App)
         {
             switch([Event type])
             {
-                case NSEventTypeKeyUp :
-                case NSEventTypeKeyDown :
+                case NSEventTypeKeyUp:
+                case NSEventTypeKeyDown:
                 {
-                    u16 KeyCode = [Event keyCode];
-                    if(KeyCode == MACOS_Escape)
+                    b32 WasDown = Event.ARepeat;
+                    b32 IsDown = ([Event type] == NSEventTypeKeyDown);
+
+                    if((IsDown != WasDown) || !IsDown)
                     {
-                        IsGameRunning = false;
+                        //printf("IsDown : %d, WasDown : %d", IsDown, WasDown);
+                        u16 KeyCode = [Event keyCode];
+                        if(KeyCode == MACOS_Escape)
+                        {
+                            IsGameRunning = false;
+                        }
+                        else if(KeyCode == MACOS_W)
+                        {
+                            KeyboardController->MoveUp = IsDown;
+                        }
+                        else if(KeyCode == MACOS_A)
+                        {
+                            KeyboardController->MoveLeft = IsDown;
+                        }
+                        else if(KeyCode == MACOS_S)
+                        {
+                            KeyboardController->MoveDown = IsDown;
+                        }
+                        else if(KeyCode == MACOS_D)
+                        {
+                            KeyboardController->MoveRight = IsDown;
+                        }
+                        else if(KeyCode == MACOS_Space)
+                        {
+                            KeyboardController->AButton = IsDown;
+                        }
                     }
                 }break;
 
-                default :
+                default:
                 {
                     [App sendEvent : Event];
                 }
@@ -78,7 +103,6 @@ MacOSHandleEvents(NSApplication *App)
         }
         else
         {
-            // TODO : Make sure this does not 'block' the code.
             break;
         }
     }
@@ -153,10 +177,13 @@ MacOSXBOXInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValueR
 internal r32 
 MacOSGetProconStickValue(i32 StickValue, i32 StickMin, i32 StickAverage, i32 StickMax)
 {
-    r32 Result = 0.0f;
-    Result = 2.0f*((r32)(StickValue - StickAverage)/(StickMax - StickMin));
     // TODO : Not a particularly good deadzone handling, but as long as I don't get the
     // official document from nintendo, this will  stay this way.
+#define  PROCON_DEADZONE 0.1f
+
+    r32 Result = 0.0f;
+    Result = 2.0f*((r32)(StickValue - StickAverage)/(StickMax - StickMin));
+
     if(Result < -1.0f)
     {
         Result = -1.0f;
@@ -165,7 +192,7 @@ MacOSGetProconStickValue(i32 StickValue, i32 StickMin, i32 StickAverage, i32 Sti
     {
         Result = 1.0f;
     }
-    else if(Result < 0.1f && Result > -0.1f)
+    else if(Result < PROCON_DEADZONE && Result > -PROCON_DEADZONE)
     {
         Result = 0.0f;
     }
@@ -176,7 +203,10 @@ MacOSGetProconStickValue(i32 StickValue, i32 StickMin, i32 StickAverage, i32 Sti
 MACOS_CALLBACK void
 MacOSProConInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValueRef Value)
 {
-    game_controller *Controller = (game_controller *)Context;
+    game_input_manager *InputManager = (game_input_manager *)Context;
+    game_input_raw *NewInput = InputManager->RawInputs + InputManager->NewInputIndex;
+    game_controller *Controller = NewInput->Controllers + (NewInput->ControllerCount - 1);
+
     IOHIDElementRef Element = IOHIDValueGetElement(Value);
 
     const uint8_t *ValueInByte = IOHIDValueGetBytePtr(Value);
@@ -230,16 +260,11 @@ MacOSProConInputDetected(void *Context, IOReturn Result, void *Sender, IOHIDValu
     i32 RightStickY = (((u16)Value10) << 4) | ((Value6 >> 9) & 0b00001111);
     i32 LeftStickX = (((u16)(Value6 & 0b00001111) << 8) | (u16)Value5);
     i32 LeftStickY = (((u16)Value7) << 4) | ((Value6 >> 4) & 0b00001111);
-    //printf("RightStickX : %u, RightStickY : %u\n", RightStickX, RightStickY);
-    //printf("LeftStickX : %u, LeftStickY : %u\n", LeftStickX, LeftStickY);
 
     Controller->LeftStickX = MacOSGetProconStickValue(LeftStickX, LeftStickXMin, LeftStickXAverage, LeftStickXMax);
     Controller->LeftStickY = MacOSGetProconStickValue(LeftStickY, LeftStickYMin, LeftStickYAverage, LeftStickYMax);
     Controller->RightStickX = MacOSGetProconStickValue(RightStickX, RightStickXMin, RightStickXAverage, RightStickXMax);
     Controller->RightStickY = MacOSGetProconStickValue(RightStickY, RightStickYMin, RightStickYAverage, RightStickYMax);
-
-    printf("LeftStickX : %.6f, LeftStickY : %.6f, RightStickX : %.6f, RightStickY : %.6f\n", 
-            Controller->LeftStickX, Controller->LeftStickY, Controller->RightStickX, Controller->RightStickY);
 
     // NOTE : controller min/max getter
 #if 0
@@ -354,10 +379,11 @@ DeviceRemovalCallback(void *context, IOReturn result, void *sender)
 }
 
 MACOS_CALLBACK void 
-ControllerConnectionDetected(void *Context, IOReturn Result, void *Sender, IOHIDDeviceRef Device)
+ControllerConnected(void *Context, IOReturn Result, void *Sender, IOHIDDeviceRef Device)
 {
-    game_input *Input = (game_input *)Context;
-    game_controller *Controller = Input->Controllers + Input->ControllerCount++;
+    game_input_manager *InputManager = (game_input_manager *)Context;
+    game_input_raw *NewInput = InputManager->RawInputs + InputManager->NewInputIndex;
+    game_controller *Controller = NewInput->Controllers + NewInput->ControllerCount++;
 
     /*
        https://opensource.apple.com/source/IOHIDFamily/IOHIDFamily-315.7.16/IOHIDFamily/IOHIDUsageTables.h 
@@ -379,26 +405,25 @@ ControllerConnectionDetected(void *Context, IOReturn Result, void *Sender, IOHID
 
         if(strcmp(ProducKeyInChar, "Pro Controller") == 0)
         {
-            IOHIDDeviceRegisterInputValueCallback(Device, MacOSProConInputDetected, Controller);  
-            Controller->Connected = 1;
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSProConInputDetected, InputManager);  
+            Controller->IsAnalog = 1;
         }
         // TODO : These names are totally random for now, as I don't have the controllers..
         else if(strcmp(ProducKeyInChar, "Dual Shock") == 0)
         {
-            IOHIDDeviceRegisterInputValueCallback(Device, MacOSDualShockInputDetected, Controller);  
-            Controller->Connected = 1;
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSDualShockInputDetected, InputManager);  
+            Controller->IsAnalog = 1;
         }
         else if(strcmp(ProducKeyInChar, "Dual Sense") == 0)
         {
-            IOHIDDeviceRegisterInputValueCallback(Device, MacOSDualSenseInputDetected, Controller);  
-            Controller->Connected = 1;
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSDualSenseInputDetected, InputManager);  
+            Controller->IsAnalog = 1;
         }
         else if(strcmp(ProducKeyInChar, "XBOX") == 0)
         {
-            IOHIDDeviceRegisterInputValueCallback(Device, MacOSXBOXInputDetected, Controller);  
-            Controller->Connected = 1;
+            IOHIDDeviceRegisterInputValueCallback(Device, MacOSXBOXInputDetected, InputManager);  
+            Controller->IsAnalog = 1;
         }
-
 
         IOHIDDeviceRegisterRemovalCallback(Device, DeviceRemovalCallback, 0);
 
@@ -422,7 +447,7 @@ ControllerRemovalDetected(void *context, IOReturn result, void *sender, IOHIDDev
 
 // TODO : Support for multiple controllers?
 internal void
-MacOSInitController(game_input *Input)
+MacOSInitController(game_input_manager *InputManager)
 {
     HIDManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
 
@@ -434,8 +459,8 @@ MacOSInitController(game_input *Input)
         @{@(kIOHIDDeviceUsagePageKey): @(kHIDPage_GenericDesktop), @(kIOHIDDeviceUsageKey): @(kHIDUsage_GD_Joystick)},
     ]);
 
-    IOHIDManagerRegisterDeviceMatchingCallback(HIDManager, ControllerConnectionDetected, Input);
-    IOHIDManagerRegisterDeviceRemovalCallback(HIDManager, ControllerRemovalDetected, Input);
+    IOHIDManagerRegisterDeviceMatchingCallback(HIDManager, ControllerConnected, InputManager);
+    IOHIDManagerRegisterDeviceRemovalCallback(HIDManager, ControllerRemovalDetected, InputManager);
 
     IOHIDManagerScheduleWithRunLoop(HIDManager,
                                    CFRunLoopGetCurrent(), // TODO : CFRunLoopGetCurrent vs CFRunLoopGetMain ?
@@ -626,6 +651,7 @@ MacOSGetGameCode(game_code *GameCode, char *FileName)
     }
 }
 
+
 int main(int argc, char **argv)
 {
     // TODO : How to 'build' a path that works no matter where the library is.
@@ -638,6 +664,7 @@ int main(int argc, char **argv)
     GameMemory.PermanentStorageSize = Megabytes(4);
     GameMemory.TransientStorageSize = Gigabytes(1);
     u64 TotalSize = GameMemory.PermanentStorageSize + GameMemory.TransientStorageSize; 
+    // NOTE : vm_allocate will always clear the memory to zero. Great!
     vm_allocate(mach_task_self(), 
                 (vm_address_t *)&GameMemory.PermanentStorage,
                 TotalSize, 
@@ -665,11 +692,14 @@ int main(int argc, char **argv)
         // TODO : Unlike Win32, I cannot use GetState() to Get the state of controller - macos controlls these stuff.
         // Therefore, I cannot use the oldInput - newInput swap scheme like handmade hero. Maybe put a indicator inside
         // the game_input struct so that I can know which game_input to use inside the controller input callback?
-        game_input Input[2] = {};
-        game_input *NewInput = Input;
-        game_input *OldInput = Input + 1;
 
-        MacOSInitController(Input);
+        game_input_manager InputManager = {};
+        InputManager.NewInputIndex = 0;
+        // NOTE : 0th controller is keyboard controller
+        InputManager.RawInputs[0].ControllerCount = 1;
+        InputManager.RawInputs[1].ControllerCount = 1;
+
+        MacOSInitController(&InputManager);
 
         struct mach_timebase_info MachTimeInfo;
         mach_timebase_info(&MachTimeInfo);
@@ -715,32 +745,26 @@ int main(int argc, char **argv)
         NSString *AppName = [[NSProcessInfo processInfo]processName];
         [Window setTitle:AppName];
         [Window makeKeyAndOrderFront:0];
-        // [Window toggleFullScreen:0]; // TODO : Fullscreen support?
-
-        fox_app_delegate *appDelegate = [[fox_app_delegate alloc] init];
-        [App setDelegate:appDelegate];
-
-        NSWindow *MainWindow = [App mainWindow];
 
         macos_opengl_info MacOSOpenGLInfo = {};
         MacOSOpenGLInfo = PrepareDisplayingWithOpenGL(Window, &WindowFrameRect, MacOSBuffer.Width, MacOSBuffer.Height, MacOSBuffer.Memory); 
 
-        IsGameRunning = true;
-
-        u64 BeginTime = 0;
-
         [App activateIgnoringOtherApps:YES];
 
+        u64 BeginTime = mach_absolute_time();
+        IsGameRunning = true;
         // NOTE : Here's the game loop
         while(IsGameRunning)
         {
+            game_input_raw *NewInput = InputManager.RawInputs + InputManager.NewInputIndex;
+
             int DynamicLibraryLock = open("DynamicLibraryLockPath", O_RDONLY);
             if(DynamicLibraryLock != 0)
             {
                 MacOSGetGameCode(&GameCode, DynamicLibraryPath);
             }
 
-            MacOSHandleEvents(App);
+            MacOSHandleEvents(App, &InputManager);
 
             game_offscreen_buffer GameOffscreenBuffer = {};
             GameOffscreenBuffer.Width = MacOSBuffer.Width;
@@ -749,7 +773,7 @@ int main(int argc, char **argv)
             GameOffscreenBuffer.Pitch = MacOSBuffer.Pitch;
             GameOffscreenBuffer.Memory = MacOSBuffer.Memory;
 
-            GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameMemory, &GamePlatformAPI, TargetSecondsPerFrame);
+            GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameMemory, NewInput, &GamePlatformAPI, TargetSecondsPerFrame);
             GameCode.FillAudioBuffer(&GameAudioBuffer, TargetSecondsPerFrame);
 
             // Rendering loop with OpenGL.
@@ -778,7 +802,7 @@ int main(int argc, char **argv)
             }
 
             u64 EndTime = mach_absolute_time();
-            u32 TimeDifferenceInNanoSecond = (u32)MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick);
+            u64 TimeDifferenceInNanoSecond = MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick);
 
             if(TimeDifferenceInNanoSecond < TargetNanoSecondsPerFrame)
             {
@@ -792,11 +816,13 @@ int main(int argc, char **argv)
                 // TODO : Missed Frame!
             }
 
+            //InputManager.NewInputIndex = InputManager.NewInputIndex == 0? 1 : 0;
+
             EndTime = mach_absolute_time();
             // TODO : More precise frame rate
-            printf("%f\n", MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick)/SecToNanoSec);
-
+            printf("%f\n", (r32)(MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick))/SecToNanoSec);
             BeginTime = EndTime;
+
         }
     }
 

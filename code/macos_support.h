@@ -17,6 +17,10 @@ struct macos_opengl_info
     NSOpenGLContext *OpenGLContext;
 };
 
+// TODO : I can make the game to resize when the user clicks the edge of the window,
+// but it requires whole window delegate kind of thing that I really don't want to deal with.
+// Maybe make the game to only support certain resolutions which can be selected by the user?
+
 /*
  * Here is how we manage the game controllers and game pads
  * 1. 'Create' IOHIDManager
@@ -30,11 +34,5 @@ struct macos_opengl_info
  *      CFRUnLoopGetCurrent() or CFRunLoopGetMain?
  *  5. Open the IOHIDManager, which will get the current & future HIDevices(in our case, the gmaepad and joystick)
  * */
-
-// NOTE : app delegate is mianly for applicationDidFinishLaunching function,
-// which we are using to go inside our game loop even after the [App Run] call.
-@interface fox_app_delegate : NSObject <NSApplicationDelegate>
-//[Window setDelegate:appDelegate]; // TODO : Do we really need this?
-@end
 
 #endif

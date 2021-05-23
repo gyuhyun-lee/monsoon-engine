@@ -1,40 +1,5 @@
 #include "macos_support.h"
 
-// NOTE : Whenever the application steps into [NSApp Run] method, 
-// we are unable to control the application ourselves. Therfore,
-// we need our version of app delegate so that the OS can call this function
-// to 'stop' the application from running.
-@implementation fox_app_delegate : NSObject
-// -(void)applicationWillFinishLaunching: (NSNotification *)notification
-- (void)applicationDidFinishLaunching: (NSNotification *)notification 
-{
-    // This 'stop' function should only be called here - because the application
-    // cannot be manipulated by ourseleves when the [NSApp Run] function is called.
-    [NSApp stop: nil];
-
-    // Post empty event: without it we can't put application to front
-    // for some reason (I get this technique from GLFW source).
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-    NSEvent* event =
-        [NSEvent otherEventWithType: NSApplicationDefined
-                 location: NSMakePoint(0, 0)
-                 modifierFlags: 0
-                 timestamp: 0
-                 windowNumber: 0
-                 context: nil
-                 subtype: 0
-                 data1: 0
-                 data2: 0];
-    [NSApp postEvent: event atStart: YES];
-    [pool drain];
-}
-
-- (void)dealloc 
-{
-    [super dealloc];
-}
-@end
-
 internal CVReturn 
 DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const CVTimeStamp* outputTime,
                 CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)

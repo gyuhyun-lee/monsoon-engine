@@ -10,7 +10,7 @@ typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
-typedef int32 bool32;
+typedef int32 b3232;
 
 typedef uint8_t uint8; 
 typedef uint16_t uint16; 
@@ -73,20 +73,9 @@ struct game_audio_buffer
     b32 IsSoundReady;
 };
 
-// TODO : Unform support for all types of controllers?
 struct game_controller
 {   
-    b32 Connected;
-
-    bool AButton;
-    bool BButton;
-    bool XButton;
-    bool YButton;
-
-    bool DPadRight;
-    bool DPadLeft;
-    bool DPadUp;
-    bool DPadDown;
+    b32 IsAnalog;
 
     // TODO :Collaps these values into vector
     // NOTE : These are -1.0f ~ 1.0f value
@@ -95,10 +84,24 @@ struct game_controller
     r32 RightStickX;
     r32 RightStickY;
 
+    b32 MoveUp;
+    b32 MoveDown;
+    b32 MoveLeft;
+    b32 MoveRight;
+
+    b32 AButton;
+    b32 BButton;
+    b32 XButton;
+    b32 YButton;
+
+    b32 DPadRight;
+    b32 DPadLeft;
+    b32 DPadUp;
+    b32 DPadDown;
+
     b32 RightShoulder;
-        
-    b32 LeftShoulder;
     b32 RightTrigger;
+    b32 LeftShoulder;
     b32 LeftTrigger;
 
     b32 MinusButton;
@@ -107,10 +110,26 @@ struct game_controller
     b32 HomeButton;
 };
 
-struct game_input
+struct game_input_raw
 {
     game_controller Controllers[4];
     u32 ControllerCount;
+};
+
+struct game_input_manager
+{
+    game_input_raw RawInputs[2];
+    u32 NewInputIndex; // NOTE : This value is 0 or 1, and will be changed at the end of main loop. // NOTE : This value is 0 or 1, and will be changed at the end of main loop. // NOTE : This value is 0 or 1, and will be changed at the end of main loop. // NOTE : This value is 0 or 1, and will be changed at the end of main loop.
+};
+
+struct game_input
+{   
+    b32 MoveUp;
+    b32 MoveDown;
+    b32 MoveLeft;
+    b32 MoveRight;
+
+    b32 ActionRight;
 };
 
 struct game_memory
@@ -140,7 +159,7 @@ struct game_platform_api
     debug_free_file_memory *DEBUGFreeFileMemory;
 };
 
-#define GAME_UPDATE_AND_RENDER(name) void (name)(game_offscreen_buffer *OffscreenBuffer, game_memory *Memory, game_platform_api *PlatformAPI, r32 dtPerFrame)
+#define GAME_UPDATE_AND_RENDER(name) void (name)(game_offscreen_buffer *Buffer, game_memory *Memory, game_input_raw *RawInput, game_platform_api *PlatformAPI, r32 dtPerFrame)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub){}
 
@@ -157,9 +176,43 @@ struct game_code
     game_fill_audio_buffer *FillAudioBuffer;
 };
 
+struct tile_chunk
+{
+    u32 *Tiles;
+    
+    u32 MinAbsTileX;
+    u32 MinAbsTileY;
+
+    u32 TileCountX;
+    u32 TileCountY;
+};
+
+struct world
+{
+    // TODO : Chunk_level spareness
+    tile_chunk TileChunks[4];
+
+    r32 TileSideInMeters;
+};
+
+struct world_position
+{
+    u32 TileX;
+    u32 TileY;
+
+    // NOTE : These are reletive to the Left Bottom Corner of the tile, in meters
+    r32 X;
+    r32 Y;
+};
+
 struct game_state
 {
-    int a = 1;
+    i32 XOffset;
+    i32 YOffset;
+
+    world_position PlayerPos;
+    
+    b32 IsInitialized;
 };
 
 #endif

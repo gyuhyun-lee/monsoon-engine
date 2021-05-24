@@ -205,12 +205,24 @@ struct world_position
     r32 Y;
 };
 
+struct debug_loaded_bmp
+{
+    u32 Width;
+    u32 Height;
+    u32 Pitch;
+    u32 BytesPerPixel;
+
+    u32 *Pixels;
+};
+
 struct game_state
 {
     i32 XOffset;
     i32 YOffset;
 
     world_position PlayerPos;
+
+    debug_loaded_bmp SampleBMP;
     
     b32 IsInitialized;
 };

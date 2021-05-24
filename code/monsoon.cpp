@@ -1,4 +1,6 @@
-#include "soma_platform_independent.h"
+#include "monsoon_platform_independent.h"
+#include "monsoon_intrinsic.h"
+
 #include <stdio.h>
 
 internal void 
@@ -42,31 +44,14 @@ ClearBuffer(game_offscreen_buffer *Buffer)
     }
 }
 
-internal i32
-RoundR32ToInt32(r32 Value)
-{
-    return (i32)(Value + 0.5f);
-}
 
-internal i32
-TruncateR32ToInt32(r32 Value)
-{
-    return (i32)Value;
-}
-
-#include <math.h> // TODO : Get rid math.h
-internal i32
-FloorR32ToInt32(r32 Value)
-{
-    return (i32)floor(Value);
-}
-
+// NOTE : MacOS offscreen buffer is bottom-up 
 internal void
 DrawRectangle(game_offscreen_buffer *Buffer, r32 X, r32 Y, r32 Width, r32 Height,
             r32 R, r32 G, r32 B)
 {    
-    i32 MinX = X;
-    i32 MinY = Y;
+    i32 MinX = RoundR32ToInt32(X);
+    i32 MinY = RoundR32ToInt32(Y);
     i32 MaxX = RoundR32ToInt32(X + Width);
     i32 MaxY = RoundR32ToInt32(Y + Height);
     
@@ -74,7 +59,7 @@ DrawRectangle(game_offscreen_buffer *Buffer, r32 X, r32 Y, r32 Width, r32 Height
     {
         MinX = 0;
     }
-    if(MaxX > 0 && MaxX > Buffer->Width)
+    if(MaxX > Buffer->Width)
     {
         MaxX = Buffer->Width;
     }
@@ -83,7 +68,7 @@ DrawRectangle(game_offscreen_buffer *Buffer, r32 X, r32 Y, r32 Width, r32 Height
     {
         MinY = 0;
     }
-    if(MaxY > 0 && MaxY > Buffer->Height)
+    if(MaxY > Buffer->Height)
     {
         MaxY = Buffer->Height;
     }   
@@ -196,6 +181,90 @@ IsWorldPointEmptyUnsafe(world *World, world_position CanPos)
     return Result;
 }
 
+#pragma pack(push, 1)
+struct debug_bmp_file_header
+{
+    u16 FileHeader;
+    u32 FileSize;
+    u16 Reserved1;
+    u16 Reserved2;
+    u32 PixelOffset;
+    u32 HeaderSize;
+    u32 Width;
+    u32 Height;
+    u16 ColorPlaneCount;
+    u16 BitsPerPixel;
+    u32 Compression;
+};
+#pragma pack(pop)
+
+
+internal debug_loaded_bmp
+DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName)
+{
+    debug_loaded_bmp Result = {};
+    debug_platform_read_file_result File = ReadEntireFile(FileName);
+    debug_bmp_file_header *Header = (debug_bmp_file_header *)File.Memory;
+
+    Result.Width = Header->Width;
+    Result.Height = Header->Height;
+    Result.BytesPerPixel = Header->BitsPerPixel/8;
+    Result.Pitch = Result.Width * Result.BytesPerPixel;
+
+    Result.Pixels = (u32 *)((u8 *)Header + Header->PixelOffset);
+
+    return Result;
+}
+
+internal void
+DrawBMP(game_offscreen_buffer *Buffer, debug_loaded_bmp *LoadedBMP, 
+        r32 X, r32 Y, r32 Width = 0, r32 Height = 0)
+{
+    i32 MinX = RoundR32ToInt32(X);
+    i32 MinY = RoundR32ToInt32(Y);
+    i32 MaxX = RoundR32ToInt32(X + LoadedBMP->Width);
+    i32 MaxY = RoundR32ToInt32(Y + LoadedBMP->Height);
+    
+    if(MinX < 0)
+    {
+        MinX = 0;
+    }
+    if(MaxX > Buffer->Width)
+    {
+        MaxX = Buffer->Width;
+    }
+    if(MinY < 0)
+    {
+        MinY = 0;
+    }
+    if(MaxY > Buffer->Height)
+    {
+        MaxY = Buffer->Height;
+    }   
+
+    u8 *Row = (u8 *)Buffer->Memory + 
+                    Buffer->Pitch*MinY + 
+                    Buffer->BytesPerPixel*MinX;
+    u8 *SourceRow = (u8 *)LoadedBMP->Pixels;
+
+    for(i32 Y = MinY;
+        Y < MaxY;
+        ++Y)
+    {
+        u32 *Pixel = (u32 *)Row;
+        u32 *SourcePixel = (u32 *)SourceRow;
+        for(i32 X = MinX;
+            X < MaxX;
+            ++X)
+        {
+            *Pixel++ = *SourcePixel++;
+        }
+
+        Row += Buffer->Pitch;
+        SourceRow += LoadedBMP->Pitch;
+    }
+}
+
 extern "C"
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
@@ -212,6 +281,8 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         State->PlayerPos.TileX = 5;
         State->PlayerPos.TileY = 5;
 
+        State->SampleBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/temp.bmp");
+
         State->IsInitialized = true;
     }
 
@@ -219,6 +290,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
 #define TILE_COUNT_X 17
 #define TILE_COUNT_Y 9
+
 
     u32 Tiles00[TILE_COUNT_Y][TILE_COUNT_X] = 
     {
@@ -302,7 +374,6 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     World.TileChunks[3].Tiles = (u32 *)Tiles11;
     World.TileChunks[3].TileCountX = TILE_COUNT_X;
     World.TileChunks[3].TileCountY = TILE_COUNT_Y;
-
     r32 PixelToMeters = 0.02f;
     r32 MetersToPixels = 1.0f/PixelToMeters;
 
@@ -425,8 +496,8 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
     DrawRectangle(Buffer, PlayerTileMapRelX*MetersToPixels, PlayerTileMapRelY*MetersToPixels, MetersToPixels*PlayerWidth, MetersToPixels*PlayerHeight, 0.2, 1.0f, 1.0f);
     DrawRectangle(Buffer, PlayerTileMapRelX*MetersToPixels, PlayerTileMapRelY*MetersToPixels, MetersToPixels*PlayerWidth*0.2f, MetersToPixels*PlayerHeight*0.2f, 1.0, 0.0f, 0.0f);
-    debug_platform_read_file_result File = PlatformAPI->DEBUGReadEntireFile("/Volumes/work/soma/data/sample.bmp");
-    PlatformAPI->DEBUGWriteEntireFile("/Volumes/work/soma/data/sample_temp.bmp", File.Memory, File.Size);
+
+    DrawBMP(Buffer, &State->SampleBMP, PlayerTileMapRelX*MetersToPixels, PlayerTileMapRelY*MetersToPixels, MetersToPixels*PlayerWidth*0.2f, MetersToPixels*PlayerHeight*0.2f);
 }
 
 extern "C"

@@ -11,6 +11,28 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "DEBUGLoadBMP(debug_platform_read_file_result (*)(char*), char*):monsoon.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
+      </ContextState>
+      <ContextState
+         contextName = "ControllerInputDetected(void*, int, void*, __IOHIDValue*):macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "ValueInInt, b">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "::GameUpdateAndRender(game_offscreen_buffer *, game_memory *, game_input_raw *, game_platform_api *, r32):monsoon.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "State-&gt;SampleBMP.Pixels[1]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "DEBUGMacOSPlatformReadFile(char*):macos_main.mm">
          <PersistentStrings>
             <PersistentString
@@ -33,17 +55,6 @@
                value = "AudioComponent">
             </PersistentString>
          </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "ControllerInputDetected(void*, int, void*, __IOHIDValue*):macos_main.mm">
-         <PersistentStrings>
-            <PersistentString
-               value = "ValueInInt, b">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
       </ContextState>
    </ContextStates>
 </VariablesViewState>

@@ -7,13 +7,14 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		B289F585265B8FE900E367D5 /* monsoon_intrinsic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_intrinsic.h; path = ../../../code/monsoon_intrinsic.h; sourceTree = "<group>"; };
+		B289F586265B8FE900E367D5 /* monsoon_platform_independent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_platform_independent.h; path = ../../../code/monsoon_platform_independent.h; sourceTree = "<group>"; };
+		B289F587265B8FE900E367D5 /* monsoon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon.cpp; path = ../../../code/monsoon.cpp; sourceTree = "<group>"; };
 		B296A4F12647E74300236E70 /* macos_support.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_support.cpp; path = ../../../code/macos_support.cpp; sourceTree = "<group>"; };
 		B296A4F22647E74300236E70 /* macos_keycode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_keycode.h; path = ../../../code/macos_keycode.h; sourceTree = "<group>"; };
 		B296A4F32647E74300236E70 /* macos_support.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_support.h; path = ../../../code/macos_support.h; sourceTree = "<group>"; };
-		B296A4F42647E74300236E70 /* soma.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = soma.cpp; path = ../../../code/soma.cpp; sourceTree = "<group>"; };
 		B296A4F52647E74300236E70 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = ../../../code/Makefile; sourceTree = "<group>"; };
 		B296A4F62647E74300236E70 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../../code/macos_main.mm; sourceTree = "<group>"; };
-		B296A4F72647E74300236E70 /* soma_platform_independent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = soma_platform_independent.h; path = ../../../code/soma_platform_independent.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -25,8 +26,9 @@
 				B296A4F12647E74300236E70 /* macos_support.cpp */,
 				B296A4F32647E74300236E70 /* macos_support.h */,
 				B296A4F52647E74300236E70 /* Makefile */,
-				B296A4F72647E74300236E70 /* soma_platform_independent.h */,
-				B296A4F42647E74300236E70 /* soma.cpp */,
+				B289F585265B8FE900E367D5 /* monsoon_intrinsic.h */,
+				B289F586265B8FE900E367D5 /* monsoon_platform_independent.h */,
+				B289F587265B8FE900E367D5 /* monsoon.cpp */,
 			);
 			sourceTree = "<group>";
 		};

@@ -11,8 +11,8 @@
 
 
 
-#include "soma_platform_independent.h"
-#include "soma.cpp"
+#include "monsoon_platform_independent.h"
+#include "monsoon.cpp"
 
 #undef internal // NOTE : Cocoa.h is already using internal.. so I need to do this :(
 #include <Cocoa/Cocoa.h> // APPKIT
@@ -655,8 +655,8 @@ MacOSGetGameCode(game_code *GameCode, char *FileName)
 int main(int argc, char **argv)
 {
     // TODO : How to 'build' a path that works no matter where the library is.
-    char *DynamicLibraryPath = "/Volumes/work/soma/build/fox.app/Contents/Resources/soma.dylib";
-    char *DynamicLibraryLockPath = "/Volumes/work/soma/build/fox.app/Contents/Resources/soma.lock";
+    char *DynamicLibraryPath = "/Volumes/work/soma/build/fox.app/Contents/Resources/monsoon.dylib";
+    char *DynamicLibraryLockPath = "/Volumes/work/soma/build/fox.app/Contents/Resources/monsoon.lock";
     game_code GameCode = {};
     MacOSGetGameCode(&GameCode, DynamicLibraryPath);
 

@@ -462,17 +462,19 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     ClearBuffer(Buffer);
 
     tile_chunk *PlayerTileChunk = GetTileChunk(&World, State->PlayerPos.TileX, State->PlayerPos.TileY);
+    u32 TileChunkMaxTileX = PlayerTileChunk->MinAbsTileX + PlayerTileChunk->TileCountX;
+    u32 TileChunkMaxTileY = PlayerTileChunk->MinAbsTileY + PlayerTileChunk->TileCountY;
     for(u32 Y = 0;
-        Y < TILE_COUNT_Y;
+        Y < PlayerTileChunk->TileCountY;
         ++Y)
     {
         u32 PixelY = MinCornerPixelY + Y*World.TileSideInMeters*MetersToPixels;
         for(u32 X = 0;
-            X < TILE_COUNT_X;
+            X < PlayerTileChunk->TileCountX;
             ++X)
         {
             u32 PixelX = MinCornerPixelX + X*World.TileSideInMeters*MetersToPixels;
-            if(GetTileValueUnsafe(PlayerTileChunk->Tiles, TILE_COUNT_X, TILE_COUNT_Y, X, Y))
+            if(GetTileValueUnsafe(PlayerTileChunk->Tiles, PlayerTileChunk->TileCountX, PlayerTileChunk->TileCountY, X, Y))
 
             {
                 DrawRectangle(Buffer, PixelX, PixelY, 
@@ -484,6 +486,13 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
                 DrawRectangle(Buffer, PixelX, PixelY, 
                             0.9f*World.TileSideInMeters*MetersToPixels, 0.9f*World.TileSideInMeters*MetersToPixels, 
                             0.3f, 0.3f, 0.3f);
+            }
+
+            if(State->PlayerPos.TileX == PlayerTileChunk->MinAbsTileX + X && State->PlayerPos.TileY == PlayerTileChunk->MinAbsTileY + Y)
+            {
+                DrawRectangle(Buffer, PixelX, PixelY, 
+                            0.9f*World.TileSideInMeters*MetersToPixels, 0.9f*World.TileSideInMeters*MetersToPixels, 
+                            0.1f, 0.1f, 0.1f);
             }
         }
     }

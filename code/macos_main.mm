@@ -34,15 +34,21 @@
 
 global_variable b32 IsGameRunning;
 global_variable IOHIDManagerRef HIDManager; // TODO : Any way to get rid of this global variable?
+global_variable b32 IsFullScreen;
 
 internal u64 
 MachTimeDifferenceToNanoSecond(u64 BeginMachTime, u64 EndMachTime, r32 NanoSecondPerTick)
 {
     return (u64)(((EndMachTime - BeginMachTime)*NanoSecondPerTick));
 }
+internal u64 
+MachTimeDifferenceInMicroSecond(u64 BeginMachTime, u64 EndMachTime, r32 NanoSecondPerTick)
+{
+    return (u64)(((EndMachTime - BeginMachTime)*NanoSecondPerTick));
+}
 
 internal void
-MacOSHandleEvents(NSApplication *App, game_input_manager *InputManager)
+MacOSHandleEvents(NSApplication *App, game_input_manager *InputManager, debug_game_input_record *DEBUGInputRecord)
 {
     game_input_raw *NewInput = InputManager->RawInputs + InputManager->NewInputIndex;
     game_controller *KeyboardController = NewInput->Controllers + 0;
@@ -91,6 +97,67 @@ MacOSHandleEvents(NSApplication *App, game_input_manager *InputManager)
                         else if(KeyCode == MACOS_Space)
                         {
                             KeyboardController->AButton = IsDown;
+                        }
+                        else if(KeyCode == MACOS_F10)
+                        {
+                            if(IsDown)
+                            {
+                                if(DEBUGInputRecord->Memory)
+                                {
+                                    free(DEBUGInputRecord->Memory);
+                                    DEBUGInputRecord->MemorySize = 0;
+                                }
+
+                                // NOTE : Start input recording
+                                DEBUGInputRecord->MemorySize = sizeof(game_state) + sizeof(game_input_raw)*DEBUGInputRecord->MaxPlayIndexCount;
+                                DEBUGInputRecord->Memory = malloc(DEBUGInputRecord->MemorySize);
+
+                                DEBUGInputRecord->PlayIndex = 0;
+                                DEBUGInputRecord->PlayIndexCount = 0;
+
+                                DEBUGInputRecord->IsRecording = true;
+                            }
+                        }
+                        else if(KeyCode == MACOS_F11)
+                        {
+                            // NOTE : End input recording
+                            DEBUGInputRecord->IsRecording = false;
+                        }
+                        else if(KeyCode == MACOS_F12)
+                        {
+                            if(IsDown)
+                            {
+                                if(DEBUGInputRecord->IsPlaying == false)
+                                {
+                                    // NOTE : Play & Stop input recording
+                                    DEBUGInputRecord->PlayIndexCount = DEBUGInputRecord->PlayIndex;
+                                    DEBUGInputRecord->PlayIndex = 0;
+
+                                    DEBUGInputRecord->IsPlaying = true;
+
+                                }
+                                else
+                                {
+                                    DEBUGInputRecord->IsPlaying = false;
+                                    DEBUGInputRecord->PlayIndex = 0;
+                                }
+                            }
+                        }
+                        b32 AltWasDown = false;
+                        if(KeyCode == MACOS_Option)
+                        {
+                            AltWasDown = true;
+                        }
+
+                        if(KeyCode == MACOS_Return)
+                        {
+                            if(IsDown)
+                            {
+                                NSWindow *Window = [Event window];
+                                // TODO : proper buffer resize here!
+                                [Window toggleFullScreen:0];
+                                IsFullScreen = !IsFullScreen;
+                            }
                         }
                     }
                 }break;
@@ -671,7 +738,8 @@ int main(int argc, char **argv)
                 VM_FLAGS_ANYWHERE);
     GameMemory.TransientStorage = (u8 *)GameMemory.PermanentStorage + GameMemory.PermanentStorageSize;
 
-    if(GameMemory.PermanentStorage && GameMemory.TransientStorage)
+    if(GameCode.UpdateAndRender && GameCode.FillAudioBuffer &&
+        GameMemory.PermanentStorage && GameMemory.TransientStorage)
     {
         game_platform_api GamePlatformAPI = {};
         GamePlatformAPI.DEBUGReadEntireFile = DEBUGMacOSReadFile;
@@ -698,15 +766,18 @@ int main(int argc, char **argv)
         // NOTE : 0th controller is keyboard controller
         InputManager.RawInputs[0].ControllerCount = 1;
         InputManager.RawInputs[1].ControllerCount = 1;
-
         MacOSInitController(&InputManager);
 
         struct mach_timebase_info MachTimeInfo;
         mach_timebase_info(&MachTimeInfo);
         r32 NanoSecondPerTick = ((r32)MachTimeInfo.numer/(r32)MachTimeInfo.denom);
 
-        r32 TargetSecondsPerFrame = 1/30.0f;
+        u32 TargetFramesPerSecond = 30;
+        r32 TargetSecondsPerFrame = 1.0f/(r32)TargetFramesPerSecond;
         u32 TargetNanoSecondsPerFrame = (u32)(TargetSecondsPerFrame*SecToNanoSec);
+
+        debug_game_input_record DEBUGInputRecord = {};
+        DEBUGInputRecord.MaxPlayIndexCount = TargetFramesPerSecond * 20;
 
         macos_offscreen_buffer MacOSBuffer = {};
         MacOSBuffer.Width = 1920;
@@ -762,9 +833,34 @@ int main(int argc, char **argv)
             if(DynamicLibraryLock != 0)
             {
                 MacOSGetGameCode(&GameCode, DynamicLibraryPath);
+                close(DynamicLibraryLock);
             }
 
-            MacOSHandleEvents(App, &InputManager);
+            MacOSHandleEvents(App, &InputManager, &DEBUGInputRecord);
+
+            if(DEBUGInputRecord.IsRecording)
+            {
+                if(DEBUGInputRecord.PlayIndex == 0)
+                {
+                    game_state *GameState = (game_state *)(GameMemory.PermanentStorage);
+                    *((game_state *)DEBUGInputRecord.Memory) = *GameState;
+                }
+                game_input_raw *RecordedInputs = (game_input_raw *)((u8 *)DEBUGInputRecord.Memory + 
+                                                                        sizeof(game_state));
+                game_input_raw *CurrentInputRecord = RecordedInputs + DEBUGInputRecord.PlayIndex++;
+                *CurrentInputRecord = *(InputManager.RawInputs + InputManager.NewInputIndex);
+
+                if(DEBUGInputRecord.PlayIndex == DEBUGInputRecord.MaxPlayIndexCount)
+                {
+                    DEBUGInputRecord.MaxPlayIndexCount *= 2;
+                    u32 NewMemorySize = sizeof(game_state) + sizeof(game_input_raw)*DEBUGInputRecord.MaxPlayIndexCount;
+                    void *NewMemory = malloc(NewMemorySize);
+                    memcpy(NewMemory, DEBUGInputRecord.Memory, DEBUGInputRecord.MemorySize);
+                    free(DEBUGInputRecord.Memory);
+                    DEBUGInputRecord.Memory = NewMemory;
+                    DEBUGInputRecord.MemorySize = NewMemorySize;
+                }
+            }
 
             game_offscreen_buffer GameOffscreenBuffer = {};
             GameOffscreenBuffer.Width = MacOSBuffer.Width;
@@ -773,6 +869,25 @@ int main(int argc, char **argv)
             GameOffscreenBuffer.Pitch = MacOSBuffer.Pitch;
             GameOffscreenBuffer.Memory = MacOSBuffer.Memory;
 
+
+            if(DEBUGInputRecord.IsPlaying)
+            {
+                if(DEBUGInputRecord.PlayIndex == 0)
+                {
+                    game_state *GameState = (game_state *)(GameMemory.PermanentStorage);
+                    *GameState = *((game_state *)DEBUGInputRecord.Memory);
+                }
+                
+                game_input_raw *RecordedInputs = (game_input_raw *)((u8 *)DEBUGInputRecord.Memory + 
+                                                                        sizeof(game_state));
+                game_input_raw *CurrentInputRecord = RecordedInputs + DEBUGInputRecord.PlayIndex++; 
+                *NewInput = *CurrentInputRecord;
+
+                if(DEBUGInputRecord.PlayIndex == DEBUGInputRecord.PlayIndexCount)
+                {
+                    DEBUGInputRecord.PlayIndex = 0;
+                }
+            }
             GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameMemory, NewInput, &GamePlatformAPI, TargetSecondsPerFrame);
             GameCode.FillAudioBuffer(&GameAudioBuffer, TargetSecondsPerFrame);
 
@@ -787,7 +902,20 @@ int main(int argc, char **argv)
                             GL_BGRA, 
                             GL_UNSIGNED_INT_8_8_8_8_REV, 
                             MacOSBuffer.Memory);
-                glViewport(0, 0, MacOSBuffer.Width, MacOSBuffer.Height);
+                if(!IsFullScreen)
+                {
+                    glViewport(0, 0, MacOSBuffer.Width, MacOSBuffer.Height);
+                }
+                else
+                {
+                    // TODO : This does not give proper display size?
+                    CGDirectDisplayID DisplayID = CGMainDisplayID();
+                    u32 DisplayWidth = CGDisplayPixelsWide(DisplayID);
+                    u32 DisplayHeight = CGDisplayPixelsHigh(DisplayID);
+
+                    glViewport(0, 0, DisplayWidth, DisplayHeight);
+                }
+
 
                 glBegin(GL_QUADS); 
                 {
@@ -801,13 +929,17 @@ int main(int argc, char **argv)
                 [MacOSOpenGLInfo.OpenGLContext flushBuffer]; // This will call glFlush() internally
             }
 
+            // NOTE : because nanosleep is so accurate, we have to UNDERSLEEP by some amount,
+            // and then spin inside the while loop to get the accurate page sleep
+            // TODO : How to decide this offset?
             u64 EndTime = mach_absolute_time();
             u64 TimeDifferenceInNanoSecond = MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick);
-
+            u64 UnderSleepOffset = 1100000;
+#if 1
             if(TimeDifferenceInNanoSecond < TargetNanoSecondsPerFrame)
             {
                 timespec TimeSpec = {};
-                TimeSpec.tv_nsec = TargetNanoSecondsPerFrame - TimeDifferenceInNanoSecond;
+                TimeSpec.tv_nsec = TargetNanoSecondsPerFrame - TimeDifferenceInNanoSecond - UnderSleepOffset;
 
                 nanosleep(&TimeSpec, 0);
             }
@@ -815,6 +947,17 @@ int main(int argc, char **argv)
             {
                 // TODO : Missed Frame!
             }
+
+            while(TimeDifferenceInNanoSecond < TargetNanoSecondsPerFrame)
+            {
+                EndTime = mach_absolute_time();
+                TimeDifferenceInNanoSecond = MachTimeDifferenceToNanoSecond(BeginTime, EndTime, NanoSecondPerTick);
+            }
+#else
+            if(TimeDifferenceInNanoSecond)
+            {
+            }
+#endif
 
             //InputManager.NewInputIndex = InputManager.NewInputIndex == 0? 1 : 0;
 

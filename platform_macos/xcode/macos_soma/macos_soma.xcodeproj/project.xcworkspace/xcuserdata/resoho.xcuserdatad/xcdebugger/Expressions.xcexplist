@@ -3,32 +3,50 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "DEBUGLoadBMP(debug_platform_read_file_result (*)(char*), char*):monsoon.cpp">
+      </ContextState>
+      <ContextState
          contextName = "main:macos_main.mm">
          <PersistentStrings>
             <PersistentString
                value = "((u32 *)FileMemory)[0]">
             </PersistentString>
+            <PersistentString
+               value = "(game_state *)(InputRecord.Memory)">
+            </PersistentString>
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "DEBUGLoadBMP(debug_platform_read_file_result (*)(char*), char*):monsoon.cpp">
+         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
       </ContextState>
       <ContextState
-         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
+         contextName = "::GameUpdateAndRender(game_offscreen_buffer *, game_memory *, game_input_raw *, game_platform_api *, r32):monsoon.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "CameraPlayerDiff">
+            </PersistentString>
+            <PersistentString
+               value = "State-&gt;dPlayerX">
+            </PersistentString>
+            <PersistentString
+               value = "State-&gt;dPlayer">
+            </PersistentString>
+            <PersistentString
+               value = "ddPlayer">
+            </PersistentString>
+            <PersistentString
+               value = "State-&gt;PlayerPos">
+            </PersistentString>
+            <PersistentString
+               value = "State-&gt;Player-&gt;Pos.P">
+            </PersistentString>
+         </PersistentStrings>
       </ContextState>
       <ContextState
          contextName = "ControllerInputDetected(void*, int, void*, __IOHIDValue*):macos_main.mm">
          <PersistentStrings>
             <PersistentString
                value = "ValueInInt, b">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "::GameUpdateAndRender(game_offscreen_buffer *, game_memory *, game_input_raw *, game_platform_api *, r32):monsoon.cpp">
-         <PersistentStrings>
-            <PersistentString
-               value = "State-&gt;SampleBMP.Pixels[1]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -55,6 +73,15 @@
                value = "AudioComponent">
             </PersistentString>
          </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MacOSHandleEvents(NSApplication*, game_input_manager*, debug_game_input_record*):macos_main.mm">
+      </ContextState>
+      <ContextState
+         contextName = "CanonicalizeWorldPos(world*, world_position*):monsoon_tile.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "WorldPositionDifferenceInMeter(world*, world_position*, world_position*):monsoon_tile.cpp">
       </ContextState>
    </ContextStates>
 </VariablesViewState>

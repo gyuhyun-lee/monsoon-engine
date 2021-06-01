@@ -7,28 +7,30 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		B289F585265B8FE900E367D5 /* monsoon_intrinsic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_intrinsic.h; path = ../../../code/monsoon_intrinsic.h; sourceTree = "<group>"; };
-		B289F586265B8FE900E367D5 /* monsoon_platform_independent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_platform_independent.h; path = ../../../code/monsoon_platform_independent.h; sourceTree = "<group>"; };
-		B289F587265B8FE900E367D5 /* monsoon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon.cpp; path = ../../../code/monsoon.cpp; sourceTree = "<group>"; };
-		B296A4F12647E74300236E70 /* macos_support.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_support.cpp; path = ../../../code/macos_support.cpp; sourceTree = "<group>"; };
-		B296A4F22647E74300236E70 /* macos_keycode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_keycode.h; path = ../../../code/macos_keycode.h; sourceTree = "<group>"; };
-		B296A4F32647E74300236E70 /* macos_support.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_support.h; path = ../../../code/macos_support.h; sourceTree = "<group>"; };
-		B296A4F52647E74300236E70 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = ../../../code/Makefile; sourceTree = "<group>"; };
-		B296A4F62647E74300236E70 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../../code/macos_main.mm; sourceTree = "<group>"; };
+		B2CE8BEB265D045600B6D735 /* monsoon_platform_independent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_platform_independent.h; path = ../../../code/monsoon_platform_independent.h; sourceTree = "<group>"; };
+		B2CE8BEC265D045600B6D735 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = ../../../code/Makefile; sourceTree = "<group>"; };
+		B2CE8BED265D045600B6D735 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../../code/macos_main.mm; sourceTree = "<group>"; };
+		B2CE8BEE265D045600B6D735 /* monsoon_tile.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon_tile.cpp; path = ../../../code/monsoon_tile.cpp; sourceTree = "<group>"; };
+		B2CE8BEF265D045600B6D735 /* macos_support.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_support.cpp; path = ../../../code/macos_support.cpp; sourceTree = "<group>"; };
+		B2CE8BF0265D045600B6D735 /* macos_keycode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_keycode.h; path = ../../../code/macos_keycode.h; sourceTree = "<group>"; };
+		B2CE8BF1265D045600B6D735 /* macos_support.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_support.h; path = ../../../code/macos_support.h; sourceTree = "<group>"; };
+		B2CE8BF2265D045600B6D735 /* monsoon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon.cpp; path = ../../../code/monsoon.cpp; sourceTree = "<group>"; };
+		B2CE8BF3265D045600B6D735 /* monsoon_intrinsic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_intrinsic.h; path = ../../../code/monsoon_intrinsic.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		B2F57E86261C8E7D00C40A30 = {
 			isa = PBXGroup;
 			children = (
-				B296A4F22647E74300236E70 /* macos_keycode.h */,
-				B296A4F62647E74300236E70 /* macos_main.mm */,
-				B296A4F12647E74300236E70 /* macos_support.cpp */,
-				B296A4F32647E74300236E70 /* macos_support.h */,
-				B296A4F52647E74300236E70 /* Makefile */,
-				B289F585265B8FE900E367D5 /* monsoon_intrinsic.h */,
-				B289F586265B8FE900E367D5 /* monsoon_platform_independent.h */,
-				B289F587265B8FE900E367D5 /* monsoon.cpp */,
+				B2CE8BF0265D045600B6D735 /* macos_keycode.h */,
+				B2CE8BED265D045600B6D735 /* macos_main.mm */,
+				B2CE8BEF265D045600B6D735 /* macos_support.cpp */,
+				B2CE8BF1265D045600B6D735 /* macos_support.h */,
+				B2CE8BEC265D045600B6D735 /* Makefile */,
+				B2CE8BF3265D045600B6D735 /* monsoon_intrinsic.h */,
+				B2CE8BEB265D045600B6D735 /* monsoon_platform_independent.h */,
+				B2CE8BEE265D045600B6D735 /* monsoon_tile.cpp */,
+				B2CE8BF2265D045600B6D735 /* monsoon.cpp */,
 			);
 			sourceTree = "<group>";
 		};

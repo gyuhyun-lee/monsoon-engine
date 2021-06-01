@@ -43,16 +43,20 @@ typedef double r64;
 #define SecToNanoSec 1.0e+9
 
 #define Assert(Expression) if(!(Expression)) {int *a = 0; *a = 0;}
+#define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
 
 #define global_variable static
 #define local_variable static
 #define internal static
 
+#include "monsoon_math.h" 
+
 struct game_offscreen_buffer
 {
-    u32 Width;
-    u32 Height;
-    u32 Pitch;
+    i32 Width;
+    i32 Height;
+
+    i32 Pitch;
 
     u32 BytesPerPixel;
     void *Memory;
@@ -119,7 +123,7 @@ struct game_input_raw
 struct game_input_manager
 {
     game_input_raw RawInputs[2];
-    u32 NewInputIndex; // NOTE : This value is 0 or 1, and will be changed at the end of main loop. // NOTE : This value is 0 or 1, and will be changed at the end of main loop. // NOTE : This value is 0 or 1, and will be changed at the end of main loop. // NOTE : This value is 0 or 1, and will be changed at the end of main loop.
+    u32 NewInputIndex; // NOTE : This value is 0 or 1, and will be changed at the end of main loop.
 };
 
 struct game_input
@@ -183,8 +187,8 @@ struct tile_chunk
     u32 MinAbsTileX;
     u32 MinAbsTileY;
 
-    u32 TileCountX;
-    u32 TileCountY;
+    u32 MaxAbsTileX;
+    u32 MaxAbsTileY;
 };
 
 struct world
@@ -195,14 +199,20 @@ struct world
     r32 TileSideInMeters;
 };
 
+// IMPORTANT : NOTE : Entity with Tile Position 0, 0, 0 and X, Y Position 0, 0
+// will be drawn at the center of the world!!!!!!!!!!!!!
 struct world_position
 {
-    u32 TileX;
-    u32 TileY;
+    // TODO : Might wanna make these values int
+    // to minimize the hassle that we get while subtracting two world_positions.
+    u32 AbsTileX;
+    u32 AbsTileY;
+    u32 AbsTileZ;
 
-    // NOTE : These are reletive to the Left Bottom Corner of the tile, in meters
-    r32 X;
-    r32 Y;
+    // NOTE : These are reletive to the center of the tile, in meters
+    // and will represent the center of the entity
+    //
+    v2 P;
 };
 
 struct debug_loaded_bmp
@@ -212,17 +222,76 @@ struct debug_loaded_bmp
     u32 Pitch;
     u32 BytesPerPixel;
 
+    r32 AlignmentX;
+    r32 AlignmentY;
+
     u32 *Pixels;
+};
+
+struct debug_game_input_record
+{
+    /*NOTE : 
+     *  Input record starts with 20 seconds worth of memory, 
+     *  and reallocates twice as much memory when the memory is depleted.
+     *  Input record memory first comes with the initial game_state,
+     *  followed by each frame worth of game_input
+    */
+    void *Memory;
+    u32 MemorySize;
+
+    u32 PlayIndex;
+    u32 PlayIndexCount;
+    u32 MaxPlayIndexCount;
+
+    b32 IsRecording;
+    b32 IsPlaying;
+};
+
+enum entity_type
+{
+    Entity_Type_Player,
+    Entity_Type_Wall,
+};
+
+struct low_entity
+{
+    world_position WorldP;
+    r32 Width;
+    r32 Height;
+
+    entity_type Type;
+};
+
+struct sim_entity
+{
+    r32 X;
+    r32 Y;
+    r32 Z;
+};
+
+struct sim_region
+{
+    sim_entity Entities[256];
+    u32 EntityCount;
 };
 
 struct game_state
 {
+    world World;
     i32 XOffset;
     i32 YOffset;
 
-    world_position PlayerPos;
+    world_position CameraPos;
 
-    debug_loaded_bmp SampleBMP;
+    low_entity Entities[256];
+    u32 EntityCount;
+
+    low_entity *Player;
+    v2 dPlayer;
+
+    debug_loaded_bmp HeadBMP;
+    debug_loaded_bmp CapeBMP;
+    debug_loaded_bmp TorsoBMP;
     
     b32 IsInitialized;
 };

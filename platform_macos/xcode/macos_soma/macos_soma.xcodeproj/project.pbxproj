@@ -7,10 +7,14 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		B2864C80266B5A06001BC034 /* monsoon_world.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon_world.cpp; path = ../../../code/monsoon_world.cpp; sourceTree = "<group>"; };
+		B2864C81266B5A06001BC034 /* monsoon_world.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_world.h; path = ../../../code/monsoon_world.h; sourceTree = "<group>"; };
+		B2864C82266B5A0C001BC034 /* monsoon_math.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_math.h; path = ../../../code/monsoon_math.h; sourceTree = "<group>"; };
+		B2864C83266CC2AF001BC034 /* monsoon_sim_region.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_sim_region.h; path = ../../../code/monsoon_sim_region.h; sourceTree = "<group>"; };
+		B2864C84266CC2AF001BC034 /* monsoon_sim_region.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon_sim_region.cpp; path = ../../../code/monsoon_sim_region.cpp; sourceTree = "<group>"; };
 		B2CE8BEB265D045600B6D735 /* monsoon_platform_independent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_platform_independent.h; path = ../../../code/monsoon_platform_independent.h; sourceTree = "<group>"; };
 		B2CE8BEC265D045600B6D735 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = ../../../code/Makefile; sourceTree = "<group>"; };
 		B2CE8BED265D045600B6D735 /* macos_main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = macos_main.mm; path = ../../../code/macos_main.mm; sourceTree = "<group>"; };
-		B2CE8BEE265D045600B6D735 /* monsoon_tile.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon_tile.cpp; path = ../../../code/monsoon_tile.cpp; sourceTree = "<group>"; };
 		B2CE8BEF265D045600B6D735 /* macos_support.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = macos_support.cpp; path = ../../../code/macos_support.cpp; sourceTree = "<group>"; };
 		B2CE8BF0265D045600B6D735 /* macos_keycode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_keycode.h; path = ../../../code/macos_keycode.h; sourceTree = "<group>"; };
 		B2CE8BF1265D045600B6D735 /* macos_support.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_support.h; path = ../../../code/macos_support.h; sourceTree = "<group>"; };
@@ -29,8 +33,12 @@
 				B2CE8BEC265D045600B6D735 /* Makefile */,
 				B2CE8BF3265D045600B6D735 /* monsoon_intrinsic.h */,
 				B2CE8BEB265D045600B6D735 /* monsoon_platform_independent.h */,
-				B2CE8BEE265D045600B6D735 /* monsoon_tile.cpp */,
 				B2CE8BF2265D045600B6D735 /* monsoon.cpp */,
+				B2864C80266B5A06001BC034 /* monsoon_world.cpp */,
+				B2864C81266B5A06001BC034 /* monsoon_world.h */,
+				B2864C82266B5A0C001BC034 /* monsoon_math.h */,
+				B2864C84266CC2AF001BC034 /* monsoon_sim_region.cpp */,
+				B2864C83266CC2AF001BC034 /* monsoon_sim_region.h */,
 			);
 			sourceTree = "<group>";
 		};

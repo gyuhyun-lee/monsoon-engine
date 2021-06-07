@@ -7,20 +7,36 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "90052F9F-1E5A-4F34-8441-E40F3E5A9A6F"
+            uuid = "97A1466E-9528-44F5-AE22-08504DD7919D"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../code/monsoon.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "448"
-            endingLineNumber = "448"
-            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            startingLineNumber = "240"
+            endingLineNumber = "240"
+            landmarkName = "AddLowEntity(State, Type, AbsTileX, AbsTileY, AbsTileZ, Dim)"
             landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C775382B-9F5A-49E3-B06A-45E8DDA36824"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "400"
+            endingLineNumber = "400"
+            landmarkName = "unknown"
+            landmarkType = "0">
             <Locations>
                <Location
-                  uuid = "90052F9F-1E5A-4F34-8441-E40F3E5A9A6F - 2957a6be6fd44f33"
+                  uuid = "C775382B-9F5A-49E3-B06A-45E8DDA36824 - 2957a6be6fd449e3"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -30,12 +46,12 @@
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "448"
-                  endingLineNumber = "448"
-                  offsetFromSymbolStart = "1816">
+                  startingLineNumber = "400"
+                  endingLineNumber = "400"
+                  offsetFromSymbolStart = "104">
                </Location>
                <Location
-                  uuid = "90052F9F-1E5A-4F34-8441-E40F3E5A9A6F - c81a8fd01ac53dbb"
+                  uuid = "C775382B-9F5A-49E3-B06A-45E8DDA36824 - c81a8fd01ac53b6b"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -45,9 +61,24 @@
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "448"
-                  endingLineNumber = "448"
-                  offsetFromSymbolStart = "1816">
+                  startingLineNumber = "400"
+                  endingLineNumber = "400"
+                  offsetFromSymbolStart = "68">
+               </Location>
+               <Location
+                  uuid = "C775382B-9F5A-49E3-B06A-45E8DDA36824 - c81a8fd01ac53b6b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "400"
+                  endingLineNumber = "400"
+                  offsetFromSymbolStart = "104">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -55,20 +86,36 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "A88252FD-9BEB-4091-8731-7E897F8E36EE"
+            uuid = "0F4AA69F-4A09-4AC0-B75F-9E7348144BB3"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../code/monsoon.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "484"
-            endingLineNumber = "484"
+            startingLineNumber = "548"
+            endingLineNumber = "548"
+            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6E4B189F-99A4-4FE0-9B49-EBD6BD22C1D3"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "440"
+            endingLineNumber = "440"
             landmarkName = "GAME_UPDATE_AND_RENDER()"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "A88252FD-9BEB-4091-8731-7E897F8E36EE - 2957a6be6fd4459f"
+                  uuid = "6E4B189F-99A4-4FE0-9B49-EBD6BD22C1D3 - 2957a6be6fd44ecb"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -78,12 +125,12 @@
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "492"
-                  endingLineNumber = "492"
-                  offsetFromSymbolStart = "2136">
+                  startingLineNumber = "440"
+                  endingLineNumber = "440"
+                  offsetFromSymbolStart = "648">
                </Location>
                <Location
-                  uuid = "A88252FD-9BEB-4091-8731-7E897F8E36EE - c81a8fd01ac53717"
+                  uuid = "6E4B189F-99A4-4FE0-9B49-EBD6BD22C1D3 - c81a8fd01ac53c43"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -93,9 +140,9 @@
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "492"
-                  endingLineNumber = "492"
-                  offsetFromSymbolStart = "2136">
+                  startingLineNumber = "440"
+                  endingLineNumber = "440"
+                  offsetFromSymbolStart = "648">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -103,84 +150,35 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "84E49D33-99FA-4C73-9784-919EF4FE5DD9"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/macos_main.mm"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "147"
-            endingLineNumber = "147"
-            landmarkName = "MacOSHandleEvents(App, InputManager, DEBUGInputRecord)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "8992323A-932B-4801-8D2A-4742370854F4"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/macos_main.mm"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "146"
-            endingLineNumber = "146"
-            landmarkName = "MacOSHandleEvents(App, InputManager, DEBUGInputRecord)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "F6C66137-D2FC-445D-8255-200B0EC1F98B"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/macos_main.mm"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "149"
-            endingLineNumber = "149"
-            landmarkName = "MacOSHandleEvents(App, InputManager, DEBUGInputRecord)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "81EE5AB1-A0A2-442C-B9F1-49658C18ED17"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/macos_main.mm"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "906"
-            endingLineNumber = "906"
-            landmarkName = "main(argc, argv)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "1EFDCC8F-7826-4F95-B961-6C084D785364"
+            uuid = "4B86D9CE-C0F8-47BB-BF4F-920174F3BACC"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../code/monsoon.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "494"
-            endingLineNumber = "494"
+            startingLineNumber = "449"
+            endingLineNumber = "449"
             landmarkName = "GAME_UPDATE_AND_RENDER()"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "1EFDCC8F-7826-4F95-B961-6C084D785364 - c81a8fd01ac53755"
+                  uuid = "4B86D9CE-C0F8-47BB-BF4F-920174F3BACC - 2957a6be6fd44f12"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "449"
+                  endingLineNumber = "449"
+                  offsetFromSymbolStart = "712">
+               </Location>
+               <Location
+                  uuid = "4B86D9CE-C0F8-47BB-BF4F-920174F3BACC - c81a8fd01ac53d9a"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -190,13 +188,62 @@
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "494"
-                  endingLineNumber = "494"
-                  offsetFromSymbolStart = "2464">
+                  startingLineNumber = "449"
+                  endingLineNumber = "449"
+                  offsetFromSymbolStart = "712">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "55161315-D686-4650-9DD5-FEF7A78B4E31"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "545"
+            endingLineNumber = "545"
+            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "09CAC452-7CB3-4164-B238-8B7361C292A3"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "534"
+            endingLineNumber = "534"
+            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "09CAC452-7CB3-4164-B238-8B7361C292A3 - 2957a6be6fd45a25"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "534"
+                  endingLineNumber = "534"
+                  offsetFromSymbolStart = "1444">
                </Location>
                <Location
-                  uuid = "1EFDCC8F-7826-4F95-B961-6C084D785364 - c81a8fd01ac537b4"
-                  shouldBeEnabled = "No"
+                  uuid = "09CAC452-7CB3-4164-B238-8B7361C292A3 - c81a8fd01ac528ad"
+                  shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "GameUpdateAndRender"
@@ -205,9 +252,9 @@
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "495"
-                  endingLineNumber = "495"
-                  offsetFromSymbolStart = "2484">
+                  startingLineNumber = "534"
+                  endingLineNumber = "534"
+                  offsetFromSymbolStart = "1444">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -215,7 +262,103 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "E5EA9550-C6F8-4F74-A115-6C2535927D5C"
+            uuid = "67F96D16-0573-47BC-ADDF-E3DB5C21EE0B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "488"
+            endingLineNumber = "488"
+            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "67F96D16-0573-47BC-ADDF-E3DB5C21EE0B - 2957a6be6fd4441b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "488"
+                  endingLineNumber = "488"
+                  offsetFromSymbolStart = "1012">
+               </Location>
+               <Location
+                  uuid = "67F96D16-0573-47BC-ADDF-E3DB5C21EE0B - c81a8fd01ac53693"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "488"
+                  endingLineNumber = "488"
+                  offsetFromSymbolStart = "1012">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D013AC3D-8850-4AB9-9924-3E7CA7CC12BE"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "486"
+            endingLineNumber = "486"
+            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "D013AC3D-8850-4AB9-9924-3E7CA7CC12BE - 2957a6be6fd444d5"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "486"
+                  endingLineNumber = "486"
+                  offsetFromSymbolStart = "1000">
+               </Location>
+               <Location
+                  uuid = "D013AC3D-8850-4AB9-9924-3E7CA7CC12BE - c81a8fd01ac5365d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "486"
+                  endingLineNumber = "486"
+                  offsetFromSymbolStart = "1000">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A83514E1-9898-4D64-B1B4-25FA76C89F29"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
@@ -228,7 +371,22 @@
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "E5EA9550-C6F8-4F74-A115-6C2535927D5C - c81a8fd01ac53776"
+                  uuid = "A83514E1-9898-4D64-B1B4-25FA76C89F29 - 2957a6be6fd445fe"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GameUpdateAndRender"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "493"
+                  endingLineNumber = "493"
+                  offsetFromSymbolStart = "1164">
+               </Location>
+               <Location
+                  uuid = "A83514E1-9898-4D64-B1B4-25FA76C89F29 - c81a8fd01ac53776"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -240,22 +398,7 @@
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "493"
                   endingLineNumber = "493"
-                  offsetFromSymbolStart = "2272">
-               </Location>
-               <Location
-                  uuid = "E5EA9550-C6F8-4F74-A115-6C2535927D5C - c81a8fd01ac53776"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "GameUpdateAndRender"
-                  moduleName = "monsoon.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "493"
-                  endingLineNumber = "493"
-                  offsetFromSymbolStart = "2308">
+                  offsetFromSymbolStart = "1164">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -263,95 +406,47 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "6AEC00B7-DED8-446A-B94C-830E11752FB0"
+            uuid = "894DF141-BEF6-41A5-895B-4B9F3B714526"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../code/monsoon.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "495"
-            endingLineNumber = "495"
-            landmarkName = "GAME_UPDATE_AND_RENDER()"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "BA40AD87-7E15-4106-AD12-83495CBF1301"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/macos_main.mm"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "920"
-            endingLineNumber = "920"
-            landmarkName = "main(argc, argv)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "E2EF847D-1288-40B3-AE27-E45C086AE826"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/macos_main.mm"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "936"
-            endingLineNumber = "936"
-            landmarkName = "main(argc, argv)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "B196E30A-491A-4C37-9084-E343F9D92A79"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../../../code/monsoon.cpp"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "490"
-            endingLineNumber = "490"
-            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            startingLineNumber = "259"
+            endingLineNumber = "259"
+            landmarkName = "AddLowEntity(State, Type, AbsTileX, AbsTileY, AbsTileZ, Dim)"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "B196E30A-491A-4C37-9084-E343F9D92A79 - c81a8fd01ac536d1"
+                  uuid = "894DF141-BEF6-41A5-895B-4B9F3B714526 - 41cceb5df0f5e6f1"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "GameUpdateAndRender"
-                  moduleName = "monsoon.dylib"
+                  symbolName = "AddPlayerEntity(game_state*, unsigned int, unsigned int, unsigned int, v2)"
+                  moduleName = "fox"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "490"
-                  endingLineNumber = "490"
-                  offsetFromSymbolStart = "1924">
+                  startingLineNumber = "259"
+                  endingLineNumber = "259"
+                  offsetFromSymbolStart = "36">
                </Location>
                <Location
-                  uuid = "B196E30A-491A-4C37-9084-E343F9D92A79 - c81a8fd01ac536d1"
-                  shouldBeEnabled = "No"
+                  uuid = "894DF141-BEF6-41A5-895B-4B9F3B714526 - a081c23385e49479"
+                  shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "GameUpdateAndRender"
+                  symbolName = "AddPlayerEntity(game_state*, unsigned int, unsigned int, unsigned int, v2)"
                   moduleName = "monsoon.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "490"
-                  endingLineNumber = "490"
-                  offsetFromSymbolStart = "1932">
+                  startingLineNumber = "259"
+                  endingLineNumber = "259"
+                  offsetFromSymbolStart = "36">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -359,63 +454,191 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "93F8CDDA-55F1-4C68-8AEA-30F5237528D5"
+            uuid = "E1CD0356-C48D-45CC-81C8-02C818C5B8A7"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "../../../code/monsoon.cpp"
+            filePath = "../../../code/monsoon_sim_region.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "395"
-            endingLineNumber = "395"
-            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            startingLineNumber = "136"
+            endingLineNumber = "136"
+            landmarkName = "PutEntityInsideWorldChunk(WorldChunk, Arena, Entity)"
             landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "E1CD0356-C48D-45CC-81C8-02C818C5B8A7 - 1b88ab4722dfa74"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "PutEntityInsideWorldChunk(world_chunk*, memory_arena*, low_entity*)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136"
+                  offsetFromSymbolStart = "60">
+               </Location>
+               <Location
+                  uuid = "E1CD0356-C48D-45CC-81C8-02C818C5B8A7 - e0f5a3da073c88fc"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "PutEntityInsideWorldChunk(world_chunk*, memory_arena*, low_entity*)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136"
+                  offsetFromSymbolStart = "60">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "E8E668F5-E418-4B9F-8146-BE6418AFA64D"
+            uuid = "FE7B241E-C916-46AF-99DB-BC901A06120F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_sim_region.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "154"
+            endingLineNumber = "154"
+            landmarkName = "PutEntityInsideWorldChunk(WorldChunk, Arena, Entity)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "FE7B241E-C916-46AF-99DB-BC901A06120F - 1b88ab4722dfc9a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "PutEntityInsideWorldChunk(world_chunk*, memory_arena*, low_entity*)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "154"
+                  endingLineNumber = "154"
+                  offsetFromSymbolStart = "152">
+               </Location>
+               <Location
+                  uuid = "FE7B241E-C916-46AF-99DB-BC901A06120F - e0f5a3da073c8e12"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "PutEntityInsideWorldChunk(world_chunk*, memory_arena*, low_entity*)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "154"
+                  endingLineNumber = "154"
+                  offsetFromSymbolStart = "152">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "45F754DC-7F13-4969-8184-E8FD3DC19F21"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_sim_region.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "123"
+            endingLineNumber = "123"
+            landmarkName = "ClearAllEntityBlocksInSimRegion(SimRegion, World)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "45F754DC-7F13-4969-8184-E8FD3DC19F21 - 34e63d424d3816f9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ClearAllEntityBlocksInSimRegion(sim_region*, world*)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "123"
+                  endingLineNumber = "123"
+                  offsetFromSymbolStart = "436">
+               </Location>
+               <Location
+                  uuid = "45F754DC-7F13-4969-8184-E8FD3DC19F21 - d5ab142c38296471"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ClearAllEntityBlocksInSimRegion(sim_region*, world*)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "123"
+                  endingLineNumber = "123"
+                  offsetFromSymbolStart = "436">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "82E5ADC7-8EDB-47BC-869C-195CFDBBEB6B"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../code/monsoon.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "468"
-            endingLineNumber = "468"
-            landmarkName = "GAME_UPDATE_AND_RENDER()"
+            startingLineNumber = "252"
+            endingLineNumber = "252"
+            landmarkName = "AddLowEntity(State, Type, AbsTileX, AbsTileY, AbsTileZ, Dim)"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "E8E668F5-E418-4B9F-8146-BE6418AFA64D - c81a8fd01ac5302f"
+                  uuid = "82E5ADC7-8EDB-47BC-869C-195CFDBBEB6B - 1d6cc107dbd3fd37"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "GameUpdateAndRender"
-                  moduleName = "monsoon.dylib"
+                  symbolName = "AddLowEntity(game_state*, entity_type, unsigned int, unsigned int, unsigned int, v2)"
+                  moduleName = "fox"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "468"
-                  endingLineNumber = "468"
-                  offsetFromSymbolStart = "1856">
+                  startingLineNumber = "252"
+                  endingLineNumber = "252"
+                  offsetFromSymbolStart = "384">
                </Location>
                <Location
-                  uuid = "E8E668F5-E418-4B9F-8146-BE6418AFA64D - c81a8fd01ac5302f"
+                  uuid = "82E5ADC7-8EDB-47BC-869C-195CFDBBEB6B - fc21e869aec28fbf"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "GameUpdateAndRender"
+                  symbolName = "AddLowEntity(game_state*, entity_type, unsigned int, unsigned int, unsigned int, v2)"
                   moduleName = "monsoon.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Volumes/work/soma/code/monsoon.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "468"
-                  endingLineNumber = "468"
-                  offsetFromSymbolStart = "1844">
+                  startingLineNumber = "252"
+                  endingLineNumber = "252"
+                  offsetFromSymbolStart = "384">
                </Location>
             </Locations>
          </BreakpointContent>

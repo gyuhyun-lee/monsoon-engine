@@ -9,8 +9,6 @@
     input recording
 */
 
-
-
 #include "monsoon_platform_independent.h"
 #include "monsoon.cpp"
 

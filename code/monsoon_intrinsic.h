@@ -32,7 +32,6 @@ SwapU32(u32 *X, u32 *Y)
     *Y = Temp;
 }
 
-// TODO : Intrinsic!
 inline u32
 FindLeastSignificantSetBit(u32 Value)
 {
@@ -55,6 +54,30 @@ FindLeastSignificantSetBit(u32 Value)
 #endif
 
     return Result;
+}
+
+inline r32
+Cos(r32 rad)
+{
+    return cosf(rad);
+}
+
+inline r32
+Sin(r32 rad)
+{
+    return sinf(rad);
+}
+
+inline r32
+atan(r32 y, r32 x)
+{
+    return atan2f(y, x);
+}
+
+inline r32
+SquareRoot2(r32 Value)
+{
+    return sqrtf(Value);
 }
 
 #endif

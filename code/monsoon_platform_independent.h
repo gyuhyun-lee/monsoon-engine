@@ -45,6 +45,9 @@ typedef double r64;
 #define Assert(Expression) if(!(Expression)) {int *a = 0; *a = 0;}
 #define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
 
+#define Minimum(a, b) ((a < b) ? a : b)
+#define Maximum(a, b) ((a > b)? a : b)
+
 #define global_variable static
 #define local_variable static
 #define internal static
@@ -180,41 +183,6 @@ struct game_code
     game_fill_audio_buffer *FillAudioBuffer;
 };
 
-struct tile_chunk
-{
-    u32 *Tiles;
-    
-    u32 MinAbsTileX;
-    u32 MinAbsTileY;
-
-    u32 MaxAbsTileX;
-    u32 MaxAbsTileY;
-};
-
-struct world
-{
-    // TODO : Chunk_level spareness
-    tile_chunk TileChunks[4];
-
-    r32 TileSideInMeters;
-};
-
-// IMPORTANT : NOTE : Entity with Tile Position 0, 0, 0 and X, Y Position 0, 0
-// will be drawn at the center of the world!!!!!!!!!!!!!
-struct world_position
-{
-    // TODO : Might wanna make these values int
-    // to minimize the hassle that we get while subtracting two world_positions.
-    u32 AbsTileX;
-    u32 AbsTileY;
-    u32 AbsTileZ;
-
-    // NOTE : These are reletive to the center of the tile, in meters
-    // and will represent the center of the entity
-    //
-    v2 P;
-};
-
 struct debug_loaded_bmp
 {
     u32 Width;
@@ -247,53 +215,38 @@ struct debug_game_input_record
     b32 IsPlaying;
 };
 
-enum entity_type
+#define memory_index size_t
+struct memory_arena
 {
-    Entity_Type_Player,
-    Entity_Type_Wall,
+    memory_index TotalSize;
+    memory_index Used;
+
+    u8 *Base;
 };
 
-struct low_entity
+inline u8 *
+PushSize(memory_arena *Arena, memory_index Size)
 {
-    world_position WorldP;
-    r32 Width;
-    r32 Height;
+    Assert((Arena->Used + Size) <= Arena->TotalSize);
 
-    entity_type Type;
-};
+    u8 *Result = Arena->Base + Arena->Used;
+    Arena->Used += Size;
 
-struct sim_entity
+    return Result;
+}
+
+#define PushStruct(Arena, type) (type *)PushSize(Arena, sizeof(type))
+#define PushArray(Arena, type, count) (type *)PushSize(Arena, sizeof(type)*count)
+
+internal memory_arena
+StartMemoryArena(u8 *Base, memory_index TotalSize)
 {
-    r32 X;
-    r32 Y;
-    r32 Z;
-};
+    memory_arena Result = {};
 
-struct sim_region
-{
-    sim_entity Entities[256];
-    u32 EntityCount;
-};
+    Result.Base = Base;
+    Result.TotalSize = TotalSize;
 
-struct game_state
-{
-    world World;
-    i32 XOffset;
-    i32 YOffset;
-
-    world_position CameraPos;
-
-    low_entity Entities[256];
-    u32 EntityCount;
-
-    low_entity *Player;
-    v2 dPlayer;
-
-    debug_loaded_bmp HeadBMP;
-    debug_loaded_bmp CapeBMP;
-    debug_loaded_bmp TorsoBMP;
-    
-    b32 IsInitialized;
-};
+    return Result;
+}
 
 #endif

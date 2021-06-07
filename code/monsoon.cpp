@@ -1,7 +1,13 @@
 #include "monsoon_platform_independent.h"
 #include "monsoon_intrinsic.h"
-#include "monsoon_tile.cpp"
+#include "monsoon_world.h"
+#include "monsoon_sim_region.h"
+#include "monsoon_random.h"
 
+#include "monsoon_world.cpp"
+#include "monsoon_sim_region.cpp"
+
+#include "monsoon.h"
 #include <stdio.h>
 
 internal void 
@@ -48,18 +54,18 @@ ClearBuffer(game_offscreen_buffer *Buffer)
 
 // NOTE : MacOS offscreen buffer is bottom-up 
 internal void
-DrawRectangle(game_offscreen_buffer *Buffer, r32 X, r32 Y, r32 Width, r32 Height,
+DrawRectangle(game_offscreen_buffer *Buffer, v2 P, v2 Dim,
             r32 R, r32 G, r32 B)
 {    
-    i32 MinX = RoundR32ToInt32(X);
-    i32 MinY = RoundR32ToInt32(Y);
-    i32 MaxX = RoundR32ToInt32(X + Width);
-    i32 MaxY = RoundR32ToInt32(Y + Height);
+    i32 MinX = RoundR32ToInt32(P.X);
+    i32 MinY = RoundR32ToInt32(P.Y);
+    i32 MaxX = RoundR32ToInt32(P.X + Dim.X);
+    i32 MaxY = RoundR32ToInt32(P.Y + Dim.Y);
 
-    i32 DEBUGMinX = RoundR32ToInt32(X);
-    i32 DEBUGMinY = RoundR32ToInt32(Y);
-    i32 DEBUGMaxX = RoundR32ToInt32(X + Width);
-    i32 DEBUGMaxY = RoundR32ToInt32(Y + Height);
+    i32 DEBUGMinX = RoundR32ToInt32(P.X);
+    i32 DEBUGMinY = RoundR32ToInt32(P.Y);
+    i32 DEBUGMaxX = RoundR32ToInt32(P.X + Dim.X);
+    i32 DEBUGMaxY = RoundR32ToInt32(P.Y + Dim.Y);
 
     if(MinX < 0)
     {
@@ -225,48 +231,169 @@ DrawBMP(game_offscreen_buffer *Buffer, debug_loaded_bmp *LoadedBMP,
     }
 }
 
-
-
 internal low_entity *
-AddLowEntity(game_state *State, entity_type Type, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, r32 Width, r32 Height)
+AddLowEntity(game_state *State, entity_type Type, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, 
+            v2 Dim)
 {
     Assert(State->EntityCount < ArrayCount(State->Entities));
 
     low_entity *Entity = State->Entities + State->EntityCount++;
 
-    Entity->WorldP.AbsTileX = AbsTileX;
-    Entity->WorldP.AbsTileY = AbsTileY;
-    Entity->WorldP.AbsTileZ = AbsTileZ;
-    Entity->Width = Width;
-    Entity->Height = Height;
+    Entity->WorldP.P.X = AbsTileX*State->World.TileSideInMeters + State->World.TileSideInMeters/2.0f - State->World.ChunkDim.X/2;
+    Entity->WorldP.P.Y = AbsTileY*State->World.TileSideInMeters + State->World.TileSideInMeters/2.0f - State->World.ChunkDim.Y/2;
+    // TODO : if the tile value is too high, it will wrap, producing incorrect value.
+    CanonicalizeWorldPos(&State->World, &Entity->WorldP);
+
+    Entity->Dim = Dim;
     Entity->Type = Type;
+
+    if(State->EntityCount == 4418)
+    {
+        int a = 1;
+    }
+
+    world_chunk *WorldChunk = GetWorldChunk(&State->World, Entity->WorldP.ChunkX, Entity->WorldP.ChunkY, Entity->WorldP.ChunkZ);
+    PutEntityInsideWorldChunk(WorldChunk, &State->WorldArena, Entity);
 
     return Entity;
 }
 
 internal void
-AddPlayerEntity(game_state *State, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, r32 Width, r32 Height)
+AddPlayerEntity(game_state *State, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, v2 Dim)
 {
-    State->Player = AddLowEntity(State, Entity_Type_Player, AbsTileX, AbsTileY, AbsTileZ, Width, Height);
+    State->Player = AddLowEntity(State, EntityType_Player, AbsTileX, AbsTileY, AbsTileZ, Dim);
 }
 
 internal void
-AddTilesAsLowEntity(game_state  *State, tile_chunk *TileChunk, r32 TileSideInMeters)
+TestWall(r32 WallX, r32 WallHalfDimY, v2 WallNormal, 
+        r32 NewX, r32 OldX,  r32 NewY, r32 OldY,
+        r32 *tMin, b32 *Hit, v2 *HitWallNormal)
 {
-    for(u32 Y = TileChunk->MinAbsTileY;
-        Y < TileChunk->MaxAbsTileY;
-        ++Y)
+    r32 dX = NewX - OldX;
+
+    if(dX != 0.0f)
     {
-        for(u32 X = TileChunk->MinAbsTileX;
-            X < TileChunk->MaxAbsTileX;
-            ++X)
+        r32 tTest = (WallX - OldX)/dX;
+
+        if(tTest >= 0.0f && tTest < 1.0f)
         {
-            if(GetTileValueFromTileChunkUnchecked(TileChunk, X, Y))
+            if(tTest < *tMin)
             {
-                AddLowEntity(State, Entity_Type_Wall, X, Y, 0, TileSideInMeters, TileSideInMeters);
+                r32 tY = OldY + tTest*(NewY - OldY);
+                if(tY > -WallHalfDimY && tY < WallHalfDimY)
+                {
+                    *Hit = true;
+                    *tMin = tTest;
+                    *HitWallNormal = WallNormal;
+                }
             }
         }
     }
+}
+
+internal void
+MoveEntity(game_state *State, sim_region *SimRegion, 
+            sim_entity *Entity, v2 ddP, r32 Speed, r32 dtPerFrame)
+{
+    r32 ddPLength = LengthSquare(ddP);
+    if(ddPLength > 1.0f)
+    {
+        ddP *= 1.0f/SquareRoot2(ddPLength);
+    }
+
+    ddP *= Speed;
+    ddP -= 8.0f*Entity->dP;
+    /*
+     * NOTE :
+     * Position = 0.5f*a*dt*dt + previous frame v * dt + previous frame p
+     * Velocity = a*dt + v;
+    */   
+    v2 EntityDelta = 0.5f*Square(dtPerFrame)*ddP + 
+                    dtPerFrame*Entity->dP;
+    v2 RemainingEntityDelta = EntityDelta;
+    Entity->dP = dtPerFrame*ddP + Entity->dP;
+    r32 DistanceLeftSquare = LengthSquare(EntityDelta);
+
+    for(u32 CollisionIteration = 0;
+        CollisionIteration < 4;
+        ++CollisionIteration)
+    {
+        if(DistanceLeftSquare > 0.0f)
+        {
+            v2 NewEntityPos = Entity->P;
+            NewEntityPos += RemainingEntityDelta;
+
+            r32 tMin = 1.0f;
+            v2 HitWallNormal = {};
+            b32 Hit = false;
+
+            for(u32 EntityIndex = 0;
+                EntityIndex < SimRegion->EntityCount;
+                ++EntityIndex)
+            {
+                sim_entity *TestEntity = SimRegion->Entities + EntityIndex;
+                if(TestEntity != Entity)
+                {
+                    v2 MinkowskiHalfDim = 0.5f*(TestEntity->Dim + Entity->Dim);
+                    v2 TestEntityRelNewP = NewEntityPos - TestEntity->P;
+                    v2 TestEntityRelOldP = Entity->P - TestEntity->P;
+
+                    // NOTE : Test against left wall
+                    TestWall(-MinkowskiHalfDim.X, MinkowskiHalfDim.Y, V2(-1, 0), 
+                            TestEntityRelNewP.X, TestEntityRelOldP.X, TestEntityRelNewP.Y, TestEntityRelOldP.Y, 
+                            &tMin, &Hit, &HitWallNormal);
+
+                    // NOTE : Test against right wall
+                    TestWall(MinkowskiHalfDim.X, MinkowskiHalfDim.Y, V2(1, 0), 
+                            TestEntityRelNewP.X, TestEntityRelOldP.X, TestEntityRelNewP.Y, TestEntityRelOldP.Y, 
+                            &tMin, &Hit, &HitWallNormal);
+
+                    // NOTE : Test against upper wall
+                    TestWall(MinkowskiHalfDim.Y, MinkowskiHalfDim.X, V2(0, -1), 
+                            TestEntityRelNewP.Y, TestEntityRelOldP.Y, TestEntityRelNewP.X, TestEntityRelOldP.X, 
+                            &tMin, &Hit, &HitWallNormal);
+
+                    // NOTE : Test against bottom wall
+                    TestWall(-MinkowskiHalfDim.Y, MinkowskiHalfDim.X, V2(0, 1), 
+                            TestEntityRelNewP.Y, TestEntityRelOldP.Y, TestEntityRelNewP.X, TestEntityRelOldP.X, 
+                            &tMin, &Hit, &HitWallNormal);
+                }
+            }
+
+            v2 EntityDeltaForThisIteration = RemainingEntityDelta;
+            v2 EntityDeltaLeftForThisIteration = V2(0, 0);
+            v2 OldRemainingEntityDelta = RemainingEntityDelta;
+
+            if(Hit)
+            {
+                // TODO : What to do with this epsilon?
+                r32 tEpsilon = 0.0001f;
+
+                EntityDeltaForThisIteration = (tMin - tEpsilon)*RemainingEntityDelta;
+
+                r32 EntityDeltaForThisIterationLengthSquare = LengthSquare(EntityDeltaForThisIteration);
+                if(EntityDeltaForThisIterationLengthSquare > DistanceLeftSquare)
+                {
+                    EntityDeltaForThisIteration *= SquareRoot2(DistanceLeftSquare/EntityDeltaForThisIterationLengthSquare);
+                }
+
+                v2 EntityDeltaLeftForThisIteration = RemainingEntityDelta - EntityDeltaForThisIteration;
+
+                Entity->dP = Entity->dP - 1.0f*Dot(Entity->dP, HitWallNormal)*HitWallNormal;
+
+                RemainingEntityDelta = EntityDeltaLeftForThisIteration - 1.0f*Dot(EntityDeltaLeftForThisIteration, HitWallNormal)*HitWallNormal;
+            }
+
+            Entity->P += EntityDeltaForThisIteration;
+
+            // TODO : Clean this code!
+            r32 LengthSquareMovedForThisIteration = LengthSquare(EntityDeltaForThisIteration);
+            r32 LengthSquareCanceledByWall = LengthSquare(EntityDeltaLeftForThisIteration - RemainingEntityDelta);
+            DistanceLeftSquare -= LengthSquareMovedForThisIteration + LengthSquareCanceledByWall;
+        }
+    }
+
+    //CanonicalizeWorldPos(World, &Entity->WorldP, EntityDelta);
 }
 
 // TODO : This should go away!
@@ -275,104 +402,141 @@ AddTilesAsLowEntity(game_state  *State, tile_chunk *TileChunk, r32 TileSideInMet
 extern "C"
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
-    Assert(sizeof(game_state) < Memory->PermanentStorageSize);
+    Assert(sizeof(game_state) <= Memory->PermanentStorageSize);
 
     game_state *State = (game_state *)Memory->PermanentStorage;
-    u32 Tiles00[TILE_COUNT_Y][TILE_COUNT_X] = 
-    {
-        {1, 1, 1, 1,     1, 1, 1, 1,     0, 0, 1, 1,     1, 1, 1, 1, 1},
-        {1, 0, 0, 0,     0, 0, 1, 0,     0, 0, 0, 0,     0, 0, 0, 0, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0, 0},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0, 0},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1, 1}
-    };
-
-    u32 Tiles01[TILE_COUNT_Y][TILE_COUNT_X] = 
-    {
-        {1, 1, 1, 1,     1, 1, 1, 0,     0, 1, 1, 1,     1, 1, 1, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 1, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {0, 0, 0, 0,     0, 1, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 1,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1, 1}
-    };
-
-    u32 Tiles10[TILE_COUNT_Y][TILE_COUNT_X] = 
-    {
-        {1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0, 0},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 1, 1, 1,     1, 1, 1, 0,     0, 0, 1, 1,     1, 1, 1, 1, 1}
-    };
-
-    u32 Tiles11[TILE_COUNT_Y][TILE_COUNT_X] = 
-    {
-        {1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1,     1, 1, 1, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 0,     0, 0, 0, 1, 1},
-        {1, 1, 1, 1,     1, 1, 1, 0,     0, 0, 1, 1,     1, 1, 1, 1, 1}
-    };
-
 
     if(!State->IsInitialized)
     {
+        State->WorldArena = StartMemoryArena((u8 *)Memory->TransientStorage, Megabytes(16));
+
         // TODO : Tile Chunk Construction
         world *World = &State->World;
         World->TileSideInMeters = 2.0f;
-        World->TileChunks[0].Tiles = (u32 *)Tiles00;
-        World->TileChunks[0].MinAbsTileX = 0;
-        World->TileChunks[0].MinAbsTileY = 0;
-        World->TileChunks[0].MaxAbsTileX = World->TileChunks[0].MinAbsTileX + TILE_COUNT_X;
-        World->TileChunks[0].MaxAbsTileY = World->TileChunks[0].MinAbsTileY + TILE_COUNT_Y;
-        AddTilesAsLowEntity(State, World->TileChunks + 0, World->TileSideInMeters);
-
-        World->TileChunks[1].MinAbsTileX = TILE_COUNT_X;
-        World->TileChunks[1].MinAbsTileY = 0;
-        World->TileChunks[1].Tiles = (u32 *)Tiles01;
-        World->TileChunks[1].MaxAbsTileX = World->TileChunks[1].MinAbsTileX + TILE_COUNT_X;
-        World->TileChunks[1].MaxAbsTileY = World->TileChunks[1].MinAbsTileY + TILE_COUNT_Y;
-        AddTilesAsLowEntity(State, World->TileChunks + 1, World->TileSideInMeters);
-
-        World->TileChunks[2].MinAbsTileX = 0;
-        World->TileChunks[2].MinAbsTileY = TILE_COUNT_Y;
-        World->TileChunks[2].Tiles = (u32 *)Tiles10;
-        World->TileChunks[2].MaxAbsTileX = World->TileChunks[2].MinAbsTileX + TILE_COUNT_X;
-        World->TileChunks[2].MaxAbsTileY = World->TileChunks[2].MinAbsTileY + TILE_COUNT_Y;
-        AddTilesAsLowEntity(State, World->TileChunks + 2, World->TileSideInMeters);
-
-        World->TileChunks[3].MinAbsTileX = TILE_COUNT_X;
-        World->TileChunks[3].MinAbsTileY = TILE_COUNT_Y;
-        World->TileChunks[3].Tiles = (u32 *)Tiles11;
-        World->TileChunks[3].MaxAbsTileX = World->TileChunks[3].MinAbsTileX + TILE_COUNT_X;
-        World->TileChunks[3].MaxAbsTileY = World->TileChunks[3].MinAbsTileY + TILE_COUNT_Y;
-        AddTilesAsLowEntity(State, World->TileChunks + 3, World->TileSideInMeters);
+        World->ChunkDim.X = TILE_COUNT_X*World->TileSideInMeters;
+        World->ChunkDim.Y = TILE_COUNT_Y*World->TileSideInMeters;
+        InitializeWorld(World);
 
         State->XOffset = 0;
         State->YOffset = 0;
 
-        State->CameraPos.AbsTileX = (TILE_COUNT_X+1)/2;
-        State->CameraPos.AbsTileY = (TILE_COUNT_Y+1)/2;
+        State->CameraPos.ChunkX = 0;
+        State->CameraPos.ChunkY = 0;
+        State->CameraPos.ChunkZ = 0;
         State->CameraPos.P.X = 0;
         State->CameraPos.P.Y = 0;
 
-        AddPlayerEntity(State, 6, 4, 0, 0.5f*World->TileSideInMeters, 0.9*World->TileSideInMeters);
+        AddPlayerEntity(State, 6, 4, 0, V2(0.5f*World->TileSideInMeters, 0.9*World->TileSideInMeters));
+
+        random_series Series = Seed(123);
+        // TODO : Proper map construction!
+        // NOTE : Start with bottom map
+        b32 LeftShouldBeOpened = false;
+        b32 BottomShouldBeOpened = false;
+        b32 RightShouldBeOpened = false;
+        b32 UpShouldBeOpened = true;
+
+        u32 LeftBottomTileX = 0;
+        u32 LeftBottomTileY = 0;
+        for(u32 ScreenIndex = 0;
+            ScreenIndex < 100;
+            ++ScreenIndex)
+        {
+            for(u32 Y = 0;
+                Y < TILE_COUNT_Y;
+                ++Y)
+            {
+                u32 Row = LeftBottomTileY + Y;
+                for(u32 X = 0;
+                    X < TILE_COUNT_X;
+                    ++X)
+                {
+                    u32 Column = LeftBottomTileX + X;
+                    b32 ShouldAddWall = true;
+
+                    if(LeftShouldBeOpened)
+                    {
+                        if(Y == TILE_COUNT_Y/2 && X == 0)
+                        {
+                            ShouldAddWall = false;
+                        }
+                    }
+                    if(RightShouldBeOpened)
+                    {
+                        if(Y == TILE_COUNT_Y/2 && X == TILE_COUNT_X-1)
+                        {
+                            ShouldAddWall = false;
+                        }
+                    }
+                    if(BottomShouldBeOpened)
+                    {
+                        if(X == TILE_COUNT_X/2 && Y == 0)
+                        {
+                            ShouldAddWall = false;
+                        }
+                    }
+                    if(UpShouldBeOpened)
+                    {
+                        if(X == TILE_COUNT_X/2 && Y == TILE_COUNT_Y-1)
+                        {
+                            ShouldAddWall = false;
+                        }
+                    }
+
+                    if(!(X == 0 || X == TILE_COUNT_X - 1) && !(Y == 0 || Y == TILE_COUNT_Y - 1))
+                    {
+                        ShouldAddWall = false;
+                    }
+
+                    if(ShouldAddWall)
+                    {
+                        AddLowEntity(State, EntityType_Wall, Column, Row, 0, V2(World->TileSideInMeters, World->TileSideInMeters));
+                        printf("%u\n", State->EntityCount);
+                    }
+                }
+            }
+
+            if(RightShouldBeOpened)
+            {
+                LeftBottomTileX += TILE_COUNT_X;
+                LeftShouldBeOpened = true;
+                u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
+                if(RandomNumber % 2)
+                {
+                    // NOTE : map with up & left opened
+                    UpShouldBeOpened = true;
+                    BottomShouldBeOpened = false;
+                    RightShouldBeOpened = false;
+                }
+                else
+                {
+                    // NOTE : map with right & left opened
+                    RightShouldBeOpened = true;
+                    BottomShouldBeOpened = false;
+                    UpShouldBeOpened = false;
+                }
+            }
+            else if(UpShouldBeOpened)
+            {
+                LeftBottomTileY += TILE_COUNT_Y;
+                BottomShouldBeOpened = true;
+                u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
+                if(RandomNumber % 2)
+                {
+                    // NOTE : map with up & bottom opened
+                    UpShouldBeOpened = true;
+                    LeftShouldBeOpened = false;
+                    RightShouldBeOpened = false;
+                }
+                else
+                {
+                    // NOTE : map with bottom & right opened
+                    RightShouldBeOpened = true;
+                    LeftShouldBeOpened = false;
+                    UpShouldBeOpened = false;
+                }
+            }
+        }
 
         State->HeadBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test_hero_front_head.bmp");
         State->HeadBMP.AlignmentX = 48;
@@ -387,8 +551,6 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         State->IsInitialized = true;
     }
     world *World = &State->World;
-
-    r32 MetersToPixels = (r32)Buffer->Width/((TILE_COUNT_X+1)*World->TileSideInMeters);
 
     game_input Input = {}; // NOTE : Sum of all the raw inputs
     for(u32 ControllerIndex = 0;
@@ -461,198 +623,76 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         ddPlayer.Y -= 1.0f;
     }
 
+    // TODO : This is wrong when the player is using controller.
     if(ddPlayer.X != 0.0f && ddPlayer.Y != 0.0f)
     {
-        // TODO : This only works when 
         ddPlayer *= 0.70710678118f;
     }
-
-    v2 PlayerDim = V2(State->Player->Width, State->Player->Height);
 
     r32 PlayerSpeed = 50.0f;
     if(Input.ActionRight)
     {
-        PlayerSpeed = 50.f;
+        PlayerSpeed = 150.f;
     }
 
-    ddPlayer *= PlayerSpeed;
-    /*
-     * NOTE :
-     * Position = 0.5f*a*dt*dt + previous frame v * dt + previous frame p
-     * Velocity = a*dt + v;
-    */   
-#if 1
-    // TODO : Something is wrong with the equation?
-    //ddPlayer -= 5.0f*State->dPlayer;
-    ddPlayer -= 8.0f*State->dPlayer;
-
-    world_position NewPlayerPos = State->Player->WorldP;
-    NewPlayerPos.P = 0.5f*Square(dtPerFrame)*ddPlayer + 
-                    dtPerFrame*State->dPlayer + 
-                    NewPlayerPos.P;
-    State->dPlayer = dtPerFrame*ddPlayer + State->dPlayer;
-
-    CanonicalizeWorldPos(World, &NewPlayerPos);
-#else
-    world_position NewPlayerPos = State->Player->WorldP;
-    CanonicalizeWorldPos(World, &NewPlayerPos, dtPerFrame*ddPlayer);
-#endif
-    
-    world_position NewPlayerPosUpperLeft = NewPlayerPos;
-    CanonicalizeWorldPos(World, &NewPlayerPosUpperLeft, V2(-0.5f*PlayerDim.X, 0.5f*PlayerDim.Y));
-     
-    world_position NewPlayerPosUpperRight = NewPlayerPos;
-    CanonicalizeWorldPos(World, &NewPlayerPosUpperRight, V2(0.5f*PlayerDim.X, 0.5f*PlayerDim.Y));
-
-    world_position NewPlayerPosBottonRight = NewPlayerPos;
-    CanonicalizeWorldPos(World, &NewPlayerPosBottonRight, V2(0.5f*PlayerDim.X, -0.5f*PlayerDim.Y));
-
-    world_position NewPlayerPosBottomLeft = NewPlayerPos;
-    CanonicalizeWorldPos(World, &NewPlayerPosBottomLeft, V2(-0.5f*PlayerDim.X, -0.5f*PlayerDim.Y));
-
-    if(IsWorldPointEmptyUnchecked(World, NewPlayerPos) &&
-        IsWorldPointEmptyUnchecked(World, NewPlayerPosUpperLeft) &&
-        IsWorldPointEmptyUnchecked(World, NewPlayerPosUpperRight) &&
-        IsWorldPointEmptyUnchecked(World, NewPlayerPosBottomLeft) &&
-        IsWorldPointEmptyUnchecked(World, NewPlayerPosBottonRight))
-    {
-        State->Player->WorldP = NewPlayerPos;
-    }
-
-    ClearBuffer(Buffer);
-
-    r32 ScreenHalfWidthInMeter = (World->TileSideInMeters * (TILE_COUNT_X))/2.0f;
-    r32 ScreenHalfHeightInMeter = (World->TileSideInMeters * (TILE_COUNT_Y))/2.0f;
-
-    world_position_difference CameraPlayerDiff = 
-            WorldPositionDifferenceInMeter(World, &State->CameraPos, &State->Player->WorldP);
-    if(CameraPlayerDiff.P.X > ScreenHalfWidthInMeter)
-    {
-        State->CameraPos.P.X += 2.0f*ScreenHalfWidthInMeter;
-    }
-    else if(CameraPlayerDiff.P.X < -ScreenHalfWidthInMeter)
-    {
-        State->CameraPos.P.X -= 2.0f*ScreenHalfWidthInMeter;
-    }
-    if(CameraPlayerDiff.P.Y > ScreenHalfHeightInMeter)
-    {
-        State->CameraPos.P.Y += 2.0f*ScreenHalfHeightInMeter;
-    }
-    else if(CameraPlayerDiff.P.Y < -ScreenHalfHeightInMeter)
-    {
-        State->CameraPos.P.Y -= 2.0f*ScreenHalfHeightInMeter;
-    }
-    CanonicalizeWorldPos(World, &State->CameraPos);
-
-    r32 CenterXInMeter = State->CameraPos.AbsTileX*World->TileSideInMeters + State->CameraPos.P.X;
-    r32 CenterYInMeter = State->CameraPos.AbsTileY*World->TileSideInMeters + State->CameraPos.P.Y;
-
-    u32 MinScreenAbsTileX = ConvertMeterToTileCount(World, CenterXInMeter - ScreenHalfWidthInMeter);
-    u32 MaxScreenAbsTileX = ConvertMeterToTileCount(World, CenterXInMeter + ScreenHalfWidthInMeter);
-    u32 MinScreenAbsTileY = ConvertMeterToTileCount(World, CenterYInMeter - ScreenHalfHeightInMeter);
-    u32 MaxScreenAbsTileY = ConvertMeterToTileCount(World, CenterYInMeter + ScreenHalfHeightInMeter);
+    State->CameraPos = State->Player->WorldP;
+    sim_region SimRegion = {};
+    // TODO : Accurate max entity delta for the sim region!
+    StartSimRegion(World, &SimRegion, State->CameraPos, World->ChunkDim, V2(10, 10));
 
     for(u32 EntityIndex = 0;
-        EntityIndex < State->EntityCount;
+        EntityIndex < SimRegion.EntityCount;
         ++EntityIndex)
     {
-        low_entity *Entity = State->Entities + EntityIndex;
-        if(Entity->WorldP.AbsTileX >= MinScreenAbsTileX && 
-            Entity->WorldP.AbsTileY >= MinScreenAbsTileY && 
-            Entity->WorldP.AbsTileX <= MaxScreenAbsTileX && 
-            Entity->WorldP.AbsTileY <= MaxScreenAbsTileY)
+        sim_entity *Entity = SimRegion.Entities + EntityIndex;
+
+        switch(Entity->Type)
         {
-            tile_chunk *TileChunk = GetTileChunk(World, Entity->WorldP.AbsTileX, Entity->WorldP.AbsTileY);
-
-            r32 CenterRelX = Entity->WorldP.AbsTileX*World->TileSideInMeters + Entity->WorldP.P.X - CenterXInMeter;
-            r32 CenterRelY = Entity->WorldP.AbsTileY*World->TileSideInMeters + Entity->WorldP.P.Y - CenterYInMeter;
-            r32 PixelX = Buffer->Width/2 + CenterRelX*MetersToPixels - 0.5f*MetersToPixels*Entity->Width;
-            r32 PixelY = Buffer->Height/2 + CenterRelY*MetersToPixels - 0.5f*MetersToPixels*Entity->Height;
-            u32 EntityWidthInPixel = Entity->Width*MetersToPixels;
-            u32 EntityHeightInPixel = Entity->Height*MetersToPixels;
-
-            switch(Entity->Type)
+            case EntityType_Player:
             {
-                case Entity_Type_Wall:
-                {
-                    DrawRectangle(Buffer, PixelX, PixelY, 
-                                EntityWidthInPixel, EntityHeightInPixel, 
-                                1.0f, 1.0f, 1.0f);
-                }break;
-
-                case Entity_Type_Player: 
-                {
-#if 1
-                    DrawRectangle(Buffer, PixelX, PixelY, 
-                                MetersToPixels*State->Player->Width, MetersToPixels*State->Player->Height, 
-                                0.0f, 0.8f, 1.0f);
-#else
-                    DrawBMP(Buffer, &State->HeadBMP, PixelX, PixelY, 0, 0, State->HeadBMP.AlignmentX, State->HeadBMP.AlignmentY);
-                    DrawBMP(Buffer, &State->TorsoBMP, PixelX, PixelY, 0, 0, State->TorsoBMP.AlignmentX, State->TorsoBMP.AlignmentY);
-                    DrawBMP(Buffer, &State->CapeBMP, PixelX, PixelY, 0, 0, State->CapeBMP.AlignmentX, State->CapeBMP.AlignmentY);
-#endif
-                }break;
-            }
-
+                MoveEntity(State, &SimRegion, Entity, ddPlayer, PlayerSpeed, dtPerFrame);
+            }break;
         }
     }
-#if 0
 
-    for(u32 Y = MinScreenAbsTileY;
-        Y < MaxScreenAbsTileY;
-        ++Y)
+    // TODO : Push rendering entries
+    ClearBuffer(Buffer);
+
+    r32 MetersToPixels = (r32)Buffer->Width/((TILE_COUNT_X+1)*World->TileSideInMeters);
+    MetersToPixels = 10;
+    for(u32 EntityIndex = 0;
+        EntityIndex < SimRegion.EntityCount;
+        ++EntityIndex)
     {
-        // NOTE : Tile position 0, 0 will be drawn at the EXACT CENTER of the screen.
-        r32 CenterRelY = (Y*World->TileSideInMeters - CenterYInMeter);
-        r32 PixelY = Buffer->Height/2 + CenterRelY*MetersToPixels - 0.5f*World->TileSideInMeters*MetersToPixels;
-        for(u32 X = MinScreenAbsTileX;
-            X < MaxScreenAbsTileX;
-            ++X)
+        sim_entity *Entity = SimRegion.Entities + EntityIndex;
+
+        v2 EntityDimInPixel = V2(Entity->Dim.X*MetersToPixels, Entity->Dim.Y*MetersToPixels);
+        // TODO : Simplify this using vector math
+        v2 PixelP = V2(Buffer->Width/2 + Entity->P.X*MetersToPixels - 0.5f*EntityDimInPixel.X,
+                        Buffer->Height/2 + Entity->P.Y*MetersToPixels - 0.5f*EntityDimInPixel.Y);
+
+        switch(Entity->Type)
         {
-            tile_chunk *TileChunk = GetTileChunk(World, X, Y);
-            if(TileChunk)
+            case EntityType_Wall:
             {
-                r32 CenterRelX = (X*World->TileSideInMeters - CenterXInMeter);
-                r32 PixelX = Buffer->Width/2 + CenterRelX*MetersToPixels - 0.5f*World->TileSideInMeters*MetersToPixels;
+                DrawRectangle(Buffer, PixelP, EntityDimInPixel, 1.0f, 1.0f, 1.0f);
+            }break;
 
-                r32 Gray = 1.0f;
-
-                if(GetTileValueFromTileChunkUnchecked(TileChunk, X, Y))
-                {
-                    Gray = 1.0f;
-                }
-                else
-                {
-                    Gray = 0.3f;
-                }
-
-                if(State->PlayerPos.AbsTileX == X && State->PlayerPos.AbsTileY == Y)
-                {
-                    Gray = 0.1f;
-                }
-
-                DrawRectangle(Buffer, PixelX, PixelY, 
-                            1.0f*World->TileSideInMeters*MetersToPixels,1.0f*World->TileSideInMeters*MetersToPixels, 
-                            Gray, Gray, Gray);
-            }
+            case EntityType_Player: 
+            {
+#if 1
+                DrawRectangle(Buffer, PixelP, EntityDimInPixel,  
+                            0.0f, 0.8f, 1.0f);
+#else
+                DrawBMP(Buffer, &State->HeadBMP, PixelX, PixelY, 0, 0, State->HeadBMP.AlignmentX, State->HeadBMP.AlignmentY);
+                DrawBMP(Buffer, &State->TorsoBMP, PixelX, PixelY, 0, 0, State->TorsoBMP.AlignmentX, State->TorsoBMP.AlignmentY);
+                DrawBMP(Buffer, &State->CapeBMP, PixelX, PixelY, 0, 0, State->CapeBMP.AlignmentX, State->CapeBMP.AlignmentY);
+#endif
+            }break;
         }
     }
 
-
-    r32 PlayerCenterRelX = State->PlayerPos.AbsTileX*World->TileSideInMeters + State->PlayerPos.X - CenterXInMeter;
-    r32 PlayerCenterRelY = State->PlayerPos.AbsTileY*World->TileSideInMeters + State->PlayerPos.Y - CenterYInMeter;
-    r32 PlayerPixelX = Buffer->Width/2 + PlayerCenterRelX*MetersToPixels - 0.5f*MetersToPixels*PlayerDim.X;
-    r32 PlayerPixelY = Buffer->Height/2 + PlayerCenterRelY*MetersToPixels - 0.5f*MetersToPixels*PlayerDim.Y;
-
-    DrawRectangle(Buffer, PlayerPixelX, PlayerPixelY, MetersToPixels*PlayerDim.X, MetersToPixels*PlayerDim.Y, 0.2, 1.0f, 1.0f);
-    DrawRectangle(Buffer, Buffer->Width/2 - 5, Buffer->Height/2 - 5, 10, 10, 1.0, 0.0f, 0.0f);
-    //DrawRectangle(Buffer, PlayerTileMapRelX*MetersToPixels, PlayerTileMapRelY*MetersToPixels, MetersToPixels*PlayerDim.X*0.2f, MetersToPixels*PlayerDim.Y*0.2f, 1.0, 0.0f, 0.0f);
-#endif
-
-    //DrawBMP(Buffer, &State->SampleBMP, PlayerPixelX, PlayerPixelY);
-    //DrawBMP(Buffer, &State->HeadBMP, PlayerPixelX, PlayerPixelY, 0, 0, State->HeadBMP.AlignmentX, State->HeadBMP.AlignmentY);
-    //DrawBMP(Buffer, &State->TorsoBMP, PlayerPixelX, PlayerPixelY, 0, 0, State->TorsoBMP.AlignmentX, State->TorsoBMP.AlignmentY);
-    //DrawBMP(Buffer, &State->CapeBMP, PlayerPixelX, PlayerPixelY, 0, 0, State->CapeBMP.AlignmentX, State->CapeBMP.AlignmentY);
+    EndSimRegion(World, &State->WorldArena, &SimRegion);
 }
 
 extern "C"

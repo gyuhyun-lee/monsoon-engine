@@ -74,6 +74,7 @@ struct world_chunk
 struct world
 {
     // TODO : How many chunks are needed?
+    // TODO : What should happen if we use all of the world chunks?
     world_chunk WorldChunks[256];
     v2 ChunkDim;
 

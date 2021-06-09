@@ -20,6 +20,9 @@ struct game_state
     debug_loaded_bmp CapeBMP;
     debug_loaded_bmp TorsoBMP;
 
+    debug_loaded_bmp RockBMP[4];
+    debug_loaded_bmp GrassBMP[2];
+
     memory_arena WorldArena;
     
     b32 IsInitialized;

@@ -1,11 +1,11 @@
 #include "monsoon_platform_independent.h"
 #include "monsoon_intrinsic.h"
-#include "monsoon_world.h"
-#include "monsoon_sim_region.h"
 #include "monsoon_random.h"
+#include "monsoon_world.h"
 
 #include "monsoon_world.cpp"
 #include "monsoon_sim_region.cpp"
+#include "monsoon_render.cpp"
 
 #include "monsoon.h"
 #include <stdio.h>
@@ -27,85 +27,6 @@ RenderSomething(game_offscreen_buffer *Buffer, i32 XOffset = 0, i32 YOffset = 0)
         }
 
         FirstPixelOfRow += Buffer->Pitch;
-    }
-}
-
-// TODO : Better buffer clearing function
-internal void 
-ClearBuffer(game_offscreen_buffer *Buffer)
-{
-    u8 *FirstPixelOfRow = (u8 *)Buffer->Memory;
-    for(int Row = 0;
-        Row < Buffer->Height;
-        ++Row)
-    {
-        u32 *Pixel = (u32 *)(FirstPixelOfRow);
-        for(int Column = 0;
-            Column < Buffer->Width;
-            ++Column)
-        {
-            *Pixel++ = 0x00000000;
-        }
-
-        FirstPixelOfRow += Buffer->Pitch;
-    }
-}
-
-
-// NOTE : MacOS offscreen buffer is bottom-up 
-internal void
-DrawRectangle(game_offscreen_buffer *Buffer, v2 P, v2 Dim,
-            r32 R, r32 G, r32 B)
-{    
-    i32 MinX = RoundR32ToInt32(P.X);
-    i32 MinY = RoundR32ToInt32(P.Y);
-    i32 MaxX = RoundR32ToInt32(P.X + Dim.X);
-    i32 MaxY = RoundR32ToInt32(P.Y + Dim.Y);
-
-    i32 DEBUGMinX = RoundR32ToInt32(P.X);
-    i32 DEBUGMinY = RoundR32ToInt32(P.Y);
-    i32 DEBUGMaxX = RoundR32ToInt32(P.X + Dim.X);
-    i32 DEBUGMaxY = RoundR32ToInt32(P.Y + Dim.Y);
-
-    if(MinX < 0)
-    {
-        MinX = 0;
-    }
-    if(MaxX > Buffer->Width)
-    {
-        MaxX = Buffer->Width;
-    }
- 
-    if(MinY < 0)
-    {
-        MinY = 0;
-    }
-    if(MaxY > Buffer->Height)
-    {
-        MaxY = Buffer->Height;
-    }   
-
-    // NOTE : Bit pattern for the pixel : AARRGGBB
-    u32 Color = (u32)((RoundR32ToInt32(R * 255.0f) << 16) |
-                (RoundR32ToInt32(G * 255.0f) << 8) |
-                (RoundR32ToInt32(B * 255.0f) << 0));
-
-    u8 *Row = (u8 *)Buffer->Memory + 
-                    Buffer->Pitch*MinY + 
-                    Buffer->BytesPerPixel*MinX;
-    for(i32 Y = MinY;
-        Y < MaxY;
-        ++Y)
-    {
-        u32 *Pixel = (u32 *)Row;
-        for(i32 X = MinX;
-            X < MaxX;
-            ++X)
-        {
-            *Pixel++ = Color;
-        }
-
-        Row += Buffer->Pitch;
     }
 }
 
@@ -144,93 +65,6 @@ DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName)
     
     return Result;
 }
-
-internal void
-DrawBMP(game_offscreen_buffer *Buffer, debug_loaded_bmp *LoadedBMP, 
-        r32 X, r32 Y, r32 Width = 0, r32 Height = 0,
-        r32 AlignmentX = 0, r32 AlignmentY = 0)
-{
-    X -= AlignmentX;
-    Y -= AlignmentY;
-    i32 MinX = RoundR32ToInt32(X);
-    i32 MinY = RoundR32ToInt32(Y);
-    i32 MaxX = RoundR32ToInt32(X + LoadedBMP->Width);
-    i32 MaxY = RoundR32ToInt32(Y + LoadedBMP->Height);
-
-    i32 SourceOffsetX = 0;
-    i32 SourceOffsetY = 0;
-    
-    if(MinX < 0) 
-    {
-        SourceOffsetX = -MinX;
-        MinX = 0;
-    }
-    if(MaxX > Buffer->Width)
-    {
-        MaxX = Buffer->Width;
-    }
-    if(MinY < 0)
-    {
-        SourceOffsetY = -MinY;
-        MinY = 0;
-    }
-    if(MaxY > Buffer->Height)
-    {
-        MaxY = Buffer->Height;
-    }   
-
-#if 0
-    // NOTE : To see the region of the whole BMP, enable this.
-    DrawRectangle(Buffer, X, Y, LoadedBMP->Width, LoadedBMP->Height, 1, 0, 0);
-#endif
-
-    u8 *Row = (u8 *)Buffer->Memory + 
-                    Buffer->Pitch*MinY + 
-                    Buffer->BytesPerPixel*MinX;
-    u8 *SourceRow = (u8 *)LoadedBMP->Pixels + 
-                    LoadedBMP->Pitch*SourceOffsetY + 
-                    LoadedBMP->BytesPerPixel*SourceOffsetX;
-
-    for(i32 Y = MinY;
-        Y < MaxY;
-        ++Y)
-    {
-        u32 *Pixel = (u32 *)Row;
-        u32 *SourcePixel = (u32 *)SourceRow;
-        for(i32 X = MinX;
-            X < MaxX;
-            ++X)
-        {
-            // NOTE : Bit pattern for the pixel : AARRGGBB
-            r32 DestR = ((*Pixel >> 16) & 0x000000ff) / 255.0f;
-            r32 DestG = ((*Pixel >> 8) & 0x000000ff) / 255.0f;
-            r32 DestB = ((*Pixel >> 0) & 0x000000ff) / 255.0f;
-
-            // NOTE : Bit pattern for the BMP : AARRGGBB
-            r32 SourceR = ((*SourcePixel >> 16) & 0x000000ff) / 255.0f;
-            r32 SourceG = ((*SourcePixel >> 8) & 0x000000ff) / 255.0f;
-            r32 SourceB = ((*SourcePixel >> 0) & 0x000000ff) / 255.0f;
-            r32 SourceA = ((*SourcePixel >> 24) & 0x000000ff) / 255.0f;
-
-            r32 ResultR = (1.0f-SourceA)*DestR + SourceA*SourceR;
-            r32 ResultG = (1.0f-SourceA)*DestG + SourceA*SourceG;
-            r32 ResultB = (1.0f-SourceA)*DestB + SourceA*SourceB;
-
-            u32 ResultColor = ((u32)(ResultR*255.0f + 0.5f) << 16) |
-                                ((u32)(ResultG*255.0f + 0.5f) << 8) |
-                                ((u32)(ResultB*255.0f + 0.5f) << 0);
-
-            *Pixel++ = ResultColor;
-            SourcePixel++;
-        }
-
-
-
-        Row += Buffer->Pitch;
-        SourceRow += LoadedBMP->Pitch;
-    }
-}
-
 internal low_entity *
 AddLowEntity(game_state *State, entity_type Type, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, 
             v2 Dim)
@@ -239,18 +73,14 @@ AddLowEntity(game_state *State, entity_type Type, u32 AbsTileX, u32 AbsTileY, u3
 
     low_entity *Entity = State->Entities + State->EntityCount++;
 
-    Entity->WorldP.P.X = AbsTileX*State->World.TileSideInMeters + State->World.TileSideInMeters/2.0f - State->World.ChunkDim.X/2;
-    Entity->WorldP.P.Y = AbsTileY*State->World.TileSideInMeters + State->World.TileSideInMeters/2.0f - State->World.ChunkDim.Y/2;
-    // TODO : if the tile value is too high, it will wrap, producing incorrect value.
+    Entity->WorldP.P = State->World.TileSideInMeters*V2(AbsTileX, AbsTileY) + 
+                        0.5f*V2(State->World.TileSideInMeters, State->World.TileSideInMeters) - 
+                        0.5f*State->World.ChunkDim;
+    //Entity->WorldP.P.Z = 0; // TODO : Properly handle Z
     CanonicalizeWorldPos(&State->World, &Entity->WorldP);
 
     Entity->Dim = Dim;
     Entity->Type = Type;
-
-    if(State->EntityCount == 4418)
-    {
-        int a = 1;
-    }
 
     world_chunk *WorldChunk = GetWorldChunk(&State->World, Entity->WorldP.ChunkX, Entity->WorldP.ChunkY, Entity->WorldP.ChunkZ);
     PutEntityInsideWorldChunk(WorldChunk, &State->WorldArena, Entity);
@@ -396,6 +226,14 @@ MoveEntity(game_state *State, sim_region *SimRegion,
     //CanonicalizeWorldPos(World, &Entity->WorldP, EntityDelta);
 }
 
+internal void
+DrawBackground(game_state *State, game_offscreen_buffer *Buffer)
+{
+    random_series Series = Seed(13);
+
+    GetNextRandomNumberInSeries(&Series);
+}
+
 // TODO : This should go away!
 #define TILE_COUNT_X 17
 #define TILE_COUNT_Y 9
@@ -410,7 +248,6 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     {
         State->WorldArena = StartMemoryArena((u8 *)Memory->TransientStorage, Megabytes(16));
 
-        // TODO : Tile Chunk Construction
         world *World = &State->World;
         World->TileSideInMeters = 2.0f;
         World->ChunkDim.X = TILE_COUNT_X*World->TileSideInMeters;
@@ -430,7 +267,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
         random_series Series = Seed(123);
         // TODO : Proper map construction!
-        // NOTE : Start with bottom map
+        // NOTE : Construction starts with bottom map
         b32 LeftShouldBeOpened = false;
         b32 BottomShouldBeOpened = false;
         b32 RightShouldBeOpened = false;
@@ -538,15 +375,20 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             }
         }
 
-        State->HeadBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test_hero_front_head.bmp");
-        State->HeadBMP.AlignmentX = 48;
-        State->HeadBMP.AlignmentY = 40;
-        State->TorsoBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test_hero_front_torso.bmp");
-        State->TorsoBMP.AlignmentX = 48;
-        State->TorsoBMP.AlignmentY = 40;
-        State->CapeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test_hero_front_cape.bmp");
-        State->CapeBMP.AlignmentX = 48;
-        State->CapeBMP.AlignmentY = 40;
+        State->HeadBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_head.bmp");
+        State->HeadBMP.Alignment = V2(48, 40);
+        State->TorsoBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_torso.bmp");
+        State->TorsoBMP.Alignment = V2(48, 40);
+        State->CapeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_cape.bmp");
+        State->CapeBMP.Alignment = V2(48, 40);
+
+        State->RockBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock00.bmp");
+        State->RockBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock01.bmp");
+        State->RockBMP[2] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock02.bmp");
+        State->RockBMP[3] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock03.bmp");
+
+        State->GrassBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/grass00.bmp");
+        State->GrassBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/grass01.bmp");
 
         State->IsInitialized = true;
     }
@@ -655,44 +497,42 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         }
     }
 
-    // TODO : Push rendering entries
-    ClearBuffer(Buffer);
+    render_group RenderGroup = {};
+    // TODO : How can I keep track of used memory without explicitly mentioning it?
+    RenderGroup.Arena = StartMemoryArena((u8 *)Memory->TransientStorage + Megabytes(16), Megabytes(4));
+    RenderGroup.MetersToPixels = (r32)Buffer->Width/((TILE_COUNT_X+1)*World->TileSideInMeters);
+    //RenderGroup.MetersToPixels = 10;
+    RenderGroup.BufferHalfDim = 0.5f*V2(Buffer->Width, Buffer->Height);
 
-    r32 MetersToPixels = (r32)Buffer->Width/((TILE_COUNT_X+1)*World->TileSideInMeters);
-    MetersToPixels = 10;
     for(u32 EntityIndex = 0;
         EntityIndex < SimRegion.EntityCount;
         ++EntityIndex)
     {
         sim_entity *Entity = SimRegion.Entities + EntityIndex;
 
-        v2 EntityDimInPixel = V2(Entity->Dim.X*MetersToPixels, Entity->Dim.Y*MetersToPixels);
-        // TODO : Simplify this using vector math
-        v2 PixelP = V2(Buffer->Width/2 + Entity->P.X*MetersToPixels - 0.5f*EntityDimInPixel.X,
-                        Buffer->Height/2 + Entity->P.Y*MetersToPixels - 0.5f*EntityDimInPixel.Y);
-
         switch(Entity->Type)
         {
             case EntityType_Wall:
             {
-                DrawRectangle(Buffer, PixelP, EntityDimInPixel, 1.0f, 1.0f, 1.0f);
+                PushRect(&RenderGroup, Entity->P, Entity->Dim, V3(1.0f, 1.0f, 1.0f));
             }break;
 
             case EntityType_Player: 
             {
 #if 1
-                DrawRectangle(Buffer, PixelP, EntityDimInPixel,  
-                            0.0f, 0.8f, 1.0f);
+                PushRect(&RenderGroup, Entity->P, Entity->Dim, V3(0.0f, 0.8f, 1.0f));
 #else
-                DrawBMP(Buffer, &State->HeadBMP, PixelX, PixelY, 0, 0, State->HeadBMP.AlignmentX, State->HeadBMP.AlignmentY);
-                DrawBMP(Buffer, &State->TorsoBMP, PixelX, PixelY, 0, 0, State->TorsoBMP.AlignmentX, State->TorsoBMP.AlignmentY);
-                DrawBMP(Buffer, &State->CapeBMP, PixelX, PixelY, 0, 0, State->CapeBMP.AlignmentX, State->CapeBMP.AlignmentY);
+                PushBMP(&RenderGroup, &State->HeadBMP, Entity->P, Entity->Dim);
+                PushBMP(&RenderGroup, &State->TorsoBMP, Entity->P, Entity->Dim);
+                PushBMP(&RenderGroup, &State->CapeBMP, Entity->P, Entity->Dim);
 #endif
             }break;
         }
     }
 
     EndSimRegion(World, &State->WorldArena, &SimRegion);
+
+    RenderRenderGroup(&RenderGroup, Buffer);
 }
 
 extern "C"

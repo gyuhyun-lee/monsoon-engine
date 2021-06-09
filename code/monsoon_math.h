@@ -301,6 +301,31 @@ v2i &operator*=(v2i &A, i32 Value)
     return A;
 }
 
+struct v3
+{
+    union
+    {
+        struct 
+        {
+            r32 X, Y, Z;
+        };
+
+        r32 E[3];
+    };
+};
+
+inline v3
+V3(r32 X, r32 Y, r32 Z)
+{
+    v3 Result = {};
+
+    Result.X = X;
+    Result.Y = Y;
+    Result.Z = Z;
+
+    return Result;
+}
+
 struct v3u
 {
     union
@@ -313,5 +338,6 @@ struct v3u
         u32 E[3];
     };
 };
+
 
 #endif

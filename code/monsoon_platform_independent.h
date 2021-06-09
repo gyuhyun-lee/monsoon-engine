@@ -190,8 +190,7 @@ struct debug_loaded_bmp
     u32 Pitch;
     u32 BytesPerPixel;
 
-    r32 AlignmentX;
-    r32 AlignmentY;
+    v2 Alignment;
 
     u32 *Pixels;
 };

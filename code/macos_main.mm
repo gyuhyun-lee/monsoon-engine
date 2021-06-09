@@ -12,7 +12,8 @@
 #include "monsoon_platform_independent.h"
 #include "monsoon.cpp"
 
-#undef internal // NOTE : Cocoa.h is already using internal.. so I need to do this :(
+// NOTE : Cocoa.h is already using internal.. so I need to do this :(
+#undef internal 
 #include <Cocoa/Cocoa.h> // APPKIT
 #define internal static
 
@@ -23,7 +24,7 @@
 #include <dlfcn.h>  // dlopen, dlsym for loading dylibs
 
 #include <IOKit/hid/IOHIDLib.h> //IOHIDManager, IOHIDElement
-#include <AudioUnit/AudioUnit.h>
+#include <AudioUnit/AudioUnit.h> 
 
 #include "macos_keycode.h"
 #include "macos_support.cpp"

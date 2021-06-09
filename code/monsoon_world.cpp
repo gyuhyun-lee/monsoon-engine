@@ -23,52 +23,33 @@ GetWorldChunk(world *World, u32 ChunkX, u32 ChunkY, u32 ChunkZ = 0)
 
     // TODO : Better hash function lol
     u32 ChunkHashValue = 200*ChunkX + 322*ChunkY + 123*ChunkZ;
+    // TODO : Better modding?
     u32 ChunkHashKey = ChunkHashValue%ArrayCount(World->WorldChunks);
-
-    world_chunk *FirstInHash = World->WorldChunks + ChunkHashKey;
-    world_chunk *NextInHash = 0;
-
-    // TODO : Maybe there is a cleaner way to handle this? i.e do-while loop
-    if(FirstInHash->ChunkX == WORLD_CHUNK_UNINITIALIZED_VALUE)
+    u32 OriginalChunkHashKey = ChunkHashKey;
+    do
     {
-        Result = FirstInHash;
-        Result->ChunkX = ChunkX;
-        Result->ChunkY = ChunkY;
-        Result->ChunkZ = ChunkZ;
-    }
-    else if(FirstInHash->ChunkX == ChunkX &&
-        FirstInHash->ChunkY == ChunkY &&
-        FirstInHash->ChunkZ == ChunkZ)
-    {
-        Result = FirstInHash;
-    }
-    else
-    {
-        NextInHash = FirstInHash + 1;
-        while(NextInHash->ChunkX != WORLD_CHUNK_UNINITIALIZED_VALUE)
+        world_chunk *FirstInHash = World->WorldChunks + ChunkHashKey;
+        if(FirstInHash->ChunkX == WORLD_CHUNK_UNINITIALIZED_VALUE)
         {
-            if(NextInHash->ChunkX == ChunkX &&
-                NextInHash->ChunkY == ChunkY &&
-                NextInHash->ChunkZ == ChunkZ)
-            {
-                Result = NextInHash;
-                break;
-            }       
-            else
-            {
-                // NOTE : Internal hash chain
-                NextInHash++; 
-            }
-        }
-
-        if(!Result)
-        {
-            Result = NextInHash;
+            Result = FirstInHash;
             Result->ChunkX = ChunkX;
             Result->ChunkY = ChunkY;
             Result->ChunkZ = ChunkZ;
+
+            break;
         }
+        else if(FirstInHash->ChunkX == ChunkX &&
+            FirstInHash->ChunkY == ChunkY &&
+            FirstInHash->ChunkZ == ChunkZ)
+        {
+            Result = FirstInHash;
+
+            break;
+        }
+
+        ChunkHashKey = (ChunkHashKey + 1)%ArrayCount(World->WorldChunks);
     }
+    while(ChunkHashKey != OriginalChunkHashKey);
 
     // TODO : What should we do if the world chunk is somehow empty??
     // Maybe if it is not urgent(i.e we don't need to simulate the entity inside this world chunk
@@ -78,57 +59,6 @@ GetWorldChunk(world *World, u32 ChunkX, u32 ChunkY, u32 ChunkZ = 0)
     return Result;
 }
 
-#if 0
-// NOTE : TileX and TileY should be canonicalized
-internal u32
-GetTileValueFromWorldChunkUnchecked(world_chunk *WorldChunk, u32 TileX, u32 TileY)
-{
-    Assert(TileX >= WorldChunk->MinAbsTileX && 
-            TileY >= WorldChunk->MinAbsTileY && 
-            TileX < WorldChunk->MaxAbsTileX && 
-            TileY < WorldChunk->MaxAbsTileY);
-
-    u32 TileCountX = WorldChunk->MaxAbsTileX - WorldChunk->MinAbsTileX;
-    u32 TileCountY = WorldChunk->MaxAbsTileY - WorldChunk->MinAbsTileY;
-
-    u32 WorldChunkRelTileX = TileX - WorldChunk->MinAbsTileX;
-    u32 WorldChunkRelTileY = TileY - WorldChunk->MinAbsTileY;
-
-    u32 Result = WorldChunk->Tiles[TileCountX * (TileCountY - WorldChunkRelTileY - 1) + WorldChunkRelTileX];
-    return Result;
-}
-
-internal b32 
-IsTileEmptyUnchecked(world_chunk *WorldChunk, u32 AbsTileX, u32 AbsTileY)
-{
-    b32 Result = false;
-
-    if(!GetTileValueFromWorldChunkUnchecked(WorldChunk, AbsTileX, AbsTileY))
-    {
-        Result = true;
-    }
-
-    return Result;
-}
-
-// NOTE : This function always needs canonicalized position
-internal b32
-IsWorldPointEmptyUnchecked(world *World, world_position CanPos)
-{
-    b32 Result = false;
-
-    world_chunk *WorldChunk = GetWorldChunk(World, CanPos.AbsTileX, CanPos.AbsTileY);
-    if(WorldChunk)
-    {
-        Result = IsTileEmptyUnchecked(WorldChunk, CanPos.AbsTileX, CanPos.AbsTileY);
-    }
-
-    return Result;
-}
-#endif
-
-
-// TODO : This should work in chunk world, not inside tile
 internal void
 CanonicalizeWorldPos(world *World, world_position *WorldPos)
 {

@@ -1,6 +1,8 @@
 #ifndef MONSOON_RANDOM_H
 #define MONSOON_RANDOM_H
 
+#define RANDOM_NUMBER_TABLE_MIN_VALUE 6783893
+#define RANDOM_NUMBER_TABLE_MAX_VALUE 4294798068 
 u32 RandomNumberTable[] = 
 {
     0xb0cfd5d9,
@@ -1032,6 +1034,39 @@ GetNextRandomNumberInSeries(random_series *Series)
     }
 
     return Result;
+}
+
+#if 0
+inline u32
+GetRandomBilateral(random_series *Series)
+{
+    GetNextRandomNumberInSeries(Series);
+}
+#endif
+
+inline r32 
+GetRandomBetween(random_series *Series, r32 Min, r32 Max)
+{
+    u32 RandomNumber = GetNextRandomNumberInSeries(Series);
+    r32 t = (r32)RandomNumber/(r32)RANDOM_NUMBER_TABLE_MAX_VALUE;
+
+    r32 Result = Min + (Max - Min)*t;
+
+    return Result;
+}
+
+inline r32
+GetRandomUnilateral(random_series *Series)
+{
+    u32 RandomNumber = GetNextRandomNumberInSeries(Series);
+    return (r32)RandomNumber/(r32)RANDOM_NUMBER_TABLE_MAX_VALUE;
+}
+
+inline r32
+GetRandomBilateral(random_series *Series)
+{
+    u32 RandomNumber = GetNextRandomNumberInSeries(Series);
+    return 2.0f * ((r32)RandomNumber/(r32)RANDOM_NUMBER_TABLE_MAX_VALUE - 0.5f);
 }
 
 #endif

@@ -1,239 +1,354 @@
 #include "monsoon_render.h"
 
-// TODO : Premultiplied alpha
 internal void
-DrawBMP(game_offscreen_buffer *Buffer, debug_loaded_bmp *LoadedBMP, 
-        v2 P, v2 Dim, v2 Alignment)
+ClearPixelBuffer(pixel_buffer_32 *buffer, r32 R, r32 G, r32 B, r32 A = 1)
 {
-    P.X -= Alignment.X;
-    P.Y -= Alignment.Y;
-    i32 MinX = RoundR32ToInt32(P.X);
-    i32 MinY = RoundR32ToInt32(P.Y);
-    // TODO : Bitmap sampling based on the entity dim!
-    i32 MaxX = RoundR32ToInt32(P.X + LoadedBMP->Width);
-    i32 MaxY = RoundR32ToInt32(P.Y + LoadedBMP->Height);
+    u32 color = (u32)((RoundR32ToInt32(A * 255.0f) << 24) |
+                    (RoundR32ToInt32(R * 255.0f) << 16) |
+                    (RoundR32ToInt32(G * 255.0f) << 8) |
+                    (RoundR32ToInt32(B * 255.0f) << 0));
+
+    // TODO : What should we take care of when we properly clear the buffer?
+    u8 *row = (u8 *)buffer->memory;
+    for(i32 Y = 0;
+        Y < buffer->height;
+        ++Y)
+    {
+        u32 *pixel = (u32 *)row;
+        for(i32 X = 0;
+            X < buffer->width;
+            ++X)
+        {
+            *pixel++ = color;
+        }
+
+        row += buffer->pitch;
+    }
+}
+
+// NOTE : MacOS offscreen buffer is bottom-up 
+internal void
+DrawRectangle(pixel_buffer_32 *buffer, v2 p, v2 xAxis, v2 yAxis,
+            r32 R, r32 G, r32 B, r32 A = 1)
+{    
+    v2 p0 = p;
+    v2 p1 = p + xAxis;
+    v2 p2 = p + yAxis;
+    v2 p3 = p + xAxis + yAxis;
+
+    i32 minX = RoundR32ToInt32(Minimum(Minimum(p0.x, p1.x), Minimum(p2.x, p3.x)));
+    i32 minY = RoundR32ToInt32(Minimum(Minimum(p0.y, p1.y), Minimum(p2.y, p3.y)));
+    i32 maxX = RoundR32ToInt32(Maximum(Maximum(p0.x, p1.x), Maximum(p2.x, p3.x)));
+    i32 maxY = RoundR32ToInt32(Maximum(Maximum(p0.y, p1.y), Maximum(p2.y, p3.y)));
+
+    if(minX < 0)
+    {
+        minX = 0;
+    }
+    if(maxX > buffer->width)
+    {
+        maxX = buffer->width;
+    }
+    if(minY < 0)
+    {
+        minY = 0;
+    }
+    if(maxY > buffer->height)
+    {
+        maxY = buffer->height;
+    }   
+
+    // NOTE : Bit pattern for the pixel : AARRGGBB
+    //
+    u32 color = (u32)((RoundR32ToInt32(A * 255.0f) << 24) |
+                    (RoundR32ToInt32(R * 255.0f) << 16) |
+                    (RoundR32ToInt32(G * 255.0f) << 8) |
+                    (RoundR32ToInt32(B * 255.0f) << 0));
+
+    u8 *row = (u8 *)buffer->memory + 
+                    buffer->pitch*minY + 
+                    buffer->bytesPerPixel*minX;
+    for(i32 y = minY;
+        y < maxY;
+        ++y)
+    {
+        u32 *pixel = (u32 *)row;
+        for(i32 x = minX;
+            x < maxX;
+            ++x)
+        {
+            v2 v = V2(x, y) - p;
+            r32 vDotXAxis = Dot(v, xAxis);
+            r32 vDotYAxis = Dot(v, yAxis);
+            r32 LengthSquareOfXAxis = LengthSquare(xAxis);
+            r32 LengthSquareOfYAxis = LengthSquare(yAxis);
+
+            if(!(vDotXAxis < 0 ||
+                vDotYAxis < 0 ||
+                vDotXAxis > LengthSquareOfXAxis||
+                vDotYAxis > LengthSquareOfYAxis))
+            {
+                *pixel++ = color;
+            }
+        }
+        row += buffer->pitch;
+    }
+}
+
+// NOTE : p is ALWAYS the pixel p based on the entity p.
+// only the alignment can be used to adjust the bmp drawing position.
+internal void
+DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
+        v2 p, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1), v2 alignment = V2(0, 0))
+{
+    Assert(pixels);
+
+    // TODO : Do we even need this alignment value?
+    // because we always starts at p - halfDim to p + halfdim, and
+    // the bmp will just fill up the space that we requested.
+    // If it turns out that we need this alignment value, we have to adjust
+    // the value based on the dim?
+    //p += alignment;
+    v2 p0 = p;
+    v2 p1 = p + xAxis;
+    v2 p2 = p + yAxis;
+    v2 p3 = p + xAxis + yAxis;
+
+    i32 minX = RoundR32ToInt32(Minimum(Minimum(p0.x, p1.x), Minimum(p2.x, p3.x)));
+    i32 minY = RoundR32ToInt32(Minimum(Minimum(p0.y, p1.y), Minimum(p2.y, p3.y)));
+    i32 maxX = RoundR32ToInt32(Maximum(Maximum(p0.x, p1.x), Maximum(p2.x, p3.x)));
+    i32 maxY = RoundR32ToInt32(Maximum(Maximum(p0.y, p1.y), Maximum(p2.y, p3.y)));
 
     i32 SourceOffsetX = 0;
     i32 SourceOffsetY = 0;
     
-    if(MinX < 0) 
+    if(minX < 0) 
     {
-        SourceOffsetX = -MinX;
-        MinX = 0;
+        SourceOffsetX = -minX;
+        minX = 0;
     }
-    if(MaxX > Buffer->Width)
+    if(maxX > Buffer->width)
     {
-        MaxX = Buffer->Width;
+        maxX = Buffer->width;
     }
-    if(MinY < 0)
+    if(minY < 0)
     {
-        SourceOffsetY = -MinY;
-        MinY = 0;
+        SourceOffsetY = -minY;
+        minY = 0;
     }
-    if(MaxY > Buffer->Height)
+    if(maxY > Buffer->height)
     {
-        MaxY = Buffer->Height;
+        maxY = Buffer->height;
     }   
 
 #if 0
     // NOTE : To see the region of the whole BMP, enable this.
-    DrawRectangle(Buffer, X, Y, LoadedBMP->Width, LoadedBMP->Height, 1, 0, 0);
+    DrawRectangle(Buffer, V2(minX, minY), dim, 1, 0, 0);
 #endif
 
-    u8 *Row = (u8 *)Buffer->Memory + 
-                    Buffer->Pitch*MinY + 
-                    Buffer->BytesPerPixel*MinX;
-    u8 *SourceRow = (u8 *)LoadedBMP->Pixels + 
-                    LoadedBMP->Pitch*SourceOffsetY + 
-                    LoadedBMP->BytesPerPixel*SourceOffsetX;
-
-    for(i32 Y = MinY;
-        Y < MaxY;
-        ++Y)
+    u8 *row = (u8 *)Buffer->memory + 
+                    Buffer->pitch*minY + 
+                    Buffer->bytesPerPixel*minX;
+    for(i32 y = minY;
+        y < maxY;
+        ++y)
     {
-        u32 *Pixel = (u32 *)Row;
-        u32 *SourcePixel = (u32 *)SourceRow;
-        for(i32 X = MinX;
-            X < MaxX;
-            ++X)
+        u32 *pixel = (u32 *)row;
+        for(i32 x = minX;
+            x < maxX;
+            ++x)
         {
-            // NOTE : Bit pattern for the pixel : AARRGGBB
-            r32 DestR = ((*Pixel >> 16) & 0x000000ff) / 255.0f;
-            r32 DestG = ((*Pixel >> 8) & 0x000000ff) / 255.0f;
-            r32 DestB = ((*Pixel >> 0) & 0x000000ff) / 255.0f;
+            // TODO : if the p has fractional value, it might make the dot value
+            // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
+            // What will be a proper way to handle this?(Round?)
+            v2 v = V2(x, y) - p;
+            r32 vDotXAxis = Dot(v, xAxis);
+            r32 vDotYAxis = Dot(v, yAxis);
+            r32 LengthSquareOfXAxis = LengthSquare(xAxis);
+            r32 LengthSquareOfYAxis = LengthSquare(yAxis);
 
-            // NOTE : Bit pattern for the BMP : AARRGGBB
-            r32 SourceR = ((*SourcePixel >> 16) & 0x000000ff) / 255.0f;
-            r32 SourceG = ((*SourcePixel >> 8) & 0x000000ff) / 255.0f;
-            r32 SourceB = ((*SourcePixel >> 0) & 0x000000ff) / 255.0f;
-            r32 SourceA = ((*SourcePixel >> 24) & 0x000000ff) / 255.0f;
+            if(!(vDotXAxis < 0 ||
+                vDotYAxis < 0 ||
+                vDotXAxis > LengthSquareOfXAxis||
+                vDotYAxis > LengthSquareOfYAxis))
+            {
+                
+                v2i textureCoord;
+                textureCoord.x = (vDotXAxis/LengthSquareOfXAxis)*pixels->width;
+                textureCoord.y = (vDotYAxis/LengthSquareOfYAxis)*pixels->height;
 
-            r32 ResultR = (1.0f-SourceA)*DestR + SourceA*SourceR;
-            r32 ResultG = (1.0f-SourceA)*DestG + SourceA*SourceG;
-            r32 ResultB = (1.0f-SourceA)*DestB + SourceA*SourceB;
+                u32 *Sourcepixel = (u32 *)pixels->memory + 
+                                    textureCoord.y*pixels->width +
+                                    textureCoord.x;
 
-            u32 ResultColor = ((u32)(ResultR*255.0f + 0.5f) << 16) |
-                                ((u32)(ResultG*255.0f + 0.5f) << 8) |
-                                ((u32)(ResultB*255.0f + 0.5f) << 0);
+                u32 DestA = ((*pixel >> 24) & 0x000000ff);
+                r32 R32DestA = DestA/255.0f;
+                u32 DestR = (*pixel >> 16) & 0x000000ff;
+                u32 DestG = (*pixel >> 8) & 0x000000ff;
+                u32 DestB = (*pixel >> 0) & 0x000000ff;
 
-            *Pixel++ = ResultColor;
-            SourcePixel++;
+                u32 SourceA = ((*Sourcepixel >> 24) & 0x000000ff);
+                r32 R32SourceA = SourceA/255.0f;
+                u32 SourceR = (*Sourcepixel >> 16) & 0x000000ff;
+                u32 SourceG = (*Sourcepixel >> 8) & 0x000000ff;
+                u32 SourceB = (*Sourcepixel >> 0) & 0x000000ff;
+
+                r32 InvSourceA = 1.0f - R32SourceA;
+                r32 ResultA = DestA*InvSourceA + SourceA; 
+                // NOTE : Source R, G, B are pre multiplied by the SourceA
+                // TODO : Overly Overlapped pixelss make wrong color value, might wanna do something with that?
+                r32 ResultR = DestR*InvSourceA + SourceR;
+                r32 ResultG = DestG*InvSourceA + SourceG;
+                r32 ResultB = DestB*InvSourceA + SourceB;
+
+                u32 ResultColor = (RoundR32ToUInt32(ResultA) << 24) |
+                                    ((RoundR32ToUInt32(ResultR) & 0x000000ff) << 16) |
+                                    ((RoundR32ToUInt32(ResultG) & 0x000000ff) << 8) |
+                                    ((RoundR32ToUInt32(ResultB) & 0x000000ff) << 0);
+
+                *pixel = ResultColor;
+
+            }
+#if 0
+            else
+            {
+                *pixel++ = 0xffff0000;
+            }
+#endif
+            pixel++;
         }
 
-        Row += Buffer->Pitch;
-        SourceRow += LoadedBMP->Pitch;
-    }
-}
 
-
-// NOTE : MacOS offscreen buffer is bottom-up 
-internal void
-DrawRectangle(game_offscreen_buffer *Buffer, v2 P, v2 Dim,
-            r32 R, r32 G, r32 B)
-{    
-    i32 MinX = RoundR32ToInt32(P.X);
-    i32 MinY = RoundR32ToInt32(P.Y);
-    i32 MaxX = RoundR32ToInt32(P.X + Dim.X);
-    i32 MaxY = RoundR32ToInt32(P.Y + Dim.Y);
-
-    i32 DEBUGMinX = RoundR32ToInt32(P.X);
-    i32 DEBUGMinY = RoundR32ToInt32(P.Y);
-    i32 DEBUGMaxX = RoundR32ToInt32(P.X + Dim.X);
-    i32 DEBUGMaxY = RoundR32ToInt32(P.Y + Dim.Y);
-
-    if(MinX < 0)
-    {
-        MinX = 0;
-    }
-    if(MaxX > Buffer->Width)
-    {
-        MaxX = Buffer->Width;
-    }
- 
-    if(MinY < 0)
-    {
-        MinY = 0;
-    }
-    if(MaxY > Buffer->Height)
-    {
-        MaxY = Buffer->Height;
-    }   
-
-    // NOTE : Bit pattern for the pixel : AARRGGBB
-    u32 Color = (u32)((RoundR32ToInt32(R * 255.0f) << 16) |
-                (RoundR32ToInt32(G * 255.0f) << 8) |
-                (RoundR32ToInt32(B * 255.0f) << 0));
-
-    u8 *Row = (u8 *)Buffer->Memory + 
-                    Buffer->Pitch*MinY + 
-                    Buffer->BytesPerPixel*MinX;
-    for(i32 Y = MinY;
-        Y < MaxY;
-        ++Y)
-    {
-        u32 *Pixel = (u32 *)Row;
-        for(i32 X = MinX;
-            X < MaxX;
-            ++X)
-        {
-            *Pixel++ = Color;
-        }
-
-        Row += Buffer->Pitch;
+        row += Buffer->pitch;
     }
 }
 
 internal void
-PushRect(render_group *RenderGroup, v2 P, v2 Dim, v3 Color)
+PushRect(render_group *RenderGroup, v3 p, v3 dim, v3 color, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
 {
-    u8 *Memory = PushSize(&RenderGroup->Arena, sizeof(render_element_header) + sizeof(render_element_rect));
-    render_element_header *Header = (render_element_header *)Memory;
-    render_element_rect *Element = (render_element_rect *)(Memory + sizeof(render_element_header));
+    u8 *Memory = PushSize(&RenderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_rect));
+    render_element_header *header = (render_element_header *)Memory;
+    render_element_rect *element = (render_element_rect *)(Memory + sizeof(render_element_header));
 
-    v2 PixelDim = RenderGroup->MetersToPixels*Dim;
-    v2 PixelP = RenderGroup->BufferHalfDim + RenderGroup->MetersToPixels*P - 0.5f*PixelDim;
+    v2 pixelDim = RenderGroup->metersToPixels*dim.xy;
+    v2 pixelP = RenderGroup->bufferHalfDim + RenderGroup->metersToPixels*p.xy - 0.5f*pixelDim;
 
-    Header->Type = RenderElementType_Rect;
-    Header->P = PixelP;
-    Element->Dim = PixelDim;
-    Element->Color = Color;
+    header->Type = RenderElementType_Rect;
+    header->xAxis = pixelDim.x*xAxis;
+    header->yAxis = pixelDim.y*yAxis;
+    v2 AdjustmentToMakeBMPCentered = 0.5f*pixelDim - (0.5f*header->xAxis + 0.5f*header->yAxis);
+    header->p = pixelP + AdjustmentToMakeBMPCentered;
 
-    RenderGroup->ElementCount++;
+    element->color = color;
+
+    RenderGroup->elementCount++;
 }
 
+// TODO : Allow xAxis and yAxis not to be perpendicular?
 internal void
-PushBMP(render_group *RenderGroup, debug_loaded_bmp *LoadedBMP, v2 P, v2 Dim)
+PushBMP(render_group *RenderGroup, pixel_buffer_32 *pixels, v3 p, v3 dim, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
 {
-    u8 *Memory = PushSize(&RenderGroup->Arena, sizeof(render_element_header) + sizeof(render_element_bmp));
-    render_element_header *Header = (render_element_header *)Memory;
-    render_element_bmp *Element = (render_element_bmp *)(Memory + sizeof(render_element_header));
+    u8 *Memory = PushSize(&RenderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_bmp));
+    render_element_header *header = (render_element_header *)Memory;
+    render_element_bmp *element = (render_element_bmp *)(Memory + sizeof(render_element_header));
 
-    v2 PixelDim = RenderGroup->MetersToPixels*Dim;
-    v2 PixelP = RenderGroup->BufferHalfDim + RenderGroup->MetersToPixels*P - 0.5f*PixelDim;
+    v2 pixelDim = RenderGroup->metersToPixels*dim.xy;
+    v2 pixelP = RenderGroup->bufferHalfDim + RenderGroup->metersToPixels*p.xy - 0.5f*pixelDim;
 
-    Header->Type = RenderElementType_BMP;
-    Header->P = PixelP;
-    Element->Dim = PixelDim;
+    header->Type = RenderElementType_BMP;
+    header->xAxis = pixelDim.x*xAxis;
+    header->yAxis = pixelDim.y*yAxis;
+    v2 AdjustmentToMakeBMPCentered = 0.5f*pixelDim - (0.5f*header->xAxis + 0.5f*header->yAxis);
+    header->p = pixelP + AdjustmentToMakeBMPCentered;
 
-    Element->LoadedBMP = *LoadedBMP;
+    element->pixels = *pixels;
+    element->alignment.x = (((r32)pixels->alignment.x/(r32)pixels->width)*pixelDim.x);
+    element->alignment.y = (((r32)pixels->alignment.y/(r32)pixels->height)*pixelDim.y);
 
-    RenderGroup->ElementCount++;
+    RenderGroup->elementCount++;
 }
 
 // TODO : Better buffer clearing function
 internal void 
-ClearBuffer(game_offscreen_buffer *Buffer)
+ClearBuffer(game_offscreen_buffer *Buffer, v3 color)
 {
-    u8 *FirstPixelOfRow = (u8 *)Buffer->Memory;
-    for(int Row = 0;
-        Row < Buffer->Height;
-        ++Row)
+    u32 C = (u32)((RoundR32ToUInt32(color.x*255.0f) << 16) | 
+                (RoundR32ToUInt32(color.y*255.0f) << 8) | 
+                (RoundR32ToUInt32(color.z*255.0f) << 0));
+
+    u8 *FirstpixelOfrow = (u8 *)Buffer->memory;
+    for(int row = 0;
+        row < Buffer->height;
+        ++row)
     {
-        u32 *Pixel = (u32 *)(FirstPixelOfRow);
+        u32 *pixel = (u32 *)(FirstpixelOfrow);
         for(int Column = 0;
-            Column < Buffer->Width;
+            Column < Buffer->width;
             ++Column)
         {
-            *Pixel++ = 0x00000000;
+            *pixel++ = C;
         }
 
-        FirstPixelOfRow += Buffer->Pitch;
+        FirstpixelOfrow += Buffer->pitch;
     }
 }
 
 internal void
-RenderRenderGroup(render_group *RenderGroup, game_offscreen_buffer *Buffer)
+RenderRenderGroup(render_group *RenderGroup, pixel_buffer_32 *pixels)
 {
-    ClearBuffer(Buffer);
-
-    u8 *Base = RenderGroup->Arena.Base;
+    u8 *Base = RenderGroup->renderMemory.base;
     for(u32 ElementIndex = 0;
-        ElementIndex < RenderGroup->ElementCount;
+        ElementIndex < RenderGroup->elementCount;
         ++ElementIndex)
     {
-        render_element_header *Header = (render_element_header *)Base;
-        Base += sizeof(*Header);
-        switch(Header->Type)
+        render_element_header *header = (render_element_header *)Base;
+        Base += sizeof(*header);
+        switch(header->Type)
         {
+#if 1
             case RenderElementType_Rect :
             {
-                render_element_rect *Element = (render_element_rect *)Base;
-                DrawRectangle(Buffer, Header->P, Element->Dim, 
-                                Element->Color.X, Element->Color.Y, Element->Color.Z);
-                Base += sizeof(*Element);
+                render_element_rect *element = (render_element_rect *)Base;
+                DrawRectangle(pixels, header->p, header->xAxis, header->yAxis,
+                                element->color.x, element->color.y, element->color.z);
+                Base += sizeof(*element);
             }break;
+#endif
 
             case RenderElementType_BMP :
             {
-                render_element_bmp *Element = (render_element_bmp *)Base;
-                DrawBMP(Buffer, &Element->LoadedBMP, 
+                render_element_bmp *element = (render_element_bmp *)Base;
+                DrawBMP(pixels, &element->pixels, 
                         // TODO : Bitmap resize based on the entity dim!!
-                        Header->P, V2(Element->LoadedBMP.Width, Element->LoadedBMP.Height),
-                        Element->LoadedBMP.Alignment);
-                Base += sizeof(*Element);
+                        header->p, header->xAxis, header->yAxis,
+                        element->alignment);
+                Base += sizeof(*element);
             }break;
         }
-
     }
+}
+
+#include <string.h>
+internal void
+DrawOffScreenBuffer(game_offscreen_buffer *OffscreenBuffer, pixel_buffer_32 *FinalpixelBuffer)
+{
+    Assert(OffscreenBuffer->width == FinalpixelBuffer->width &&
+            OffscreenBuffer->height == FinalpixelBuffer->height &&
+            OffscreenBuffer->bytesPerPixel == FinalpixelBuffer->bytesPerPixel)
+
+    memcpy(OffscreenBuffer->memory, FinalpixelBuffer->memory, FinalpixelBuffer->pitch*FinalpixelBuffer->height);
+}
+
+internal pixel_buffer_32
+MakeEmptyPixelBuffer32(u32 width, u32 height, v2 alignment = V2(0, 0))
+{
+    pixel_buffer_32 buffer = {};
+
+    buffer.width = width;
+    buffer.height = height;
+    buffer.bytesPerPixel = 4;
+    buffer.pitch = buffer.bytesPerPixel * buffer.width;
+
+    return buffer;
 }
 

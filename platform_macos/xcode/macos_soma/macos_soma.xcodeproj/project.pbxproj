@@ -20,6 +20,8 @@
 		B2CE8BF1265D045600B6D735 /* macos_support.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = macos_support.h; path = ../../../code/macos_support.h; sourceTree = "<group>"; };
 		B2CE8BF2265D045600B6D735 /* monsoon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon.cpp; path = ../../../code/monsoon.cpp; sourceTree = "<group>"; };
 		B2CE8BF3265D045600B6D735 /* monsoon_intrinsic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_intrinsic.h; path = ../../../code/monsoon_intrinsic.h; sourceTree = "<group>"; };
+		B2E4C0CB2676305E00E0AB1D /* monsoon_render.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monsoon_render.cpp; path = ../../../code/monsoon_render.cpp; sourceTree = "<group>"; };
+		B2E4C0CC2676305E00E0AB1D /* monsoon_render.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = monsoon_render.h; path = ../../../code/monsoon_render.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -33,12 +35,14 @@
 				B2CE8BEC265D045600B6D735 /* Makefile */,
 				B2CE8BF3265D045600B6D735 /* monsoon_intrinsic.h */,
 				B2CE8BEB265D045600B6D735 /* monsoon_platform_independent.h */,
-				B2CE8BF2265D045600B6D735 /* monsoon.cpp */,
 				B2864C80266B5A06001BC034 /* monsoon_world.cpp */,
 				B2864C81266B5A06001BC034 /* monsoon_world.h */,
 				B2864C82266B5A0C001BC034 /* monsoon_math.h */,
 				B2864C84266CC2AF001BC034 /* monsoon_sim_region.cpp */,
 				B2864C83266CC2AF001BC034 /* monsoon_sim_region.h */,
+				B2CE8BF2265D045600B6D735 /* monsoon.cpp */,
+				B2E4C0CB2676305E00E0AB1D /* monsoon_render.cpp */,
+				B2E4C0CC2676305E00E0AB1D /* monsoon_render.h */,
 			);
 			sourceTree = "<group>";
 		};

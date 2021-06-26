@@ -4,7 +4,7 @@
 /*
  * NOTE : Here is how I will construct the world chunk.
  * 1. 
- *  Chunk is not variable sized(at least for now). If it is, there is too much to think
+.XY *  Chunk is not variable sized(at least for now). If it is, there is too much to think
  *  how much the chunk size should vary, or what if the entity is not inside any of the chunk,
  *  should I make a new chunk(and also somehow know how big that chunk should be without interupting
  *  other chunks), or should I make any of the close chunk bigger...
@@ -28,14 +28,13 @@
 struct world_position
 {
     // NOTE : All chunks has same sizes and evenly distributed across the world.
-    u32 ChunkX;
-    u32 ChunkY;
-    u32 ChunkZ;
+    u32 chunkX;
+    u32 chunkY;
+    u32 chunkZ;
 
     // NOTE : This is relative to the center of the chunk
-    v2 P;
+    v2 p;
 };
-
 
 enum entity_type
 {
@@ -46,39 +45,39 @@ enum entity_type
 
 struct low_entity
 {
-    entity_type Type;
-    world_position WorldP;
+    entity_type type;
+    world_position worldP;
 
-    v2 dP;
-    v2 Dim;
+    v3 dP;
+    v3 dim;
 };
 
 struct low_entity_block
 {
     // TODO : What might be the optimal value for entity block?
     // TODO : Change this to be double-linked list?
-    low_entity *Entities[16];
-    u32 EntityCount;
+    low_entity *entities[16];
+    u32 entityCount;
 
-    low_entity_block *Next;
+    low_entity_block *next;
 };
 struct world_chunk
 {
-    low_entity_block EntityBlock;
+    low_entity_block entityBlock;
 
-    u32 ChunkX;
-    u32 ChunkY;
-    u32 ChunkZ;
+    u32 chunkX;
+    u32 chunkY;
+    u32 chunkZ;
 };
 
 struct world
 {
     // TODO : How many chunks are needed?
     // TODO : What should happen if we use all of the world chunks?
-    world_chunk WorldChunks[256];
-    v2 ChunkDim;
+    world_chunk worldChunks[256];
+    v2 chunkDim;
 
-    r32 TileSideInMeters;
+    r32 tileSideInMeters;
 };
 
 

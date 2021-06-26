@@ -3,4 +3,102 @@
    uuid = "5C6B7848-378A-4B05-82B8-DED261C68471"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A16B165C-C8F5-43E8-9EA3-285DADF8D9AB"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_sim_region.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "47"
+            endingLineNumber = "47"
+            landmarkName = "MoveEntity(SimRegion, Entity, ddP, Speed, dtPerFrame)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "A16B165C-C8F5-43E8-9EA3-285DADF8D9AB - 8c79ec735a643e51"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "47"
+                  endingLineNumber = "47"
+                  offsetFromSymbolStart = "240">
+               </Location>
+               <Location
+                  uuid = "A16B165C-C8F5-43E8-9EA3-285DADF8D9AB - 6d34c51d2f754cd9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "47"
+                  endingLineNumber = "47"
+                  offsetFromSymbolStart = "240">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "13656A57-D7A2-4B35-8AFB-5060F364321E"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_sim_region.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "43"
+            endingLineNumber = "43"
+            landmarkName = "MoveEntity(SimRegion, Entity, ddP, Speed, dtPerFrame)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "13656A57-D7A2-4B35-8AFB-5060F364321E - 8c79ec735a643e70"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "46"
+                  endingLineNumber = "46"
+                  offsetFromSymbolStart = "196">
+               </Location>
+               <Location
+                  uuid = "13656A57-D7A2-4B35-8AFB-5060F364321E - 6d34c51d2f754cf8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "46"
+                  endingLineNumber = "46"
+                  offsetFromSymbolStart = "196">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

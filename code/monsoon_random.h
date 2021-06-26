@@ -1016,7 +1016,7 @@ inline random_series
 Seed(u32 Value)
 {
     random_series Result = {};
-    Result.Index= Value;
+    Result.Index= Value%ArrayCount(RandomNumberTable);
 
     return Result;
 }

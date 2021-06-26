@@ -1,70 +1,26 @@
 #include "monsoon_sim_region.h"
 
 internal void
-StartSimRegion(world *World, sim_region *SimRegion, world_position Center, v2 HalfDim, v2 MaxEntityDelta)
+TestWall(r32 WallX, r32 WallhalfDimY, v2 WallNormal, 
+        r32 NewX, r32 OldX,  r32 NewY, r32 OldY,
+        r32 *tMin, b32 *Hit, v2 *HitWallNormal)
 {
-    SimRegion->EntityCount = 0;
-    SimRegion->Center = Center;
-    SimRegion->HalfDim = HalfDim + MaxEntityDelta;
+    r32 dX = NewX - OldX;
 
-    // IMPORTANT : NOTE : Sim region should NOT be bigger than the maximum movable length of
-    // the base(centered, most likely the player) entity. If the sim region somehow 
-    // was not bigger than the max length, it will clear all the entity located at 
-    // the sim region at the end of sim region.
-    world_position SimRegionLeftBottom = SimRegion->Center;
-    CanonicalizeWorldPos(World, &SimRegionLeftBottom, -SimRegion->HalfDim);
-
-    world_position SimRegionUpperRight = SimRegion->Center;
-    CanonicalizeWorldPos(World, &SimRegionUpperRight, SimRegion->HalfDim);
-
-    u32 MinChunkX = SimRegionLeftBottom.ChunkX;
-    u32 MinChunkY = SimRegionLeftBottom.ChunkY;
-    u32 OnePastMaxChunkX = SimRegionUpperRight.ChunkX + 1;
-    u32 OnePastMaxChunkY = SimRegionUpperRight.ChunkY + 1;
-    u32 MinChunkZ = 0;
-    u32 OnePastMaxChunkZ = 1;
-
-    u32 ChunkDiffX = OnePastMaxChunkX - MinChunkX;
-    u32 ChunkDiffY = OnePastMaxChunkY - MinChunkY;
-    u32 ChunkDiffZ = OnePastMaxChunkZ - MinChunkZ;
-
-    for(u32 ChunkZIndex = 0;
-        ChunkZIndex < ChunkDiffZ;
-        ++ChunkZIndex)
+    if(dX != 0.0f)
     {
-        u32 ChunkZ = MinChunkZ + ChunkZIndex;
-        for(u32 ChunkYIndex = 0;
-            ChunkYIndex < ChunkDiffY;
-            ++ChunkYIndex)
+        r32 tTest = (WallX - OldX)/dX;
+
+        if(tTest >= 0.0f && tTest < 1.0f)
         {
-            u32 ChunkY = MinChunkY + ChunkYIndex;
-            for(u32 ChunkXIndex = 0;
-                ChunkXIndex < ChunkDiffX;
-                ++ChunkXIndex)
+            if(tTest < *tMin)
             {
-                u32 ChunkX = MinChunkX + ChunkXIndex;
-                world_chunk *WorldChunk = GetWorldChunk(World, ChunkX, ChunkY, ChunkZ);
-                low_entity_block *EntityBlock = &WorldChunk->EntityBlock;
-                while(EntityBlock)
-                {               
-                    for(u32 EntityIndex = 0;
-                        EntityIndex < EntityBlock->EntityCount;
-                        ++EntityIndex)
-                    {
-                        low_entity *Entity = EntityBlock->Entities[EntityIndex];
-                        sim_entity *SimEntity = SimRegion->Entities + SimRegion->EntityCount++;
-
-                        v2 SimRegionRelP = WorldPositionDifferenceInMeter(World, &Entity->WorldP, &SimRegion->Center);
-                        SimEntity->P = SimRegionRelP;
-
-                        SimEntity->dP = Entity->dP;
-                        SimEntity->Dim = Entity->Dim;
-                        SimEntity->Type = Entity->Type;
-
-                        SimEntity->LowEntity = Entity;
-                    }
-
-                    EntityBlock = EntityBlock->Next;
+                r32 tY = OldY + tTest*(NewY - OldY);
+                if(tY > -WallhalfDimY && tY < WallhalfDimY)
+                {
+                    *Hit = true;
+                    *tMin = tTest;
+                    *HitWallNormal = WallNormal;
                 }
             }
         }
@@ -72,105 +28,252 @@ StartSimRegion(world *World, sim_region *SimRegion, world_position Center, v2 Ha
 }
 
 internal void
-ClearAllEntityBlocksInWorldChunk(world_chunk *WorldChunk)
+MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtPerFrame)
+{
+    r32 ddPLength = LengthSquare(ddP);
+    if(ddPLength > 1.0f)
+    {
+        ddP *= 1.0f/SquareRoot2(ddPLength);
+    }
+
+    ddP *= speed;
+    ddP -= 8.0f*entity->dP.xy;
+    /*
+     * NOTE :
+     * Position = 0.5f*a*dt*dt + previous frame v * dt + previous frame p
+     * Velocity = a*dt + v;
+    */   
+    v2 EntityDelta = 0.5f*Square(dtPerFrame)*ddP + 
+                    dtPerFrame*entity->dP.xy;
+    v2 RemainingEntityDelta = EntityDelta;
+    entity->dP.xy = dtPerFrame*ddP + entity->dP.xy;
+    r32 DistanceLeftSquare = LengthSquare(RemainingEntityDelta);
+
+    for(u32 CollisionIteration = 0;
+        CollisionIteration < 4;
+        ++CollisionIteration)
+    {
+        if(DistanceLeftSquare > 0.0f)
+        {
+            v2 NewEntityPos = entity->p.xy + RemainingEntityDelta;
+
+            r32 tMin = 1.0f;
+            v2 HitWallNormal = {};
+            b32 Hit = false;
+
+            for(u32 EntityIndex = 0;
+                EntityIndex < simRegion->entityCount;
+                ++EntityIndex)
+            {
+                sim_entity *testEntity = simRegion->entities + EntityIndex;
+                if(testEntity != entity)
+                {
+                    v2 MinkowskihalfDim = 0.5f*(testEntity->dim.xy + entity->dim.xy);
+                    v2 testEntityRelNewP = NewEntityPos - testEntity->p.xy;
+                    v2 testEntityRelOldP = entity->p.xy - testEntity->p.xy;
+
+                    // NOTE : Test against left wall
+                    TestWall(-MinkowskihalfDim.x, MinkowskihalfDim.y, V2(-1, 0), 
+                            testEntityRelNewP.x, testEntityRelOldP.x, testEntityRelNewP.y, testEntityRelOldP.y, 
+                            &tMin, &Hit, &HitWallNormal);
+
+                    // NOTE : Test against right wall
+                    TestWall(MinkowskihalfDim.x, MinkowskihalfDim.y, V2(1, 0), 
+                            testEntityRelNewP.x, testEntityRelOldP.x, testEntityRelNewP.y, testEntityRelOldP.y, 
+                            &tMin, &Hit, &HitWallNormal);
+
+                    // NOTE : Test against upper wall
+                    TestWall(MinkowskihalfDim.y, MinkowskihalfDim.x, V2(0, -1), 
+                            testEntityRelNewP.y, testEntityRelOldP.y, testEntityRelNewP.x, testEntityRelOldP.x, 
+                            &tMin, &Hit, &HitWallNormal);
+
+                    // NOTE : Test against bottom wall
+                    TestWall(-MinkowskihalfDim.y, MinkowskihalfDim.x, V2(0, 1), 
+                            testEntityRelNewP.y, testEntityRelOldP.y, testEntityRelNewP.x, testEntityRelOldP.x, 
+                            &tMin, &Hit, &HitWallNormal);
+                }
+            }
+
+            v2 EntityDeltaForThisIteration = RemainingEntityDelta;
+            v2 EntityDeltaLeftForThisIteration = V2(0, 0);
+            v2 OldRemainingEntityDelta = RemainingEntityDelta;
+
+            if(Hit)
+            {
+                // TODO : What to do with this epsilon?
+                r32 tEpsilon = 0.0001f;
+
+                EntityDeltaForThisIteration = (tMin - tEpsilon)*RemainingEntityDelta;
+
+                r32 EntityDeltaForThisIterationLengthSquare = LengthSquare(EntityDeltaForThisIteration);
+                if(EntityDeltaForThisIterationLengthSquare > DistanceLeftSquare)
+                {
+                    EntityDeltaForThisIteration *= SquareRoot2(DistanceLeftSquare/EntityDeltaForThisIterationLengthSquare);
+                }
+
+                v2 EntityDeltaLeftForThisIteration = RemainingEntityDelta - EntityDeltaForThisIteration;
+
+                entity->dP.xy = entity->dP.xy - 1.0f*Dot(entity->dP.xy, HitWallNormal)*HitWallNormal;
+
+                RemainingEntityDelta = EntityDeltaLeftForThisIteration - 1.0f*Dot(EntityDeltaLeftForThisIteration, HitWallNormal)*HitWallNormal;
+            }
+
+            entity->p.xy += EntityDeltaForThisIteration;
+
+            // TODO : Clean this code!
+            r32 LengthSquareMovedForThisIteration = LengthSquare(EntityDeltaForThisIteration);
+            r32 LengthSquareCanceledByWall = LengthSquare(EntityDeltaLeftForThisIteration - RemainingEntityDelta);
+            DistanceLeftSquare -= LengthSquareMovedForThisIteration + LengthSquareCanceledByWall;
+        }
+    }
+
+    //CanonicalizeWorldPos(world, &entity->worldP, EntityDelta);
+}
+
+
+internal void
+StartSimRegion(world *world, sim_region *simRegion, world_position center, v2 halfDim, v2 MaxEntityDelta)
+{
+    simRegion->entityCount = 0;
+    simRegion->center = center;
+    simRegion->halfDim.xy = halfDim + MaxEntityDelta;
+
+    // IMPORTANT : NOTE : Sim region should NOT be bigger than the maximum movable length of
+    // the base(centered, most likely the player) entity. If the sim region somehow 
+    // was not bigger than the max length, it will clear all the entity located at 
+    // the sim region at the end of sim region.
+    world_position simRegionLeftBottom = simRegion->center;
+    CanonicalizeWorldPos(world, &simRegionLeftBottom, -simRegion->halfDim.xy);
+
+    world_position simRegionUpperRight = simRegion->center;
+    CanonicalizeWorldPos(world, &simRegionUpperRight, simRegion->halfDim.xy);
+
+    u32 MinchunkX = simRegionLeftBottom.chunkX;
+    u32 MinchunkY = simRegionLeftBottom.chunkY;
+    u32 OnePastMaxchunkX = simRegionUpperRight.chunkX + 1;
+    u32 OnePastMaxchunkY = simRegionUpperRight.chunkY + 1;
+    u32 MinchunkZ = 0;
+    u32 OnePastMaxchunkZ = 1;
+
+    u32 ChunkDiffX = OnePastMaxchunkX - MinchunkX;
+    u32 ChunkDiffY = OnePastMaxchunkY - MinchunkY;
+    u32 ChunkDiffZ = OnePastMaxchunkZ - MinchunkZ;
+
+    for(u32 chunkZIndex = 0;
+        chunkZIndex < ChunkDiffZ;
+        ++chunkZIndex)
+    {
+        u32 chunkZ = MinchunkZ + chunkZIndex;
+        for(u32 chunkYIndex = 0;
+            chunkYIndex < ChunkDiffY;
+            ++chunkYIndex)
+        {
+            u32 chunkY = MinchunkY + chunkYIndex;
+            for(u32 chunkXIndex = 0;
+                chunkXIndex < ChunkDiffX;
+                ++chunkXIndex)
+            {
+                u32 chunkX = MinchunkX + chunkXIndex;
+                world_chunk *worldChunk = GetWorldChunk(world, chunkX, chunkY, chunkZ);
+                low_entity_block *entityBlock = &worldChunk->entityBlock;
+                while(entityBlock)
+                {               
+                    for(u32 EntityIndex = 0;
+                        EntityIndex < entityBlock->entityCount;
+                        ++EntityIndex)
+                    {
+                        low_entity *entity = entityBlock->entities[EntityIndex];
+                        sim_entity *simEntity = simRegion->entities + simRegion->entityCount++;
+
+                        v2 simRegionRelP = WorldPositionDifferenceInMeter(world, &entity->worldP, &simRegion->center);
+                        simEntity->p.xy = simRegionRelP;
+
+                        simEntity->dP.xy = entity->dP.xy;
+                        simEntity->dim = entity->dim;
+                        simEntity->type = entity->type;
+
+                        simEntity->lowEntity = entity;
+                    }
+
+                    entityBlock = entityBlock->next;
+                }
+            }
+        }
+    }
+}
+
+internal void
+ClearAllentityBlocksInworldChunk(world_chunk *worldChunk)
 {
     // NOTE : Set the entity count in all entity blocks to 0
-    low_entity_block *EntityBlock = &WorldChunk->EntityBlock;
-    while(EntityBlock)
+    low_entity_block *entityBlock = &worldChunk->entityBlock;
+    while(entityBlock)
     {               
-        EntityBlock->EntityCount = 0;
+        entityBlock->entityCount = 0;
 
-        EntityBlock = EntityBlock->Next;
+        entityBlock = entityBlock->next;
     }
 }
 
 internal void
-ClearAllEntityBlocksInSimRegion(sim_region *SimRegion, world *World)
+ClearAllentityBlocksInsimRegion(sim_region *simRegion, world *world)
 {
-    world_position SimRegionLeftBottom = SimRegion->Center;
-    CanonicalizeWorldPos(World, &SimRegionLeftBottom, -SimRegion->HalfDim);
+    world_position simRegionLeftBottom = simRegion->center;
+    CanonicalizeWorldPos(world, &simRegionLeftBottom, -simRegion->halfDim.xy);
 
-    world_position SimRegionUpperRight = SimRegion->Center;
-    CanonicalizeWorldPos(World, &SimRegionUpperRight, SimRegion->HalfDim);
+    world_position simRegionUpperRight = simRegion->center;
+    CanonicalizeWorldPos(world, &simRegionUpperRight, simRegion->halfDim.xy);
 
-    u32 MinChunkX = SimRegionLeftBottom.ChunkX;
-    u32 MinChunkY = SimRegionLeftBottom.ChunkY;
-    u32 OnePastMaxChunkX = SimRegionUpperRight.ChunkX + 1;
-    u32 OnePastMaxChunkY = SimRegionUpperRight.ChunkY + 1;
-    u32 MinChunkZ = 0;
-    u32 OnePastMaxChunkZ = 1;
+    u32 MinchunkX = simRegionLeftBottom.chunkX;
+    u32 MinchunkY = simRegionLeftBottom.chunkY;
+    u32 OnePastMaxchunkX = simRegionUpperRight.chunkX + 1;
+    u32 OnePastMaxchunkY = simRegionUpperRight.chunkY + 1;
+    u32 MinchunkZ = 0;
+    u32 OnePastMaxchunkZ = 1;
 
-    u32 ChunkDiffX = OnePastMaxChunkX - MinChunkX;
-    u32 ChunkDiffY = OnePastMaxChunkY - MinChunkY;
-    u32 ChunkDiffZ = OnePastMaxChunkZ - MinChunkZ;
+    u32 ChunkDiffX = OnePastMaxchunkX - MinchunkX;
+    u32 ChunkDiffY = OnePastMaxchunkY - MinchunkY;
+    u32 ChunkDiffZ = OnePastMaxchunkZ - MinchunkZ;
 
-    for(u32 ChunkZIndex = 0;
-        ChunkZIndex < ChunkDiffZ;
-        ++ChunkZIndex)
+    for(u32 chunkZIndex = 0;
+        chunkZIndex < ChunkDiffZ;
+        ++chunkZIndex)
     {
-        u32 ChunkZ = MinChunkZ + ChunkZIndex;
-        for(u32 ChunkYIndex = 0;
-            ChunkYIndex < ChunkDiffY;
-            ++ChunkYIndex)
+        u32 chunkZ = MinchunkZ + chunkZIndex;
+        for(u32 chunkYIndex = 0;
+            chunkYIndex < ChunkDiffY;
+            ++chunkYIndex)
         {
-            u32 ChunkY = MinChunkY + ChunkYIndex;
-            for(u32 ChunkXIndex = 0;
-                ChunkXIndex < ChunkDiffX;
-                ++ChunkXIndex)
+            u32 chunkY = MinchunkY + chunkYIndex;
+            for(u32 chunkXIndex = 0;
+                chunkXIndex < ChunkDiffX;
+                ++chunkXIndex)
             {
-                u32 ChunkX = MinChunkX + ChunkXIndex;
-                world_chunk *WorldChunk = GetWorldChunk(World, ChunkX, ChunkY, ChunkZ);
-                ClearAllEntityBlocksInWorldChunk(WorldChunk);
+                u32 chunkX = MinchunkX + chunkXIndex;
+                world_chunk *worldChunk = GetWorldChunk(world, chunkX, chunkY, chunkZ);
+                ClearAllentityBlocksInworldChunk(worldChunk);
             }
         }
     }
 }
 
 internal void
-PutEntityInsideWorldChunk(world_chunk *WorldChunk, memory_arena *Arena, low_entity *Entity)
+EndSimRegion(world *world, memory_arena *arena, sim_region *simRegion)
 {
-    low_entity_block *EntityBlock = 0;
-    low_entity_block *Search = &WorldChunk->EntityBlock;
-    while(!EntityBlock)
+    ClearAllentityBlocksInsimRegion(simRegion, world);
+    for(u32 simEntityIndex = 0;
+        simEntityIndex < simRegion->entityCount;
+        ++simEntityIndex)
     {
-        if(Search->EntityCount < ArrayCount(WorldChunk->EntityBlock.Entities))
-        {
-            EntityBlock = Search;
-        }
-        else
-        {
-            if(Search->Next)
-            {
-                Search = Search->Next;
-            }
-            else
-            {
-                EntityBlock = PushStruct(Arena, low_entity_block);
-                Search->Next = EntityBlock;
-            }
-        }
-    }
+        sim_entity *simEntity = simRegion->entities + simEntityIndex;
+        low_entity *entity = simEntity->lowEntity;
+        world_position NewworldPos = simRegion->center;
+        CanonicalizeWorldPos(world, &NewworldPos, simEntity->p.xy);
+        entity->worldP = NewworldPos;
+        entity->dP = simEntity->dP;
 
-    EntityBlock->Entities[EntityBlock->EntityCount++] = Entity; 
-}
-
-internal void
-EndSimRegion(world *World, memory_arena *Arena, sim_region *SimRegion)
-{
-    ClearAllEntityBlocksInSimRegion(SimRegion, World);
-    for(u32 SimEntityIndex = 0;
-        SimEntityIndex < SimRegion->EntityCount;
-        ++SimEntityIndex)
-    {
-         sim_entity *SimEntity = SimRegion->Entities + SimEntityIndex;
-        low_entity *Entity = SimEntity->LowEntity;
-        world_position NewWorldPos = SimRegion->Center;
-        CanonicalizeWorldPos(World, &NewWorldPos, SimEntity->P);
-        Entity->WorldP = NewWorldPos;
-        Entity->dP = SimEntity->dP;
-
-        world_chunk *WorldChunk = GetWorldChunk(World, NewWorldPos.ChunkX, NewWorldPos.ChunkY, NewWorldPos.ChunkZ);
-        PutEntityInsideWorldChunk(WorldChunk, Arena, Entity);
+        world_chunk *worldChunk = GetWorldChunk(world, NewworldPos.chunkX, NewworldPos.chunkY, NewworldPos.chunkZ);
+        PutEntityInsideWorldChunk(worldChunk, arena, entity);
     }
 }
 

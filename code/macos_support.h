@@ -3,12 +3,12 @@
 
 struct macos_offscreen_buffer
 {
-    u32 Width;
-    u32 Height;
-    u32 Pitch;
+    u32 width;
+    u32 height;
+    u32 pitch;
 
-    u32 BytesPerPixel;
-    void *Memory;
+    u32 bytesPerPixel;
+    void *memory;
 };
 
 struct macos_opengl_info

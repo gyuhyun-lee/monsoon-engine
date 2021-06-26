@@ -1,25 +1,35 @@
 #ifndef MONSOON_MATH_H
 #define MONSOON_MATH_H
 
+inline r32 Square(r32 Value)
+{
+    return Value*Value;
+}
+
+inline r32 LinearInterpolation(r32 Min, r32 t, r32 Max)
+{
+    return Min*(1.0f-t) + Max*t;
+}
+
 struct v2
 {
     union
     {
         struct 
         {
-            r32 X, Y;
+            r32 x, y;
         };
 
-        r32 E[2];
+        r32 e[2];
     };
 };
 
-v2 V2(r32 X, r32 Y)
+v2 V2(r32 x, r32 y)
 {
     v2 Result;
 
-    Result.X = X;
-    Result.Y = Y;
+    Result.x = x;
+    Result.y = y;
 
     return Result;
 }
@@ -28,8 +38,8 @@ v2 operator+(v2 A, v2 B)
 {
     v2 Result;
 
-    Result.X = A.X + B.X;
-    Result.Y = A.Y + B.Y;
+    Result.x = A.x + B.x;
+    Result.y = A.y + B.y;
 
     return Result;
 }
@@ -38,8 +48,8 @@ v2 operator-(v2 A, v2 B)
 {
     v2 Result;
 
-    Result.X = A.X - B.X;
-    Result.Y = A.Y - B.Y;
+    Result.x = A.x - B.x;
+    Result.y = A.y - B.y;
 
     return Result;
 }
@@ -48,24 +58,24 @@ v2 operator*(r32 Value, v2 A)
 {
     v2 Result;
 
-    Result.X = Value * A.X;
-    Result.Y = Value * A.Y;
+    Result.x = Value * A.x;
+    Result.y = Value * A.y;
 
     return Result;
 }
 
 v2 &operator+=(v2 &A, v2 B)
 {
-    A.X += B.X;
-    A.Y += B.Y;
+    A.x += B.x;
+    A.y += B.y;
 
     return A;
 }
 
 v2 &operator-=(v2 &A, v2 B)
 {
-    A.X -= B.X;
-    A.Y -= B.Y;
+    A.x -= B.x;
+    A.y -= B.y;
 
     return A;
 }
@@ -74,16 +84,16 @@ v2 operator-(v2 &A)
 {
     v2 Result = {};
 
-    Result.X = -A.X;
-    Result.Y = -A.Y;
+    Result.x = -A.x;
+    Result.y = -A.y;
 
     return Result;
 }
 
 v2 &operator*=(v2 &A, r32 Value)
 {
-    A.X *= Value;
-    A.Y *= Value;
+    A.x *= Value;
+    A.y *= Value;
 
     return A;
 }
@@ -92,26 +102,21 @@ v2 Hadamard(v2 A, v2 B)
 {
     v2 Result;
 
-    Result.X = A.X * B.X;
-    Result.Y = A.Y * B.Y;
+    Result.x = A.x * B.x;
+    Result.y = A.y * B.y;
 
     return Result;
 }
 
-r32 Square(r32 Value)
-{
-    return Value*Value;
-}
-
 r32 Dot(v2 A, v2 B)
 {
-    r32 Result = A.X*B.X + A.Y*B.Y;
+    r32 Result = A.x*B.x + A.y*B.y;
     return Result;
 }
 
 r32 LengthSquare(v2 A)
 {
-    return A.X * A.X + A.Y * A.Y;
+    return A.x * A.x + A.y * A.y;
 }
 
 r32 Length(v2 A)
@@ -133,19 +138,19 @@ struct v2u
     {
         struct 
         {
-            u32 X, Y;
+            u32 x, y;
         };
 
         u32 E[2];
     };
 };
 
-v2u V2u(u32 X, u32 Y)
+v2u V2u(u32 x, u32 y)
 {
     v2u Result;
 
-    Result.X = X;
-    Result.Y = Y;
+    Result.x = x;
+    Result.y = y;
 
     return Result;
 }
@@ -154,8 +159,8 @@ v2u operator+(v2u A, v2u B)
 {
     v2u Result;
 
-    Result.X = A.X + B.X;
-    Result.Y = A.Y + B.Y;
+    Result.x = A.x + B.x;
+    Result.y = A.y + B.y;
 
     return Result;
 }
@@ -164,8 +169,8 @@ v2u operator-(v2u A, v2u B)
 {
     v2u Result;
 
-    Result.X = A.X - B.X;
-    Result.Y = A.Y - B.Y;
+    Result.x = A.x - B.x;
+    Result.y = A.y - B.y;
 
     return Result;
 }
@@ -174,24 +179,24 @@ v2u operator*(u32 Value, v2u A)
 {
     v2u Result;
 
-    Result.X = Value * A.X;
-    Result.Y = Value * A.Y;
+    Result.x = Value * A.x;
+    Result.y = Value * A.y;
 
     return Result;
 }
 
 v2u &operator+=(v2u &A, v2u B)
 {
-    A.X += B.X;
-    A.Y += B.Y;
+    A.x += B.x;
+    A.y += B.y;
 
     return A;
 }
 
 v2u &operator-=(v2u &A, v2u B)
 {
-    A.X -= B.X;
-    A.Y -= B.Y;
+    A.x -= B.x;
+    A.y -= B.y;
 
     return A;
 }
@@ -200,16 +205,16 @@ v2u operator-(v2u &A)
 {
     v2u Result = {};
 
-    Result.X = -A.X;
-    Result.Y = -A.Y;
+    Result.x = -A.x;
+    Result.y = -A.y;
 
     return Result;
 }
 
 v2u &operator*=(v2u &A, u32 Value)
 {
-    A.X *= Value;
-    A.Y *= Value;
+    A.x *= Value;
+    A.y *= Value;
 
     return A;
 }
@@ -220,19 +225,19 @@ struct v2i
     {
         struct 
         {
-            i32 X, Y;
+            i32 x, y;
         };
 
         i32 E[2];
     };
 };
 
-v2i V2i(i32 X, i32 Y)
+v2i V2i(i32 x, i32 y)
 {
     v2i Result;
 
-    Result.X = X;
-    Result.Y = Y;
+    Result.x = x;
+    Result.y = y;
 
     return Result;
 }
@@ -241,8 +246,8 @@ v2i operator+(v2i A, v2i B)
 {
     v2i Result;
 
-    Result.X = A.X + B.X;
-    Result.Y = A.Y + B.Y;
+    Result.x = A.x + B.x;
+    Result.y = A.y + B.y;
 
     return Result;
 }
@@ -251,8 +256,8 @@ v2i operator-(v2i A, v2i B)
 {
     v2i Result;
 
-    Result.X = A.X - B.X;
-    Result.Y = A.Y - B.Y;
+    Result.x = A.x - B.x;
+    Result.y = A.y - B.y;
 
     return Result;
 }
@@ -261,24 +266,24 @@ v2i operator*(i32 Value, v2i A)
 {
     v2i Result;
 
-    Result.X = Value * A.X;
-    Result.Y = Value * A.Y;
+    Result.x = Value * A.x;
+    Result.y = Value * A.y;
 
     return Result;
 }
 
 v2i &operator+=(v2i &A, v2i B)
 {
-    A.X += B.X;
-    A.Y += B.Y;
+    A.x += B.x;
+    A.y += B.y;
 
     return A;
 }
 
 v2i &operator-=(v2i &A, v2i B)
 {
-    A.X -= B.X;
-    A.Y -= B.Y;
+    A.x -= B.x;
+    A.y -= B.y;
 
     return A;
 }
@@ -287,16 +292,16 @@ v2i operator-(v2i &A)
 {
     v2i Result = {};
 
-    Result.X = -A.X;
-    Result.Y = -A.Y;
+    Result.x = -A.x;
+    Result.y = -A.y;
 
     return Result;
 }
 
 v2i &operator*=(v2i &A, i32 Value)
 {
-    A.X *= Value;
-    A.Y *= Value;
+    A.x *= Value;
+    A.y *= Value;
 
     return A;
 }
@@ -307,7 +312,18 @@ struct v3
     {
         struct 
         {
-            r32 X, Y, Z;
+            r32 x, y, z;
+        };
+
+        struct
+        {
+            v2 xy;
+            r32 ignored0;
+        };
+        struct
+        {
+            r32 ignored1;
+            v2 yz;
         };
 
         r32 E[3];
@@ -315,13 +331,119 @@ struct v3
 };
 
 inline v3
-V3(r32 X, r32 Y, r32 Z)
+V3(r32 x, r32 y, r32 z)
 {
     v3 Result = {};
 
-    Result.X = X;
-    Result.Y = Y;
-    Result.Z = Z;
+    Result.x = x;
+    Result.y = y;
+    Result.z = z;
+
+    return Result;
+}
+
+v3 operator+(v3 A, v3 B)
+{
+    v3 Result;
+
+    Result.x = A.x + B.x;
+    Result.y = A.y + B.y;
+    Result.z = A.z + B.z;
+
+    return Result;
+}
+
+v3 operator-(v3 A, v3 B)
+{
+    v3 Result;
+
+    Result.x = A.x - B.x;
+    Result.y = A.y - B.y;
+    Result.z = A.z - B.z;
+
+    return Result;
+}
+
+v3 operator*(r32 Value, v3 A)
+{
+    v3 Result;
+
+    Result.x = Value * A.x;
+    Result.y = Value * A.y;
+    Result.z = Value * A.z;
+
+    return Result;
+}
+
+v3 &operator+=(v3 &A, v3 B)
+{
+    A.x += B.x;
+    A.y += B.y;
+    A.z += B.z;
+
+    return A;
+}
+
+v3 &operator-=(v3 &A, v3 B)
+{
+    A.x -= B.x;
+    A.y -= B.y;
+    A.z -= B.z;
+
+    return A;
+}
+
+v3 operator-(v3 &A)
+{
+    v3 Result = {};
+
+    Result.x = -A.x;
+    Result.y = -A.y;
+    Result.z = -A.z;
+
+    return Result;
+}
+
+v3 &operator*=(v3 &A, r32 Value)
+{
+    A.x *= Value;
+    A.y *= Value;
+    A.z *= Value;
+
+    return A;
+}
+
+v3 Hadamard(v3 A, v3 B)
+{
+    v3 Result;
+
+    Result.x = A.x * B.x;
+    Result.y = A.y * B.y;
+    Result.z = A.z * B.z;
+
+    return Result;
+}
+
+r32 Dot(v3 A, v3 B)
+{
+    r32 Result = A.x*B.x + A.y*B.y + A.z*B.z;
+    return Result;
+}
+
+r32 LengthSquare(v3 A)
+{
+    return A.x * A.x + A.y * A.y + A.z*A.z;
+}
+
+r32 Length(v3 A)
+{
+    return sqrt(LengthSquare(A));
+}
+
+v3 UnitLength(v3 A)
+{
+    v3 Result = A;
+    Result *= 1.0f/Length(A);
 
     return Result;
 }
@@ -332,7 +454,7 @@ struct v3u
     {
         struct 
         {
-            u32 X, Y, Z;
+            u32 x, y, z;
         };
 
         u32 E[3];

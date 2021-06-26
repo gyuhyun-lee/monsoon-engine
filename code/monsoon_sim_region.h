@@ -3,23 +3,23 @@
 
 struct sim_entity
 {
-    low_entity *LowEntity;
+    low_entity *lowEntity;
 
-    v2 P;
+    v3 p;
     // TODO : These values can be accessed through the low entity, too. 
     // might wanna clean this?
-    v2 dP;
-    v2 Dim;
-    entity_type Type;
+    v3 dP;
+    v3 dim;
+    entity_type type;
 };
 
 struct sim_region
 {
-    sim_entity Entities[1024];
-    u32 EntityCount;
+    sim_entity entities[1024];
+    u32 entityCount;
 
-    world_position Center;
-    v2 HalfDim;
+    world_position center;
+    v3 halfDim;
 };
 
 #endif

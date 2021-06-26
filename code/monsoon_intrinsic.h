@@ -3,11 +3,17 @@
 
 #include <math.h> // TODO : Get rid math.h
 
+inline u32
+RoundR32ToUInt32(r32 Value)
+{
+    return (u32)roundf(Value);
+}
+
 inline i32
 RoundR32ToInt32(r32 Value)
 {
     // TODO : Intrinsic
-    return (i32)roundf(Value);
+        return (i32)roundf(Value);
 }
 
 inline i32

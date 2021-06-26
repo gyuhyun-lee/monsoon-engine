@@ -1,31 +1,37 @@
 #ifndef MONSOON_H
 #define MONSOON_H
 
+
 struct game_state
 {
-    world World;
-    i32 XOffset;
-    i32 YOffset;
+    // TODO : Instead of putting world inside gameState, use world arena!
+    world world;
 
-    world_position CameraPos;
+    world_position cameraPos;
 
-    low_entity Entities[10000];
-    u32 EntityCount;
+    low_entity entities[10000];
+    u32 entityCount;
 
     // TODO : Get rid of this player pointer
-    low_entity *Player;
-    v2 dPlayer;
+    low_entity *player;
 
-    debug_loaded_bmp HeadBMP;
-    debug_loaded_bmp CapeBMP;
-    debug_loaded_bmp TorsoBMP;
+    pixel_buffer_32 headBMP;
+    pixel_buffer_32 capeBMP;
+    pixel_buffer_32 torsoBMP;
 
-    debug_loaded_bmp RockBMP[4];
-    debug_loaded_bmp GrassBMP[2];
+    pixel_buffer_32 rockBMP[4];
+    pixel_buffer_32 grassBMP[2];
+    pixel_buffer_32 groundBMP[4];
 
-    memory_arena WorldArena;
+    // IMPORTANT : NOTE : memory arenas' temporary memory should be cleared to zero
+    // at the end of the loop
+    memory_arena worldArena;
+    memory_arena renderArena;
+    pixel_buffer_32 backgroundBuffer;
     
-    b32 IsInitialized;
+    r32 theta;
+
+    b32 isInitialized;
 };
 
 #endif

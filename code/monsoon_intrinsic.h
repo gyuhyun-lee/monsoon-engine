@@ -13,7 +13,7 @@ inline i32
 RoundR32ToInt32(r32 Value)
 {
     // TODO : Intrinsic
-        return (i32)roundf(Value);
+    return (i32)roundf(Value);
 }
 
 inline i32
@@ -21,6 +21,13 @@ TruncateR32ToInt32(r32 Value)
 {
     // TODO : Intrinsic
     return (i32)Value;
+}
+
+inline u32
+TruncateR32ToUInt32(r32 Value)
+{
+    // TODO : Intrinsic
+    return (u32)Value;
 }
 
 inline i32

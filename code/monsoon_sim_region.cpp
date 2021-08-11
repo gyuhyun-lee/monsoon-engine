@@ -61,6 +61,7 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
             v2 HitWallNormal = {};
             b32 Hit = false;
 
+#if 0
             for(u32 EntityIndex = 0;
                 EntityIndex < simRegion->entityCount;
                 ++EntityIndex)
@@ -93,6 +94,7 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
                             &tMin, &Hit, &HitWallNormal);
                 }
             }
+#endif
 
             v2 EntityDeltaForThisIteration = RemainingEntityDelta;
             v2 EntityDeltaLeftForThisIteration = V2(0, 0);

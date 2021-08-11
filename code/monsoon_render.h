@@ -18,11 +18,18 @@ struct pixel_buffer_32
     u32 *memory;
 };
 
+struct environment_map
+{
+    v3 P; // TODO: Maybe we should store a world position
+    v2 dim;
+    pixel_buffer_32 LOD;
+};
+
 struct debug_loaded_bmp
 {
     game_offscreen_buffer BMP;
-
     v2 Alignment;
+
 };
 
 enum render_element_type
@@ -51,6 +58,9 @@ struct render_element_bmp
     // Maybe store a pointer to the memory_loaded asset?
     pixel_buffer_32 pixels;
     v2 alignment;
+
+    environment_map *envMaps;
+    pixel_buffer_32 *normalMap;
 };
 
 struct render_group

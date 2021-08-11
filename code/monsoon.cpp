@@ -1,3 +1,6 @@
+/*
+ * Monsoon Engine is a 3D engine built by Joon Lee.
+ */
 #include "monsoon_platform_independent.h"
 #include "monsoon_intrinsic.h"
 #include "monsoon_random.h"
@@ -9,6 +12,49 @@
 
 #include "monsoon.h"
 #include <stdio.h>
+
+internal void
+MakeCheckerBoard(pixel_buffer_32 *LOD, v4 color)
+{
+    color.rgb *= color.a;
+    u32 c = (u32)((RoundR32ToInt32(color.a * 255.0f) << 24) |
+                    (RoundR32ToInt32(color.r * 255.0f) << 16) |
+                    (RoundR32ToInt32(color.g * 255.0f) << 8) |
+                    (RoundR32ToInt32(color.b * 255.0f) << 0));
+
+    b32 checkBoardIsEmpty = false;
+    u8 *row = (u8 *)LOD->memory;
+    u32 checkBoardY = 0;
+    for(u32 y = 0;
+        y < LOD->height;
+        ++y)
+    {
+        u32 checkBoardX = 0;
+        u32 *pixel = (u32 *)row;
+        for(u32 x = 0;
+            x < LOD->width;
+            ++x)
+        {
+            *pixel++ = checkBoardIsEmpty ? 0xff111111 : c;
+
+            checkBoardX++;
+            if(checkBoardX == 16)
+            {
+                checkBoardX = 0;
+                checkBoardIsEmpty = !checkBoardIsEmpty;
+            }
+        }
+        checkBoardY++;
+        if(checkBoardY == 16)
+        {
+            checkBoardY = 0;
+            checkBoardIsEmpty = !checkBoardIsEmpty;
+        }
+
+        row += LOD->pitch;
+    }
+
+}
 
 /*
  * TODO : 
@@ -48,6 +94,7 @@ DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName)
 {
     // TODO : Currently only supports bmp with compression = 3
     pixel_buffer_32 Result = {};
+
     debug_platform_read_file_result File = ReadEntireFile(FileName);
     debug_bmp_file_header *Header = (debug_bmp_file_header *)File.memory;
     Assert(Header->Compression == 3);
@@ -124,7 +171,7 @@ AddPlayerentity(game_state *state, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, v3 
 internal void
 MakeBackground(game_state *state, pixel_buffer_32 *buffer)
 {
-    ClearPixelBuffer(buffer, 0, 0, 0);
+    ClearPixelBuffer(buffer, V4(0, 0, 0, 0));
 
     u32 GroundCount = 500;
     u32 RockCount = 100;
@@ -543,6 +590,10 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             }
         }
 
+        state->treeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/tree00.bmp");
+
+        state->sampleBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/sample.bmp");
+
         state->headBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_head.bmp");
         state->headBMP.alignment = V2(48, 40);
         state->torsoBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_torso.bmp");
@@ -579,7 +630,24 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         state->backgroundBuffer.bytesPerPixel = 4;
         state->backgroundBuffer.pitch = state->backgroundBuffer.width*state->backgroundBuffer.bytesPerPixel;
         state->backgroundBuffer.memory = (u32 *)PushSize(&state->renderArena, state->backgroundBuffer.pitch*state->backgroundBuffer.height);
+
+        environment_map *topEnvMap = state->envMaps + 2;
+        environment_map *middleEnvMap = state->envMaps + 1;
+        environment_map *bottomEnvMap = state->envMaps;
+        topEnvMap->LOD = MakeEmptyPixelBuffer32(&state->renderArena, 512, 256);
+        middleEnvMap->LOD = MakeEmptyPixelBuffer32(&state->renderArena, topEnvMap->LOD.width, topEnvMap->LOD.height);
+        bottomEnvMap->LOD = MakeEmptyPixelBuffer32(&state->renderArena, topEnvMap->LOD.width, topEnvMap->LOD.height);
+
+        MakeCheckerBoard(&topEnvMap->LOD, V4(1, 0, 0, 1));
+        MakeCheckerBoard(&middleEnvMap->LOD, V4(0, 1, 0, 1));
+        MakeCheckerBoard(&bottomEnvMap->LOD, V4(0, 0, 1, 1));
+
+        state->testDiffuse = MakeEmptyPixelBuffer32(&state->renderArena, 256, 256, V2(0, 0), 
+                                                    V4(0.2f, 0.2f, 0.2f, 1));
+        state->sphereNormalMap = MakeSphereNormalMap(&state->renderArena, state->testDiffuse.width, state->testDiffuse.height, 1.0f);
         //MakeBackground(state, &state->backgroundBuffer);
+        //
+        state->finalBuffer = MakeEmptyPixelBuffer32(&state->renderArena, offscreenBuffer->width, offscreenBuffer->height);
 
         state->isInitialized = true;
     }
@@ -668,7 +736,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         playerSpeed = 150.f;
     }
 
-    state->cameraPos = state->player->worldP;
+    //state->cameraPos = state->player->worldP;
     sim_region simRegion = {};
     // TODO : Accurate max entity delta for the sim region!
     StartSimRegion(world, &simRegion, state->cameraPos, world->chunkDim, V2(10, 10));
@@ -691,9 +759,9 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     render_group renderGroup = {};
     // TODO : How can I keep track of used memory without explicitly mentioning it?
     renderGroup.renderMemory = StartTemporaryMemory(&state->renderArena, Megabytes(16));
-    renderGroup.metersToPixels = (r32)Buffer->width/((TILE_COUNT_X+1)*world->tileSideInMeters);
+    renderGroup.metersToPixels = (r32)offscreenBuffer->width/((TILE_COUNT_X+1)*world->tileSideInMeters);
     //renderGroup.MetersToPixels = 10;
-    renderGroup.bufferHalfDim = 0.5f*V2(Buffer->width, Buffer->height);
+    renderGroup.bufferHalfDim = 0.5f*V2(offscreenBuffer->width, offscreenBuffer->height);
 
     for(u32 entityIndex = 0;
         entityIndex < simRegion.entityCount;
@@ -710,21 +778,28 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
             case EntityType_Player: 
             {
-                v2 xAxis = V2(Cos(state->theta), Sin(state->theta));
-                v2 yAxis = V2(-Sin(state->theta), Cos(state->theta));
-                PushRect(&renderGroup, entity->p, entity->dim, V3(0.0f, 0.8f, 1.0f));
-                PushBMP(&renderGroup, &state->headBMP, entity->p, 1*entity->dim, xAxis, yAxis);
-                PushBMP(&renderGroup, &state->torsoBMP, entity->p, 1*entity->dim, xAxis, yAxis);
-                PushBMP(&renderGroup, &state->capeBMP, entity->p, 1*entity->dim, xAxis, yAxis);
+                r32 cos = Cos(state->theta);
+                r32 sin = Sin(state->theta);
+                v2 xAxis = V2(cos, sin);
+                v2 yAxis = V2(-sin, cos);
+
+                v3 bitmapDimInMeter = V3(state->testDiffuse.width/renderGroup.metersToPixels, 
+                                        state->testDiffuse.height/renderGroup.metersToPixels,
+                                        0);
+                PushBMP(&renderGroup, &state->testDiffuse, entity->p + 1.0f*V3(cos, 0, 0), V3(10, 10, 1),
+                        xAxis, yAxis,
+                        &state->sphereNormalMap, state->envMaps);
+                /*
+                PushBMP(&renderGroup, &state->headBMP, entity->p + 1.0f*V3(Cos(state->theta), 0, 0), bitmapDimInMeter,
+                        V2(1, 0), V2(0, 1),
+                        &state->sphereNormalMap, state->envMaps);
+                        */
             }break;
         }
     }
 
     EndSimRegion(world, &state->worldArena, &simRegion);
-    pixel_buffer_32 finalBuffer = MakeEmptyPixelBuffer32(Buffer->width, Buffer->height);
-    temporary_memory BufferTemporaryMemory = StartTemporaryMemory(&state->renderArena, finalBuffer.height*finalBuffer.pitch);
-    finalBuffer.memory = (u32 *)BufferTemporaryMemory.base;
-    ClearPixelBuffer(&finalBuffer, 0.6, 0.6, 0.6);
+    ClearPixelBuffer(&state->finalBuffer, V4(0.5f, 0.5f, 0.5f, 1));
 
 #if 0
     // NOTE : Backgrounds are not affected by the MetersToPixels value. 
@@ -742,14 +817,21 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     DrawBMP(&finalBuffer, &state->backgroundBuffer, BackgroundP + V2(-state->backgroundBuffer.width, state->backgroundBuffer.height), V2(0, 0));
 #endif
 
-    RenderRenderGroup(&renderGroup, &finalBuffer);
+    RenderRenderGroup(&renderGroup, &state->finalBuffer);
 
-    DrawOffScreenBuffer(Buffer, &finalBuffer);
+    // NOTE : Test code for normal maps
+    DrawBMPSimple(&state->finalBuffer, &state->envMaps[2].LOD,
+            V2(50, 800), V2(state->envMaps[2].LOD.width, state->envMaps[2].LOD.height));
+    DrawBMPSimple(&state->finalBuffer, &state->envMaps[1].LOD,
+            V2(50, 500), V2(state->envMaps[1].LOD.width, state->envMaps[1].LOD.height));
+    DrawBMPSimple(&state->finalBuffer, &state->envMaps[0].LOD,
+            V2(50, 200), V2(state->envMaps[0].LOD.width, state->envMaps[0].LOD.height));
 
-    state->theta += 0.01f;
+    DrawOffScreenBuffer(offscreenBuffer, &state->finalBuffer);
+
+    state->theta += 0.05f;
 
     // NOTE : Temporary memories should all be cleared.
-    EndTemporaryMemory(BufferTemporaryMemory);
     EndTemporaryMemory(renderGroup.renderMemory);
     CheckMemoryArenaTemporaryMemory(&state->renderArena);
     CheckMemoryArenaTemporaryMemory(&state->worldArena);

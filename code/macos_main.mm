@@ -9,26 +9,23 @@
     input recording
 */
 
-#include "monsoon_platform_independent.h"
-#include "monsoon.cpp"
-
 // NOTE : Cocoa.h is already using internal.. so I need to do this :(
 #undef internal 
 #include <Cocoa/Cocoa.h> // APPKIT
-#define internal static
-
+#include <mach/mach_time.h> // mach_absolute_time
 #include <stdio.h> // printf for debugging purpose
 #include <sys/stat.h>
-#include <mach/mach_time.h> // mach_absolute_time
 #include <OpenGL/gl.h> // Every opengl related functions
 #include <dlfcn.h>  // dlopen, dlsym for loading dylibs
-
 #include <IOKit/hid/IOHIDLib.h> //IOHIDManager, IOHIDElement
 #include <AudioUnit/AudioUnit.h> 
 
+#include "monsoon_platform_independent.h"
+#include "monsoon.cpp"
 #include "macos_keycode.h"
 #include "macos_support.cpp"
 
+#define internal static
 #define MACOS_CALLBACK static
 
 global_variable b32 isGamerunning;

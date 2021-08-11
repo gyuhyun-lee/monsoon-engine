@@ -166,7 +166,7 @@ struct game_platform_api
     debug_free_file_memory *DEBUGFreeFileMemory;
 };
 
-#define GAME_UPDATE_AND_RENDER(name) void (name)(game_offscreen_buffer *Buffer, game_memory *Memory, game_input_raw *RawInput, game_platform_api *PlatformAPI, r32 dtPerFrame)
+#define GAME_UPDATE_AND_RENDER(name) void (name)(game_offscreen_buffer *offscreenBuffer, game_memory *Memory, game_input_raw *RawInput, game_platform_api *PlatformAPI, r32 dtPerFrame)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub){}
 

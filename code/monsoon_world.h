@@ -25,6 +25,7 @@
 // is the center of the Cartesian coordinate system.
 // left bottom corner of the tile with AbsTilePos (0, 0, 0) 
 // is also the center of the Cartesian coordinate system.
+// Also, tile (0, 0, 0)'s left bottom corner matches the left bottom corner of the chunk
 struct world_position
 {
     // NOTE : All chunks has same sizes and evenly distributed across the world.
@@ -33,7 +34,7 @@ struct world_position
     u32 chunkZ;
 
     // NOTE : This is relative to the center of the chunk
-    v2 p;
+    v3 p;
 };
 
 enum entity_type
@@ -75,7 +76,7 @@ struct world
     // TODO : How many chunks are needed?
     // TODO : What should happen if we use all of the world chunks?
     world_chunk worldChunks[256];
-    v2 chunkDim;
+    v3 chunkDim;
 
     r32 tileSideInMeters;
 };

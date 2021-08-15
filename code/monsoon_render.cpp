@@ -153,9 +153,8 @@ BilinearBlend(v4 A, v4 B, v4 C, v4 D, r32 xt, r32 yt)
 
 }
 
-
 internal void
-ClearPixelBuffer(pixel_buffer_32 *buffer, v4 color = V4(0, 0, 0, 0))
+ClearPixelBuffer32(pixel_buffer_32 *buffer, v4 color = V4(0, 0, 0, 0))
 {
     color.rgb *= color.a;
     u32 c = (u32)((RoundR32ToInt32(color.a * 255.0f) << 24) |
@@ -183,8 +182,7 @@ ClearPixelBuffer(pixel_buffer_32 *buffer, v4 color = V4(0, 0, 0, 0))
 
 // NOTE : MacOS offscreen buffer is bottom-up 
 internal void
-DrawRectangle(pixel_buffer_32 *buffer, v2 p, v2 xAxis, v2 yAxis,
-            r32 R, r32 G, r32 B, r32 A = 1)
+DrawRectangle(pixel_buffer_32 *buffer, v2 p, v2 xAxis, v2 yAxis, v4 color)
 {    
     v2 p0 = p;
     v2 p1 = p + xAxis;
@@ -215,10 +213,10 @@ DrawRectangle(pixel_buffer_32 *buffer, v2 p, v2 xAxis, v2 yAxis,
 
     // NOTE : Bit pattern for the pixel : AARRGGBB
     //
-    u32 color = (u32)((RoundR32ToInt32(A * 255.0f) << 24) |
-                    (RoundR32ToInt32(R * 255.0f) << 16) |
-                    (RoundR32ToInt32(G * 255.0f) << 8) |
-                    (RoundR32ToInt32(B * 255.0f) << 0));
+    u32 color32 = (u32)((RoundR32ToInt32(color.a * 255.0f) << 24) |
+                    (RoundR32ToInt32(color.r * 255.0f) << 16) |
+                    (RoundR32ToInt32(color.g * 255.0f) << 8) |
+                    (RoundR32ToInt32(color.b * 255.0f) << 0));
 
     u8 *row = (u8 *)buffer->memory + 
                     buffer->pitch*minY + 
@@ -243,40 +241,66 @@ DrawRectangle(pixel_buffer_32 *buffer, v2 p, v2 xAxis, v2 yAxis,
                 vDotXAxis > LengthSquareOfXAxis||
                 vDotYAxis > LengthSquareOfYAxis))
             {
-                *pixel++ = color;
+                *pixel++ = color32;
             }
         }
         row += buffer->pitch;
     }
 }
 
+// TODO : A lot of mangling of pixel - meter here, 
+// maybe we can clear this by pre-computing the stuff outside the rendering loop
+// This also makes much more sense for multi-light reflections, where the light
+// can bounce multiple times
 // NOTE : This will produce 0 to 1 linear value
 internal v4
-SampleFromEnvironmentMap(environment_map *envMap, v3 reflectionVector, v2 screenSpaceUV)
+SampleFromEnvironmentMap(environment_map *envMap, 
+                        v2 pixelP, v2 bitmapDim,
+                        v3 reflectionVector, r32 yDiffInMeter, r32 metersToPixels)
 {
     v4 result = {};
 
+    r32 pixelsToMeters = 1.0f/metersToPixels;
+    v2 pixelPInMeters = pixelsToMeters*pixelP;
+
     // TODO : Support for multiple LODs based on the roughness of the normal map
     pixel_buffer_32 *LOD = &envMap->LOD;
+    r32 widthOverHeight = (r32)LOD->width/(r32)LOD->height;
 
-#if 1
-    r32 diffInY = 0.02f;
-    r32 envMapX = (diffInY/reflectionVector.y) * reflectionVector.x + screenSpaceUV.x;
-    r32 envMapZ = (diffInY/reflectionVector.y) * reflectionVector.z + screenSpaceUV.y;
+    // TODO : For now, the origin of the environment map is always equal to the bitmap
+    // that we are using. environment map really should be placed anywhere in the world!
+    v3 envP = V3(0, yDiffInMeter, 0);
+    v3 envHalfDim = 20*V3(widthOverHeight, 0, 1);
 
-    v2 envTexelP = NonEdgedTextureCoordForBilinearSample(V2(Clamp01(envMapX), Clamp01(envMapZ)), LOD->width, LOD->height);
-#else
+    r32 yDiffInPixels = envP.y*metersToPixels;
 
-    v2 envTexelP = NonEdgedTextureCoordForBilinearSample(V2(screenSpaceUV.x, screenSpaceUV.y), LOD->width, LOD->height);
+    // TODO : Somehow, my pixel p is wrong!!
+    r32 castedX = (envP.y/reflectionVector.y) * reflectionVector.x; //+ pixelPInMeters.x;
+    r32 castedZ = (envP.y/reflectionVector.y) * reflectionVector.z; //+ pixelPInMeters.y;
+
+    if(castedX >= envP.x-envHalfDim.x && castedX < envP.x+envHalfDim.x &&
+       castedZ >= envP.z-envHalfDim.z && castedZ < envP.x+envHalfDim.z)
+    {
+        r32 envMapX = (castedX - (envP.x - envHalfDim.x))/(2.0f*envHalfDim.x);
+        r32 envMapZ = (castedZ - (envP.z - envHalfDim.z))/(2.0f*envHalfDim.z);
+
+        v2 envTexelP = NonEdgedTextureCoordForBilinearSample(V2(Clamp01(envMapX), Clamp01(envMapZ)), LOD->width, LOD->height);
+
+        bilinear_sampling_result envMapSamplingResult = BilinearSample(LOD, envTexelP);
+        result = BilinearBlend(envMapSamplingResult.A,
+                                envMapSamplingResult.B,
+                                envMapSamplingResult.C,
+                                envMapSamplingResult.D,
+                                envMapSamplingResult.linearXt,
+                                envMapSamplingResult.linearYt);
+
+#if 0
+        u32 *texelPtr = (u32 *)LOD->memory + 
+                        (u32)envTexelP.y*LOD->width + 
+                        (u32)envTexelP.x; 
+        *texelPtr = 0x99ffffff;
 #endif
-
-    bilinear_sampling_result envMapSamplingResult = BilinearSample(LOD, envTexelP);
-    result = BilinearBlend(envMapSamplingResult.A,
-                            envMapSamplingResult.B,
-                            envMapSamplingResult.C,
-                            envMapSamplingResult.D,
-                            envMapSamplingResult.linearXt,
-                            envMapSamplingResult.linearYt);
+    }
 
     return result;
 }
@@ -285,10 +309,10 @@ SampleFromEnvironmentMap(environment_map *envMap, v3 reflectionVector, v2 screen
 // NOTE : This is a simple function that just draws a fixed-sixed bitmap
 // in certain position
 internal void
-DrawBMPSimple(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
+DrawBMPSimple(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             v2 p, v2 dim)
 {
-    Assert(pixels);
+    Assert(destBuffer && sourceBuffer);
 
     // TODO : Do we even need this alignment value?
     // because we always starts at p - halfDim to p + halfdim, and
@@ -313,27 +337,27 @@ DrawBMPSimple(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
         sourceOffsetX = -minX;
         minX = 0;
     }
-    if(maxX > Buffer->width)
+    if(maxX > destBuffer->width)
     {
-        maxX = Buffer->width;
+        maxX = destBuffer->width;
     }
     if(minY < 0)
     {
         sourceOffsetY = -minY;
         minY = 0;
     }
-    if(maxY > Buffer->height)
+    if(maxY > destBuffer->height)
     {
-        maxY = Buffer->height;
+        maxY = destBuffer->height;
     }   
 
-    u8 *source = (u8 *)pixels->memory + 
-                    pixels->pitch*sourceOffsetY + 
-                    pixels->bytesPerPixel*sourceOffsetX;
+    u8 *source = (u8 *)sourceBuffer->memory + 
+                    sourceBuffer->pitch*sourceOffsetY + 
+                    sourceBuffer->bytesPerPixel*sourceOffsetX;
 
-    u8 *row = (u8 *)Buffer->memory + 
-                    Buffer->pitch*minY + 
-                    Buffer->bytesPerPixel*minX;
+    u8 *row = (u8 *)destBuffer->memory + 
+                    destBuffer->pitch*minY + 
+                    destBuffer->bytesPerPixel*minX;
     for(i32 y = minY;
         y < maxY;
         ++y)
@@ -347,8 +371,8 @@ DrawBMPSimple(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
             *pixel++ = *sourcePixel++;
         }
 
-        source += pixels->pitch;
-        row += Buffer->pitch;
+        source += sourceBuffer->pitch;
+        row += destBuffer->pitch;
     }
 }
 
@@ -357,20 +381,28 @@ DrawBMPSimple(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
 // only the alignment can be used to adjust the bmp drawing position.
 // NOTE : p and the two axises are in pixel!
 internal void
-DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
-        v2 p, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1), v2 alignment = V2(0, 0),
-        pixel_buffer_32 *normalMap = 0, environment_map *envMaps = 0)
+DrawBMP(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
+        v2 p, v4 color = V4(1, 1, 1, 1), v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1), v2 alignment = V2(0, 0),
+        pixel_buffer_32 *normalMap = 0, environment_map *envMaps = 0, r32 metersToPixels = 0.0f)
 {
+    color.rgb *= color.a;
+
     r32 lengthOfXAxis = Length(xAxis);
     r32 lengthOfYAxis = Length(yAxis);
     r32 lengthOfXAxisOverYAxis = lengthOfXAxis/lengthOfYAxis;
     r32 LengthSquareOfXAxis = LengthSquare(xAxis);
     r32 LengthSquareOfYAxis = LengthSquare(yAxis);
-    v2 normalizedXAxis = Normalize(xAxis);
-    v2 normalizedYAxis = Normalize(yAxis);
 
-    r32 asdf = lengthOfXAxis/(r32)pixels->width;
-    Assert(pixels);
+    r32 oneOver255 = 1.0f/255.0f;
+
+    // NOTE : When we have a non-uniform scaled axises, normals will change in scale,
+    // but only the X and Y components will be affected. Therefore, if we normalize 
+    // the changed normal, Z value will be overwhelmed by the scaled X and Y value
+    // This value is to negate that affect as much as possible.
+    r32 normalZScale = 0.5f*(lengthOfXAxis + lengthOfYAxis);
+
+    r32 asdf = lengthOfXAxis/(r32)sourceBuffer->width;
+    Assert(sourceBuffer);
 
     // TODO : Do we even need this alignment value?
     // because we always starts at p - halfDim to p + halfdim, and
@@ -392,27 +424,27 @@ DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
     {
         minX = 0;
     }
-    if(maxX > Buffer->width)
+    if(maxX > destBuffer->width)
     {
-        maxX = Buffer->width;
+        maxX = destBuffer->width;
     }
     if(minY < 0)
     {
         minY = 0;
     }
-    if(maxY > Buffer->height)
+    if(maxY > destBuffer->height)
     {
-        maxY = Buffer->height;
+        maxY = destBuffer->height;
     }   
 
 #if 0
     // NOTE : To see the region of the whole BMP, enable this.
-    DrawRectangle(Buffer, V2(minX, minY), dim, 1, 0, 0);
+    DrawRectangle(destBuffer, V2(minX, minY), dim, 1, 0, 0);
 #endif
 
-    u8 *row = (u8 *)Buffer->memory + 
-                    Buffer->pitch*minY + 
-                    Buffer->bytesPerPixel*minX;
+    u8 *row = (u8 *)destBuffer->memory + 
+                    destBuffer->pitch*minY + 
+                    destBuffer->bytesPerPixel*minX;
     for(i32 y = minY;
         y < maxY;
         ++y)
@@ -422,9 +454,6 @@ DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
             x < maxX;
             ++x)
         {
-            v2 screenSpaceUV = V2((r32)x/(r32)(Buffer->width - 1), 
-                                (r32)y/(r32)(Buffer->height - 1));
-
             // TODO : if the p has fractional value, it might make the dot value
             // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
             // What will be a proper way to handle this?(Round?)
@@ -437,9 +466,9 @@ DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
                 vDotXAxis <= LengthSquareOfXAxis && vDotYAxis <= LengthSquareOfYAxis)
             {
                 v2 uv = V2(vDotXAxis/LengthSquareOfXAxis, vDotYAxis/LengthSquareOfYAxis);
-                v2 textureCoord = NonEdgedTextureCoordForBilinearSample(uv, pixels->width, pixels->height);
+                v2 textureCoord = NonEdgedTextureCoordForBilinearSample(uv, sourceBuffer->width, sourceBuffer->height);
 
-                bilinear_sampling_result samplingResult = BilinearSample(pixels, textureCoord);
+                bilinear_sampling_result samplingResult = BilinearSample(sourceBuffer, textureCoord);
 
                 // NOTE : Because the monitors that the artist & player are using have sRGB gamma space,
                 // we have to convert them to linear space so that we can do the linear blending as before
@@ -455,80 +484,111 @@ DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
                                         samplingResult.linearYt);
 
                 v4 lightColor = V4(0, 0, 0, 0);
-                if(normalMap)
+                if(normalMap && envMaps)
                 {
-                    if(envMaps)
+                    /*
+                     * About the normal map
+                     * 1. We assume that the normal map has same width and height with the bitmap that we are using.
+                     * 2. Y is actually the value that we should use to decide which environment map we should use.
+                     * 3. X and Z will be used to decide which texel should we use inside the environment map
+                     * */
+                    bilinear_sampling_result norMapSamplingResult = BilinearSample(normalMap, textureCoord);
+
+                    v4 normal = BilinearBlend(norMapSamplingResult.A, norMapSamplingResult.B, norMapSamplingResult.C, norMapSamplingResult.D,
+                                                norMapSamplingResult.linearXt, norMapSamplingResult.linearYt);
+
+                    // NOTE : put normal values back into -1 to 1 range.
+                    normal.xyz = oneOver255*2.0f*normal.xyz - V3(1.f, 1.f, 1.f);
+
+                    // NOTE : If the bitmap is not uniformly scaled, unlike the other points
+                    // normals are affected reversly.
+                    // For examlple, if the bitmap is scaled by two only in xAxis,
+                    // the normal will be Nx*xAxis + 2*Ny*yAxis
+                    normal.xy = normal.x*xAxis + 
+                                lengthOfXAxisOverYAxis*normal.y*yAxis;
+                    normal.z *= normalZScale;
+                    
+                    normal.xyz = Normalize(normal.xyz);
+
+                    v3 Eye = V3(0, 0, 1); 
+                    v3 reflectionVector = Normalize(Eye - 2.0f*Dot(Eye, normal.xyz)*normal.xyz);
+
+                    // This is just the simplified version of the reflection -e + 2e^T N N
+                    //v3 reflectionVector = 2.0f*normal.z*normal.xyz;
+                    //reflectionVector.z -= 1.0f;
+
+                    environment_map *envMapToUse = 0;
+                    v4 envMapTexel = {};
+                    r32 yDiffInMeter = 0.0f;
+
+                    if(reflectionVector.y > 0.75f)
                     {
-                        /*
-                         * About the normal map
-                         * 1. We assume that the normal map has same width and height with the bitmap that we are using.
-                         * 2. Y is actually the value that we should use to decide which environment map we should use.
-                         * 3. X and Z will be used to decide which texel should we use inside the environment map
-                         * */
-                        bilinear_sampling_result norMapSamplingResult = BilinearSample(normalMap, textureCoord);
-
-                        r32 oneOver255 = 1.0f/255.0f;
-                        v3 normal = BilinearBlend(norMapSamplingResult.A, norMapSamplingResult.B, norMapSamplingResult.C, norMapSamplingResult.D,
-                                                    norMapSamplingResult.linearXt, norMapSamplingResult.linearYt).rgb;
-                        // NOTE : put normal values back into -1 to 1 range.
-                        normal.x = (normal.x*oneOver255*2.0f) - 1.0f;
-                        normal.y = (normal.y*oneOver255*2.0f) - 1.0f;
-                        normal.z = (normal.z*oneOver255*2.0f) - 1.0f;
-                        normal = Normalize(normal);
-
-                        // NOTE : If the bitmap is not uniformly scaled, unlike the other points
-                        // normals are affected reversly.
-                        // For examlple, if the bitmap is scaled by two only in xAxis,
-                        // the normal will be Nx*xAxis + 2*Ny*yAxis
-                        normal.xy = normal.x*normalizedXAxis + 
-                                    lengthOfXAxisOverYAxis*normal.y*normalizedYAxis;
-
-                        // TODO : In non uniform scaling, which only x and y are affected,
-                        // how do we normalize considering z?
-
-                        // NOTE : This is a vector towards the eye, not the direction of the eye facing
-                        v3 Eye = V3(0, 0, -1); 
-                        v3 reflectionVector = Normalize(Eye - 2.0f*Dot(Eye, normal)*normal);
-
-                        environment_map *envMapToUse = 0;
-                        v4 envMapTexel = {};
-
-                        if(reflectionVector.y > 0.75f)
-                        {
-                            // NOTE : Use the upper environment majp
-                            envMapToUse = envMaps + 2;
-                        }
-                        else if(reflectionVector.y < -0.75f)
-                        {
-                            // NOTE : We should use the bottom map,
-                            // but treat it as if it's the top env map by reversing the y value
-                            reflectionVector.y = -reflectionVector.y;
-                            // NOTE : Use the bottom enviroment map
-                            envMapToUse = envMaps + 0;
-                        }
-                        else
-                        {
-                            // middle map??
-                            //envMapToUse = envMaps + 1;
-                        }
-
-                        if(envMapToUse)
-                        {
-                            lightColor = SampleFromEnvironmentMap(envMapToUse, reflectionVector, screenSpaceUV);
-                            lightColor = sRGB255ToLinear01(lightColor);
-                        }
-
-                        // TODO(casey): ? Actually do a lighting model computation here
-                        //texel.rgb = envMapTexel.rgb;
+                        // NOTE : Use the upper environment majp
+                        envMapToUse = envMaps + 2;
+                        yDiffInMeter = 5.0f;
                     }
+#if 1
+                    else if(reflectionVector.y < -0.75f)
+                    {
+                        // NOTE : We should use the bottom map,
+                        // but treat it as if it's the top env map by reversing the y value
+                        //reflectionVector.y = -reflectionVector.y;
+                        // NOTE : Use the bottom enviroment map
+                        envMapToUse = envMaps + 0;
 
+                        yDiffInMeter = -5.0f;
+                    }
+                    else
+                    {
+                        // middle map??
+                        //envMapToUse = envMaps + 1;
+                    }
+#endif
+
+                    if(envMapToUse)
+                    {
+
+                        v2 pixelP = uv.x*xAxis + uv.y*yAxis - 0.5f*V2(lengthOfXAxis, lengthOfYAxis);
+                        lightColor = SampleFromEnvironmentMap(envMapToUse, 
+                                                            pixelP, 
+                                                            V2(lengthOfXAxis, lengthOfYAxis),
+                                                            reflectionVector, yDiffInMeter,
+                                                            metersToPixels);
+                        lightColor = sRGB255ToLinear01(lightColor);
+                    }
+#if 0
+                    v3 normalizedReflectionVector = Normalize(reflectionVector);
+                    texel.r = 0.5f*(normalizedReflectionVector.x + 1.0f);
+                    texel.g = 0.5f*(normalizedReflectionVector.y + 1.0f);
+                    texel.b = 0.5f*(normalizedReflectionVector.z + 1.0f);
+                    texel.r = Clamp01(texel.r);
+                    texel.g = Clamp01(texel.g);
+                    texel.b = Clamp01(texel.b);
+                    //texel.r = 0.0f;
+                    //texel.g = 0.0f;
+                    texel.b = 0.0f;
+                    texel.a = 1.0f;
+#endif
                 }
 
                 texel.rgb = texel.rgb + texel.a*lightColor.rgb;
 
-                v4 destC = Unpack4x8AndsRGB255ToLinear01(*pixel);
+                texel = Hadamard(texel, color);
+                texel.r = Clamp01(texel.r);
+                texel.g = Clamp01(texel.g);
+                texel.b = Clamp01(texel.b);
 
-                v4 resultColor = BlendPremultipliedPixels(destC, texel);
+                v4 destC = Unpack4x8AndsRGB255ToLinear01(*pixel);
+                v4 resultColor = {};
+
+                r32 InvSourceA = 1.0f - texel.a;
+                resultColor.a = destC.a*InvSourceA + texel.a; 
+                // NOTE : Source R, G, B are pre multiplied by the SourceA
+                // TODO : Overly Overlapped pixelss make wrong color value, might wanna do something with that?
+                resultColor.r = Clamp01(destC.r*InvSourceA + texel.r);
+                resultColor.g = Clamp01(destC.g*InvSourceA + texel.g);
+                resultColor.b = Clamp01(destC.b*InvSourceA + texel.b);
+
                 v4 resultColor255 = Linear01TosRGB255(V4(resultColor.r, resultColor.g, resultColor.b, resultColor.a));
 
                 *pixel = (RoundR32ToUInt32(resultColor255.a) << 24 |
@@ -542,59 +602,75 @@ DrawBMP(pixel_buffer_32 *Buffer, pixel_buffer_32 *pixels,
         }
 
 
-        row += Buffer->pitch;
+        row += destBuffer->pitch;
     }
 }
 
 internal void
-PushRect(render_group *RenderGroup, v3 p, v3 dim, v3 color, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
+PushRect(render_group *renderGroup, v3 p, v3 dim, v4 color, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
 {
-    u8 *Memory = PushSize(&RenderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_rect));
+    u8 *Memory = PushSize(&renderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_rect));
     render_element_header *header = (render_element_header *)Memory;
     render_element_rect *element = (render_element_rect *)(Memory + sizeof(render_element_header));
 
-    v2 pixelDim = RenderGroup->metersToPixels*dim.xy;
-    v2 pixelP = RenderGroup->bufferHalfDim + RenderGroup->metersToPixels*p.xy - 0.5f*pixelDim;
+    // NOTE : These are in meters
+    r32 distanceToMonitor = 0.3f;
+    r32 cameraZ = 5.0f;
+    r32 cameraToPz = cameraZ - p.z;
+    v2 perspectiveP = (distanceToMonitor/cameraToPz)*p.xy;
 
-    header->Type = RenderElementType_Rect;
+    v2 pixelDim = renderGroup->metersToPixels*dim.xy;
     header->xAxis = pixelDim.x*xAxis;
     header->yAxis = pixelDim.y*yAxis;
-    v2 AdjustmentToMakeBMPCentered = 0.5f*pixelDim - (0.5f*header->xAxis + 0.5f*header->yAxis);
-    header->p = pixelP + AdjustmentToMakeBMPCentered;
+    v2 pixelP = renderGroup->bufferHalfDim + renderGroup->metersToPixels*p.xy - 
+                (0.5f*header->xAxis + 0.5f*header->yAxis);
 
-    element->color = color;
+    header->Type = RenderElementType_Rect;
+    header->p = pixelP;
 
-    RenderGroup->elementCount++;
+    header->color = color;
+
+    renderGroup->elementCount++;
 }
 
 // TODO : Allow xAxis and yAxis not to be perpendicular? -> 
 // If we do allow them to be not perpendicular, the routine we are using for checking whether the pixel is inside the boundary
 // or not will be invalid
 internal void
-PushBMP(render_group *RenderGroup, pixel_buffer_32 *pixels, v3 p, v3 dim, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1), 
+PushBMP(render_group *renderGroup, pixel_buffer_32 *sourceBuffer, v3 p, v3 dim, 
+        v4 color = V4(1, 1, 1, 1),
+        v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1), 
         pixel_buffer_32 *normalMap = 0, environment_map *envMaps = 0)
 {
-    u8 *Memory = PushSize(&RenderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_bmp));
+    u8 *Memory = PushSize(&renderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_bmp));
     render_element_header *header = (render_element_header *)Memory;
     render_element_bmp *element = (render_element_bmp *)(Memory + sizeof(render_element_header));
 
-    // NOTE : So this assumes that center of the render group = center of the sim region
-    v2 pixelDim = RenderGroup->metersToPixels*dim.xy;
-    v2 pixelP = RenderGroup->bufferHalfDim + RenderGroup->metersToPixels*p.xy - 0.5f*pixelDim;
+    // NOTE : These are in meters
+    r32 distanceToMonitor = 15.0f;
+    r32 cameraZ = 20.0f;
+    r32 cameraToPz = cameraZ - p.z;
+    v2 perspectiveP = (distanceToMonitor/cameraToPz)*p.xy;
 
-    header->Type = RenderElementType_BMP;
+    v2 pixelDim = renderGroup->metersToPixels*dim.xy;
     header->xAxis = pixelDim.x*xAxis;
     header->yAxis = pixelDim.y*yAxis;
-    v2 AdjustmentToMakeBMPCentered = 0.5f*pixelDim - (0.5f*header->xAxis + 0.5f*header->yAxis);
-    header->p = pixelP + AdjustmentToMakeBMPCentered;
+    // NOTE : So this assumes that center of the render group = center of the sim region
+    v2 pixelP = renderGroup->bufferHalfDim + renderGroup->metersToPixels*perspectiveP - 
+                (0.5f*header->xAxis + 0.5f*header->yAxis);
 
-    element->pixels = *pixels;
-    element->alignment.x = (((r32)pixels->alignment.x/(r32)pixels->width)*pixelDim.x);
-    element->alignment.y = (((r32)pixels->alignment.y/(r32)pixels->height)*pixelDim.y);
+    header->Type = RenderElementType_BMP;
+    header->p = pixelP;
+    header->color = color;
+
+    element->sourceBuffer = sourceBuffer;
+    // NOTE : Adjust the alignment based on the scaled pixel dim
+    element->alignment.x = (((r32)sourceBuffer->alignment.x/(r32)sourceBuffer->width)*pixelDim.x);
+    element->alignment.y = (((r32)sourceBuffer->alignment.y/(r32)sourceBuffer->height)*pixelDim.y);
     element->envMaps = envMaps;
     element->normalMap = normalMap;
 
-    RenderGroup->elementCount++;
+    renderGroup->elementCount++;
 }
 
 // TODO : Better buffer clearing function
@@ -623,11 +699,11 @@ ClearBuffer(game_offscreen_buffer *Buffer, v3 color)
 }
 
 internal void
-RenderRenderGroup(render_group *RenderGroup, pixel_buffer_32 *pixels)
+RenderRenderGroup(render_group *renderGroup, pixel_buffer_32 *destBuffer)
 {
-    u8 *Base = RenderGroup->renderMemory.base;
+    u8 *Base = renderGroup->renderMemory.base;
     for(u32 ElementIndex = 0;
-        ElementIndex < RenderGroup->elementCount;
+        ElementIndex < renderGroup->elementCount;
         ++ElementIndex)
     {
         render_element_header *header = (render_element_header *)Base;
@@ -638,8 +714,8 @@ RenderRenderGroup(render_group *RenderGroup, pixel_buffer_32 *pixels)
             case RenderElementType_Rect :
             {
                 render_element_rect *element = (render_element_rect *)Base;
-                DrawRectangle(pixels, header->p, header->xAxis, header->yAxis,
-                                element->color.x, element->color.y, element->color.z);
+                DrawRectangle(destBuffer, header->p, header->xAxis, header->yAxis,
+                                header->color);
                 Base += sizeof(*element);
             }break;
 #endif
@@ -647,9 +723,9 @@ RenderRenderGroup(render_group *RenderGroup, pixel_buffer_32 *pixels)
             case RenderElementType_BMP :
             {
                 render_element_bmp *element = (render_element_bmp *)Base;
-                DrawBMP(pixels, &element->pixels, 
-                        header->p, header->xAxis, header->yAxis,
-                        element->alignment, element->normalMap, element->envMaps);
+                DrawBMP(destBuffer, element->sourceBuffer, 
+                        header->p, header->color, header->xAxis, header->yAxis,
+                        element->alignment, element->normalMap, element->envMaps, renderGroup->metersToPixels);
                 Base += sizeof(*element);
             }break;
         }
@@ -680,60 +756,8 @@ MakeEmptyPixelBuffer32(memory_arena *arena, i32 width, i32 height, v2 alignment 
     buffer.alignment = alignment;
     buffer.memory = (u32 *)PushArray(arena, u32, width*height);
 
-    ClearPixelBuffer(&buffer, color);
+    ClearPixelBuffer32(&buffer, color);
 
     return buffer;
 }
 
-// NOTE : This is a complete hack for now, as the bitmap image we have is 2D, but we should
-// think it as a 3D.
-// NOTE : So here's what we are going to do with these normal maps. X and Y is same as
-// 2D, and the positive Z value = direction facing towards us.
-// Therefore, it's actually a Y value that decides whether we should sample from 
-// the upper environment map or bottom environmentmap, and X & Z value decide what pixel
-// we should sample from those enviroment map.
-internal pixel_buffer_32
-MakeSphereNormalMap(memory_arena *arena, i32 width, i32 height, r32 roughness)
-{
-    pixel_buffer_32 buffer = MakeEmptyPixelBuffer32(arena, width, height);
-
-    u8 *row = (u8 *)buffer.memory;
-    for(i32 y = 0;
-        y < buffer.height;
-        ++y)
-    {
-        u32 *pixel = (u32 *)row;
-        for(i32 x = 0;
-            x < buffer.width;
-            ++x)
-        {
-            v2 uv = V2((r32)x/(r32)(buffer.width - 1.0f), (r32)y/(r32)(buffer.height - 1.0f));
-            // NOTE : Put inside -1 to 1 space
-            v3 texel = V3(2.0f*uv.x - 1.0f, 2.0f*uv.y - 1.0f, 0);
-
-            r32 rawZ = 1.0f - (texel.x*texel.x + texel.y*texel.y);
-            if(rawZ >= 0.0f)
-            {
-                // NOTE : As we can see here, z cannot be negative value
-                // which is we want, because we should not be seeing negative z value(which is the opposite side of our viewing direction)
-                texel.z = SquareRoot2(rawZ);
-            }
-            else
-            {
-                texel.x = 0.0f;
-                texel.y = 1.0f;
-                texel.z = 0.0f;
-            }
-
-            // NOTE : Again, put this to 0 to 255 range.
-            *pixel++ = (RoundR32ToUInt32(255.0f*0.5f*(texel.x + 1.0f)) << 16 |
-                        (RoundR32ToUInt32(255.0f*0.5f*(texel.y + 1.0f)) << 8) |
-                        (RoundR32ToUInt32(255.0f*0.5f*(texel.z + 1.0f)) << 0) |
-                        (RoundR32ToUInt32(255.0f*roughness) << 24));
-        }
-
-        row += buffer.pitch;
-    }
-
-    return buffer;
-}

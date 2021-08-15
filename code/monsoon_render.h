@@ -29,7 +29,6 @@ struct debug_loaded_bmp
 {
     game_offscreen_buffer BMP;
     v2 Alignment;
-
 };
 
 enum render_element_type
@@ -43,20 +42,26 @@ struct render_element_header
     render_element_type Type;
     // TODO : This should be v3 so can we can sort using Z
     v2 p;
+    v4 color;
     v2 xAxis;
     v2 yAxis;
 };
 
 struct render_element_rect
 {
-    v3 color;
 };
 
 struct render_element_bmp
 {
     // TODO : Do not store the whole BMP info, fix this when the game has compressed asset
     // Maybe store a pointer to the memory_loaded asset?
-    pixel_buffer_32 pixels;
+    pixel_buffer_32 *sourceBuffer;
+
+    // TODO : Do we even need this alignment value?
+    // because we always starts at p - halfDim to p + halfdim, and
+    // the bmp will just fill up the space that we requested.
+    // If it turns out that we need this alignment value, we have to adjust
+    // the value based on the dim?
     v2 alignment;
 
     environment_map *envMaps;
@@ -72,5 +77,11 @@ struct render_group
 
     v2 bufferHalfDim;
 };
+
+internal void PushBMP(render_group *renderGroup, pixel_buffer_32 *sourceBuffer, v3 p, v3 dim, 
+                    v2 xAxis, v2 yAxis, 
+                    pixel_buffer_32 *normalMap, environment_map *envMaps);
+internal void
+PushRect(render_group *renderGroup, v3 p, v3 dim, v3 color, v2 xAxis, v2 yAxis);
 
 #endif

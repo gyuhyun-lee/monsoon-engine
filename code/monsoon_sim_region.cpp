@@ -28,7 +28,7 @@ TestWall(r32 WallX, r32 WallhalfDimY, v2 WallNormal,
 }
 
 internal void
-MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtPerFrame)
+MoveEntity(sim_region *simRegion, sim_entity *entity, v3 ddP, r32 speed, r32 dtPerFrame)
 {
     r32 ddPLength = LengthSquare(ddP);
     if(ddPLength > 1.0f)
@@ -37,16 +37,16 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
     }
 
     ddP *= speed;
-    ddP -= 8.0f*entity->dP.xy;
+    ddP -= 8.0f*entity->dP;
     /*
      * NOTE :
      * Position = 0.5f*a*dt*dt + previous frame v * dt + previous frame p
      * Velocity = a*dt + v;
     */   
-    v2 EntityDelta = 0.5f*Square(dtPerFrame)*ddP + 
-                    dtPerFrame*entity->dP.xy;
-    v2 RemainingEntityDelta = EntityDelta;
-    entity->dP.xy = dtPerFrame*ddP + entity->dP.xy;
+    v3 EntityDelta = 0.5f*Square(dtPerFrame)*ddP + 
+                    dtPerFrame*entity->dP;
+    v3 RemainingEntityDelta = EntityDelta;
+    entity->dP = dtPerFrame*ddP + entity->dP;
     r32 DistanceLeftSquare = LengthSquare(RemainingEntityDelta);
 
     for(u32 CollisionIteration = 0;
@@ -55,13 +55,13 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
     {
         if(DistanceLeftSquare > 0.0f)
         {
-            v2 NewEntityPos = entity->p.xy + RemainingEntityDelta;
+            v3 NewEntityPos = entity->p + RemainingEntityDelta;
 
             r32 tMin = 1.0f;
             v2 HitWallNormal = {};
             b32 Hit = false;
 
-#if 0
+#if 1
             for(u32 EntityIndex = 0;
                 EntityIndex < simRegion->entityCount;
                 ++EntityIndex)
@@ -69,36 +69,42 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
                 sim_entity *testEntity = simRegion->entities + EntityIndex;
                 if(testEntity != entity)
                 {
-                    v2 MinkowskihalfDim = 0.5f*(testEntity->dim.xy + entity->dim.xy);
-                    v2 testEntityRelNewP = NewEntityPos - testEntity->p.xy;
-                    v2 testEntityRelOldP = entity->p.xy - testEntity->p.xy;
+                    v3 MinkowskihalfDim = 0.5f*(testEntity->dim + entity->dim);
+                    v3 testEntityRelNewP = NewEntityPos - testEntity->p;
+                    v3 testEntityRelOldP = entity->p - testEntity->p;
 
-                    // NOTE : Test against left wall
-                    TestWall(-MinkowskihalfDim.x, MinkowskihalfDim.y, V2(-1, 0), 
-                            testEntityRelNewP.x, testEntityRelOldP.x, testEntityRelNewP.y, testEntityRelOldP.y, 
-                            &tMin, &Hit, &HitWallNormal);
+                    // TODO : Collision is off for z value
+                    if(testEntityRelNewP.z >= -MinkowskihalfDim.z &&
+                        testEntityRelNewP.z < MinkowskihalfDim.z)
+                    {
 
-                    // NOTE : Test against right wall
-                    TestWall(MinkowskihalfDim.x, MinkowskihalfDim.y, V2(1, 0), 
-                            testEntityRelNewP.x, testEntityRelOldP.x, testEntityRelNewP.y, testEntityRelOldP.y, 
-                            &tMin, &Hit, &HitWallNormal);
+                        // NOTE : Test against left wall
+                        TestWall(-MinkowskihalfDim.x, MinkowskihalfDim.y, V2(-1, 0), 
+                                testEntityRelNewP.x, testEntityRelOldP.x, testEntityRelNewP.y, testEntityRelOldP.y, 
+                                &tMin, &Hit, &HitWallNormal);
 
-                    // NOTE : Test against upper wall
-                    TestWall(MinkowskihalfDim.y, MinkowskihalfDim.x, V2(0, -1), 
-                            testEntityRelNewP.y, testEntityRelOldP.y, testEntityRelNewP.x, testEntityRelOldP.x, 
-                            &tMin, &Hit, &HitWallNormal);
+                        // NOTE : Test against right wall
+                        TestWall(MinkowskihalfDim.x, MinkowskihalfDim.y, V2(1, 0), 
+                                testEntityRelNewP.x, testEntityRelOldP.x, testEntityRelNewP.y, testEntityRelOldP.y, 
+                                &tMin, &Hit, &HitWallNormal);
 
-                    // NOTE : Test against bottom wall
-                    TestWall(-MinkowskihalfDim.y, MinkowskihalfDim.x, V2(0, 1), 
-                            testEntityRelNewP.y, testEntityRelOldP.y, testEntityRelNewP.x, testEntityRelOldP.x, 
-                            &tMin, &Hit, &HitWallNormal);
+                        // NOTE : Test against upper wall
+                        TestWall(MinkowskihalfDim.y, MinkowskihalfDim.x, V2(0, -1), 
+                                testEntityRelNewP.y, testEntityRelOldP.y, testEntityRelNewP.x, testEntityRelOldP.x, 
+                                &tMin, &Hit, &HitWallNormal);
+
+                        // NOTE : Test against bottom wall
+                        TestWall(-MinkowskihalfDim.y, MinkowskihalfDim.x, V2(0, 1), 
+                                testEntityRelNewP.y, testEntityRelOldP.y, testEntityRelNewP.x, testEntityRelOldP.x, 
+                                &tMin, &Hit, &HitWallNormal);
+                    }
                 }
             }
 #endif
 
-            v2 EntityDeltaForThisIteration = RemainingEntityDelta;
-            v2 EntityDeltaLeftForThisIteration = V2(0, 0);
-            v2 OldRemainingEntityDelta = RemainingEntityDelta;
+            v3 EntityDeltaForThisIteration = RemainingEntityDelta;
+            v3 EntityDeltaLeftForThisIteration = V3(0, 0, 0);
+            v3 OldRemainingEntityDelta = RemainingEntityDelta;
 
             if(Hit)
             {
@@ -113,14 +119,15 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
                     EntityDeltaForThisIteration *= SquareRoot2(DistanceLeftSquare/EntityDeltaForThisIterationLengthSquare);
                 }
 
-                v2 EntityDeltaLeftForThisIteration = RemainingEntityDelta - EntityDeltaForThisIteration;
+                v3 EntityDeltaLeftForThisIteration = RemainingEntityDelta - EntityDeltaForThisIteration;
 
-                entity->dP.xy = entity->dP.xy - 1.0f*Dot(entity->dP.xy, HitWallNormal)*HitWallNormal;
+                // TODO : Another z value hack in here!
+                entity->dP = entity->dP - 1.0f*Dot(entity->dP, V3(HitWallNormal, 0.0f))*V3(HitWallNormal, 0.0f);
 
-                RemainingEntityDelta = EntityDeltaLeftForThisIteration - 1.0f*Dot(EntityDeltaLeftForThisIteration, HitWallNormal)*HitWallNormal;
+                RemainingEntityDelta = EntityDeltaLeftForThisIteration - 1.0f*Dot(EntityDeltaLeftForThisIteration, V3(HitWallNormal, 0))*V3(HitWallNormal, 0);
             }
 
-            entity->p.xy += EntityDeltaForThisIteration;
+            entity->p += EntityDeltaForThisIteration;
 
             // TODO : Clean this code!
             r32 LengthSquareMovedForThisIteration = LengthSquare(EntityDeltaForThisIteration);
@@ -134,28 +141,28 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v2 ddP, r32 speed, r32 dtP
 
 
 internal void
-StartSimRegion(world *world, sim_region *simRegion, world_position center, v2 halfDim, v2 MaxEntityDelta)
+StartSimRegion(world *world, sim_region *simRegion, world_position center, v3 halfDim, v3 MaxEntityDelta)
 {
     simRegion->entityCount = 0;
     simRegion->center = center;
-    simRegion->halfDim.xy = halfDim + MaxEntityDelta;
+    simRegion->halfDim = halfDim + MaxEntityDelta;
 
     // IMPORTANT : NOTE : Sim region should NOT be bigger than the maximum movable length of
     // the base(centered, most likely the player) entity. If the sim region somehow 
     // was not bigger than the max length, it will clear all the entity located at 
     // the sim region at the end of sim region.
     world_position simRegionLeftBottom = simRegion->center;
-    CanonicalizeWorldPos(world, &simRegionLeftBottom, -simRegion->halfDim.xy);
+    CanonicalizeWorldPos(world, &simRegionLeftBottom, -simRegion->halfDim);
 
     world_position simRegionUpperRight = simRegion->center;
-    CanonicalizeWorldPos(world, &simRegionUpperRight, simRegion->halfDim.xy);
+    CanonicalizeWorldPos(world, &simRegionUpperRight, simRegion->halfDim);
 
     u32 MinchunkX = simRegionLeftBottom.chunkX;
     u32 MinchunkY = simRegionLeftBottom.chunkY;
+    u32 MinchunkZ = simRegionLeftBottom.chunkZ;
     u32 OnePastMaxchunkX = simRegionUpperRight.chunkX + 1;
     u32 OnePastMaxchunkY = simRegionUpperRight.chunkY + 1;
-    u32 MinchunkZ = 0;
-    u32 OnePastMaxchunkZ = 1;
+    u32 OnePastMaxchunkZ = simRegionUpperRight.chunkZ + 1;
 
     u32 ChunkDiffX = OnePastMaxchunkX - MinchunkX;
     u32 ChunkDiffY = OnePastMaxchunkY - MinchunkY;
@@ -177,27 +184,39 @@ StartSimRegion(world *world, sim_region *simRegion, world_position center, v2 ha
             {
                 u32 chunkX = MinchunkX + chunkXIndex;
                 world_chunk *worldChunk = GetWorldChunk(world, chunkX, chunkY, chunkZ);
-                low_entity_block *entityBlock = &worldChunk->entityBlock;
-                while(entityBlock)
-                {               
-                    for(u32 EntityIndex = 0;
-                        EntityIndex < entityBlock->entityCount;
-                        ++EntityIndex)
-                    {
-                        low_entity *entity = entityBlock->entities[EntityIndex];
-                        sim_entity *simEntity = simRegion->entities + simRegion->entityCount++;
 
-                        v2 simRegionRelP = WorldPositionDifferenceInMeter(world, &entity->worldP, &simRegion->center);
-                        simEntity->p.xy = simRegionRelP;
+                if(worldChunk)
+                {
+                    low_entity_block *entityBlock = &worldChunk->entityBlock;
+                    while(entityBlock)
+                    {               
+                        for(u32 EntityIndex = 0;
+                            EntityIndex < entityBlock->entityCount;
+                            ++EntityIndex)
+                        {
+                            if(chunkXIndex == 1 &&
+                                chunkYIndex == 2 &&
+                                chunkZIndex == 0)
+                            {
+                                int a = 1;
+                            }
+                            low_entity *entity = entityBlock->entities[EntityIndex];
+                            sim_entity *simEntity = simRegion->entities + simRegion->entityCount++;
 
-                        simEntity->dP.xy = entity->dP.xy;
-                        simEntity->dim = entity->dim;
-                        simEntity->type = entity->type;
+                            Assert(simRegion->entityCount <= ArrayCount(simRegion->entities));
 
-                        simEntity->lowEntity = entity;
+                            v3 simRegionRelP = WorldPositionDifferenceInMeter(world, &entity->worldP, &simRegion->center);
+                            simEntity->p = simRegionRelP;
+
+                            simEntity->dP = entity->dP;
+                            simEntity->dim = entity->dim;
+                            simEntity->type = entity->type;
+
+                            simEntity->lowEntity = entity;
+                        }
+
+                        entityBlock = entityBlock->next;
                     }
-
-                    entityBlock = entityBlock->next;
                 }
             }
         }
@@ -221,17 +240,17 @@ internal void
 ClearAllentityBlocksInsimRegion(sim_region *simRegion, world *world)
 {
     world_position simRegionLeftBottom = simRegion->center;
-    CanonicalizeWorldPos(world, &simRegionLeftBottom, -simRegion->halfDim.xy);
+    CanonicalizeWorldPos(world, &simRegionLeftBottom, -simRegion->halfDim);
 
     world_position simRegionUpperRight = simRegion->center;
-    CanonicalizeWorldPos(world, &simRegionUpperRight, simRegion->halfDim.xy);
+    CanonicalizeWorldPos(world, &simRegionUpperRight, simRegion->halfDim);
 
     u32 MinchunkX = simRegionLeftBottom.chunkX;
     u32 MinchunkY = simRegionLeftBottom.chunkY;
+    u32 MinchunkZ = simRegionLeftBottom.chunkZ;
     u32 OnePastMaxchunkX = simRegionUpperRight.chunkX + 1;
     u32 OnePastMaxchunkY = simRegionUpperRight.chunkY + 1;
-    u32 MinchunkZ = 0;
-    u32 OnePastMaxchunkZ = 1;
+    u32 OnePastMaxchunkZ = simRegionUpperRight.chunkZ + 1;
 
     u32 ChunkDiffX = OnePastMaxchunkX - MinchunkX;
     u32 ChunkDiffY = OnePastMaxchunkY - MinchunkY;
@@ -253,7 +272,10 @@ ClearAllentityBlocksInsimRegion(sim_region *simRegion, world *world)
             {
                 u32 chunkX = MinchunkX + chunkXIndex;
                 world_chunk *worldChunk = GetWorldChunk(world, chunkX, chunkY, chunkZ);
-                ClearAllentityBlocksInworldChunk(worldChunk);
+                if(worldChunk)
+                {
+                    ClearAllentityBlocksInworldChunk(worldChunk);
+                }
             }
         }
     }
@@ -269,12 +291,17 @@ EndSimRegion(world *world, memory_arena *arena, sim_region *simRegion)
     {
         sim_entity *simEntity = simRegion->entities + simEntityIndex;
         low_entity *entity = simEntity->lowEntity;
-        world_position NewworldPos = simRegion->center;
-        CanonicalizeWorldPos(world, &NewworldPos, simEntity->p.xy);
-        entity->worldP = NewworldPos;
+        world_position newWorldPos = simRegion->center;
+        CanonicalizeWorldPos(world, &newWorldPos, simEntity->p);
+
+        if(newWorldPos.chunkZ == UINT_MAX)
+        {
+            int a = 1;
+        }
+        entity->worldP = newWorldPos;
         entity->dP = simEntity->dP;
 
-        world_chunk *worldChunk = GetWorldChunk(world, NewworldPos.chunkX, NewworldPos.chunkY, NewworldPos.chunkZ);
+        world_chunk *worldChunk = GetWorldChunk(world, newWorldPos.chunkX, newWorldPos.chunkY, newWorldPos.chunkZ, 1);
         PutEntityInsideWorldChunk(worldChunk, arena, entity);
     }
 }

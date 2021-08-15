@@ -55,6 +55,69 @@ MakeCheckerBoard(pixel_buffer_32 *LOD, v4 color)
     }
 
 }
+#if 1
+// NOTE : This is a complete hack for now, as the bitmap image we have is 2D, but we should
+// think it as a 3D.
+// NOTE : So here's what we are going to do with these normal maps. X and Y is same as
+// 2D, and the positive Z value = direction facing towards us.
+// Therefore, it's actually a Y value that decides whether we should sample from 
+// the upper environment map or bottom environmentmap, and X & Z value decide what pixel
+// we should sample from those enviroment map.
+internal pixel_buffer_32
+MakeSphereNormalMap(memory_arena *arena, i32 width, i32 height, r32 roughness)
+{
+    pixel_buffer_32 buffer = MakeEmptyPixelBuffer32(arena, width, height);
+
+    u8 *row = (u8 *)buffer.memory;
+    for(i32 y = 0;
+        y < buffer.height;
+        ++y)
+    {
+        u32 *pixel = (u32 *)row;
+        for(i32 x = 0;
+            x < buffer.width;
+            ++x)
+        {
+            v2 uv = V2((r32)x/(r32)(buffer.width - 1), (r32)y/(r32)(buffer.height));
+            // NOTE : Put inside -1 to 1 space
+            r32 normalX = 2.0f*uv.x - 1.0f;
+            r32 normalY = 2.0f*uv.y - 1.0f;
+            r32 normalZ = 0.0f;
+
+            // NOTE : equation of a circle is x^2+y^2+z^2 = r^2
+            r32 rawZ = 1.0f - (normalX*normalX + normalY*normalY);
+            if(rawZ >= 0.0f)
+            {
+                // NOTE : As we can see here, z cannot be negative value
+                // which is we want, because we should not be seeing negative z value(which is the opposite side of our viewing direction)
+                normalZ = SquareRoot2(rawZ);
+            }
+            else
+            {
+                normalX = 0.f;
+                normalY = 0.f;
+                normalZ = -1.f;
+            }
+
+            // NOTE : Again, put this to 0 to 255 range.
+            u32 resultX = RoundR32ToUInt32(255.0f*0.5f*(normalX + 1.0f));
+            u32 resultY = RoundR32ToUInt32(255.0f*0.5f*(normalY + 1.0f));
+            u32 resultZ = RoundR32ToUInt32(255.0f*0.5f*(normalZ + 1.0f));
+            *pixel++ = (resultX << 16 |
+                        resultY << 8 |
+                        resultZ << 0 |
+                        (RoundR32ToUInt32(255.0f*roughness) << 24));
+        }
+
+        row += buffer.pitch;
+    }
+
+    return buffer;
+}
+#endif
+
+
+
 
 /*
  * TODO : 
@@ -90,10 +153,10 @@ struct debug_bmp_file_header
 #pragma pack(pop)
 
 internal pixel_buffer_32
-DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName)
+DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName, v2 alignment = V2(0, 0))
 {
     // TODO : Currently only supports bmp with compression = 3
-    pixel_buffer_32 Result = {};
+    pixel_buffer_32 result = {};
 
     debug_platform_read_file_result File = ReadEntireFile(FileName);
     debug_bmp_file_header *Header = (debug_bmp_file_header *)File.memory;
@@ -103,14 +166,15 @@ DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName)
     u32 BlueShift = FindLeastSignificantSetBit(Header->BlueMask);
     u32 AlphaShift = FindLeastSignificantSetBit(Header->AlphaMask);
 
-    Result.width = Header->width;
-    Result.height = Header->height;
-    Result.bytesPerPixel = Header->BitsPerPixel/8;
-    Result.pitch = Result.width * Result.bytesPerPixel;
+    result.width = Header->width;
+    result.height = Header->height;
+    result.bytesPerPixel = Header->BitsPerPixel/8;
+    result.pitch = result.width * result.bytesPerPixel;
+    result.alignment = alignment;
 
-    Result.memory = (u32 *)((u8 *)Header + Header->pixelOffset);
+    result.memory = (u32 *)((u8 *)Header + Header->pixelOffset);
 
-    u8 *Sourcerow = (u8 *)Result.memory;
+    u8 *Sourcerow = (u8 *)result.memory;
     for(u32 Y = 0;
         Y < Header->height;
         ++Y)
@@ -133,22 +197,22 @@ DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName)
                                 RoundR32ToUInt32(B) << 0);
         }
 
-        Sourcerow += Result.pitch;
+        Sourcerow += result.pitch;
     }
     
-    return Result;
+    return result;
 }
+
 internal low_entity *
-AddLowentity(game_state *state, entity_type Type, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, 
+AddLowEntity(game_state *state, entity_type Type, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, 
             v3 Dim)
 {
     Assert(state->entityCount < ArrayCount(state->entities));
 
     low_entity *entity = state->entities + state->entityCount++;
 
-
-    entity->worldP.p = state->world.tileSideInMeters*V2(AbsTileX, AbsTileY) + 
-                        0.5f*V2(state->world.tileSideInMeters, state->world.tileSideInMeters) - 
+    entity->worldP.p = state->world.tileSideInMeters*V3(AbsTileX, AbsTileY, AbsTileZ) + 
+                        0.5f*state->world.tileSideInMeters*V3(1, 1, 1) - 
                         0.5f*state->world.chunkDim;
     //entity->worldP.P.Z = 0; // TODO : Properly handle Z
     CanonicalizeWorldPos(&state->world, &entity->worldP);
@@ -156,7 +220,10 @@ AddLowentity(game_state *state, entity_type Type, u32 AbsTileX, u32 AbsTileY, u3
     entity->dim = Dim;
     entity->type = Type;
 
-    world_chunk *worldChunk = GetWorldChunk(&state->world, entity->worldP.chunkX, entity->worldP.chunkY, entity->worldP.chunkZ);
+    world_chunk *worldChunk = GetWorldChunk(&state->world, 
+                                            entity->worldP.chunkX, 
+                                            entity->worldP.chunkY, 
+                                            entity->worldP.chunkZ, 1);
     PutEntityInsideWorldChunk(worldChunk, &state->worldArena, entity);
 
     return entity;
@@ -165,13 +232,18 @@ AddLowentity(game_state *state, entity_type Type, u32 AbsTileX, u32 AbsTileY, u3
 internal void
 AddPlayerentity(game_state *state, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, v3 Dim)
 {
-    state->player = AddLowentity(state, EntityType_Player, AbsTileX, AbsTileY, AbsTileZ, Dim);
+    state->player = AddLowEntity(state, EntityType_Player, AbsTileX, AbsTileY, AbsTileZ, Dim);
 }
 
+// TODO : DrawBMP is used here, which is not what I am fond with,
+// because these alignment values are bitmap specific
+// which means if the bitmap size gets scales, this will mess up the alignment value
+// PushBMP does not have this issue, so maybe pass through the render group 
+// when constructing the background?
 internal void
 MakeBackground(game_state *state, pixel_buffer_32 *buffer)
 {
-    ClearPixelBuffer(buffer, V4(0, 0, 0, 0));
+    ClearPixelBuffer32(buffer, V4(0, 0, 0, 0));
 
     u32 GroundCount = 500;
     u32 RockCount = 100;
@@ -195,11 +267,11 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
             BMPUpperRightCorner.y > buffer->height  ||
             BMPBottomLeftCorner.y < 0))    
         {
-            DrawBMP(buffer, BMPToUse, pixelP, V2(0, 0), BMPToUse->alignment);
+            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
         }
         else
         {
-            DrawBMP(buffer, BMPToUse, pixelP, V2(0, 0), BMPToUse->alignment);
+            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
 
             if(BMPBottomLeftCorner.y < 0 &&
                 BMPBottomLeftCorner.x < 0)
@@ -213,25 +285,25 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPBottomLeftCorner.y < 0)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPUpperRightCorner.x > buffer->width)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPBottomLeftCorner.x < 0)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
 
             if(BMPBottomLeftCorner.x < 0 &&
@@ -240,7 +312,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPBottomLeftCorner.x < 0 &&
                 BMPUpperRightCorner.y > buffer->height)
@@ -248,7 +320,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPUpperRightCorner.x > buffer->width &&
                 BMPUpperRightCorner.y > buffer->height)
@@ -256,7 +328,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPUpperRightCorner.x > buffer->width &&
                 BMPBottomLeftCorner.y < 0)
@@ -264,7 +336,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
         }
     }
@@ -285,11 +357,11 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
             BMPUpperRightCorner.y > buffer->height  ||
             BMPBottomLeftCorner.y < 0))    
         {
-            DrawBMP(buffer, BMPToUse, pixelP, V2(0, 0), BMPToUse->alignment);
+            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
         }
         else
         {
-            DrawBMP(buffer, BMPToUse, pixelP, V2(0, 0), BMPToUse->alignment);
+            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
 
             if(BMPBottomLeftCorner.y < 0 &&
                 BMPBottomLeftCorner.x < 0)
@@ -303,25 +375,25 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPBottomLeftCorner.y < 0)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPUpperRightCorner.x > buffer->width)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPBottomLeftCorner.x < 0)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
 
             if(BMPBottomLeftCorner.x < 0 &&
@@ -330,7 +402,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPBottomLeftCorner.x < 0 &&
                 BMPUpperRightCorner.y > buffer->height)
@@ -338,7 +410,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPUpperRightCorner.x > buffer->width &&
                 BMPUpperRightCorner.y > buffer->height)
@@ -346,7 +418,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPUpperRightCorner.x > buffer->width &&
                 BMPBottomLeftCorner.y < 0)
@@ -354,7 +426,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
         }
     }
@@ -374,11 +446,11 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
             BMPUpperRightCorner.y > buffer->height  ||
             BMPBottomLeftCorner.y < 0))    
         {
-            DrawBMP(buffer, BMPToUse, pixelP, V2(0, 0), BMPToUse->alignment);
+            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
         }
         else
         {
-            DrawBMP(buffer, BMPToUse, pixelP, V2(0, 0), BMPToUse->alignment);
+            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
 
             if(BMPBottomLeftCorner.y < 0 &&
                 BMPBottomLeftCorner.x < 0)
@@ -392,25 +464,25 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPBottomLeftCorner.y < 0)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPUpperRightCorner.x > buffer->width)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             if(BMPBottomLeftCorner.x < 0)
             {
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
 
             if(BMPBottomLeftCorner.x < 0 &&
@@ -419,7 +491,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPBottomLeftCorner.x < 0 &&
                 BMPUpperRightCorner.y > buffer->height)
@@ -427,7 +499,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x += buffer->width;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPUpperRightCorner.x > buffer->width &&
                 BMPUpperRightCorner.y > buffer->height)
@@ -435,7 +507,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
                 newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
             else if(BMPUpperRightCorner.x > buffer->width &&
                 BMPBottomLeftCorner.y < 0)
@@ -443,7 +515,7 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
                 v2 newPixelP = pixelP;
                 newPixelP.x -= buffer->width;
                 newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V2(0, 0), BMPToUse->alignment);
+                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
             }
         }
     }
@@ -451,8 +523,9 @@ MakeBackground(game_state *state, pixel_buffer_32 *buffer)
 }
 
 // TODO : This should go away!
-#define TILE_COUNT_X 17
-#define TILE_COUNT_Y 9
+#define TILE_COUNT_X 10
+#define TILE_COUNT_Y 10
+#define TILE_COUNT_Z 10
 extern "C"
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
@@ -462,12 +535,13 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
     if(!state->isInitialized)
     {
-        state->worldArena = StartMemoryArena((u8 *)Memory->transientStorage, Megabytes(256));
+        state->worldArena = StartMemoryArena((u8 *)Memory->permanentStorage + sizeof(*state), Megabytes(256));
 
         world *world = &state->world;
         world->tileSideInMeters = 2.0f;
         world->chunkDim.x = TILE_COUNT_X*world->tileSideInMeters;
         world->chunkDim.y = TILE_COUNT_Y*world->tileSideInMeters;
+        world->chunkDim.z = TILE_COUNT_Z*world->tileSideInMeters;
         InitializeWorld(world);
 
         state->cameraPos.chunkX = 0;
@@ -476,7 +550,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         state->cameraPos.p.x = 0;
         state->cameraPos.p.y = 0;
 
-        AddPlayerentity(state, 6, 4, 0, 
+        AddPlayerentity(state, 6, 4, TILE_COUNT_Z, 
                         V3(0.5f*world->tileSideInMeters, 0.9*world->tileSideInMeters, 1));
 
         random_series Series = Seed(123);
@@ -487,105 +561,118 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         b32 RightShouldBeOpened = false;
         b32 UpShouldBeOpened = true;
 
-        u32 LeftBottomTileX = 0;
-        u32 LeftBottomTileY = 0;
-        for(u32 ScreenIndex = 0;
-            ScreenIndex < 100;
-            ++ScreenIndex)
+        
+#if 1
+        for(u32 z = 0;
+            z < 3*TILE_COUNT_Z;
+            z += TILE_COUNT_Z)
+#endif
         {
-            for(u32 Y = 0;
-                Y < TILE_COUNT_Y;
-                ++Y)
+            u32 LeftBottomTileX = 0;
+            u32 LeftBottomTileY = 0;
+            
+            for(u32 ScreenIndex = 0;
+                ScreenIndex < 10;
+                ++ScreenIndex)
             {
-                u32 row = LeftBottomTileY + Y;
-                for(u32 X = 0;
-                    X < TILE_COUNT_X;
-                    ++X)
+                for(u32 Y = 0;
+                    Y < TILE_COUNT_Y;
+                    ++Y)
                 {
-                    u32 column = LeftBottomTileX + X;
-                    b32 ShouldAddWall = true;
-
-                    if(LeftShouldBeOpened)
+                    u32 row = LeftBottomTileY + Y;
+                    for(u32 X = 0;
+                        X < TILE_COUNT_X;
+                        ++X)
                     {
-                        if(Y == TILE_COUNT_Y/2 && X == 0)
+                        u32 column = LeftBottomTileX + X;
+                        b32 shouldAddWall = true;
+
+                        if(LeftShouldBeOpened)
                         {
-                            ShouldAddWall = false;
+                            if(Y == TILE_COUNT_Y/2 && X == 0)
+                            {
+                                shouldAddWall = false;
+                            }
+                        }
+                        if(RightShouldBeOpened)
+                        {
+                            if(Y == TILE_COUNT_Y/2 && X == TILE_COUNT_X-1)
+                            {
+                                shouldAddWall = false;
+                            }
+                        }
+                        if(BottomShouldBeOpened)
+                        {
+                            if(X == TILE_COUNT_X/2 && Y == 0)
+                            {
+                                shouldAddWall = false;
+                            }
+                        }
+                        if(UpShouldBeOpened)
+                        {
+                            if(X == TILE_COUNT_X/2 && Y == TILE_COUNT_Y-1)
+                            {
+                                shouldAddWall = false;
+                            }
+                        }
+
+                        if(!(X == 0 || X == TILE_COUNT_X - 1 || Y == 0 || Y == TILE_COUNT_Y - 1))
+                        {
+                            shouldAddWall = false;
+                        }
+
+                        if(shouldAddWall)
+                        {
+                            if(z == 10)
+                            {
+                                int breakhere = 1;
+                            }
+                            AddLowEntity(state, EntityType_Wall, column, row, z, 
+                                        world->tileSideInMeters*V3(1, 1, 1));
+                            printf("%u, %u, %u\n", column, row, z);
                         }
                     }
-                    if(RightShouldBeOpened)
-                    {
-                        if(Y == TILE_COUNT_Y/2 && X == TILE_COUNT_X-1)
-                        {
-                            ShouldAddWall = false;
-                        }
-                    }
-                    if(BottomShouldBeOpened)
-                    {
-                        if(X == TILE_COUNT_X/2 && Y == 0)
-                        {
-                            ShouldAddWall = false;
-                        }
-                    }
-                    if(UpShouldBeOpened)
-                    {
-                        if(X == TILE_COUNT_X/2 && Y == TILE_COUNT_Y-1)
-                        {
-                            ShouldAddWall = false;
-                        }
-                    }
+                }
 
-                    if(!(X == 0 || X == TILE_COUNT_X - 1) && !(Y == 0 || Y == TILE_COUNT_Y - 1))
+                if(RightShouldBeOpened)
+                {
+                    LeftBottomTileX += TILE_COUNT_X;
+                    LeftShouldBeOpened = true;
+                    u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
+                    if(RandomNumber % 2)
                     {
-                        ShouldAddWall = false;
+                        // NOTE : map with up & left opened
+                        UpShouldBeOpened = true;
+                        BottomShouldBeOpened = false;
+                        RightShouldBeOpened = false;
                     }
-
-                    if(ShouldAddWall)
+                    else
                     {
-                        AddLowentity(state, EntityType_Wall, column, row, 0, 
-                                    V3(world->tileSideInMeters, world->tileSideInMeters, 1));
-                        printf("%u\n", state->entityCount);
+                        // NOTE : map with right & left opened
+                        RightShouldBeOpened = true;
+                        BottomShouldBeOpened = false;
+                        UpShouldBeOpened = false;
                     }
                 }
-            }
-
-            if(RightShouldBeOpened)
-            {
-                LeftBottomTileX += TILE_COUNT_X;
-                LeftShouldBeOpened = true;
-                u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
-                if(RandomNumber % 2)
+                else if(UpShouldBeOpened)
                 {
-                    // NOTE : map with up & left opened
-                    UpShouldBeOpened = true;
-                    BottomShouldBeOpened = false;
-                    RightShouldBeOpened = false;
-                }
-                else
-                {
-                    // NOTE : map with right & left opened
-                    RightShouldBeOpened = true;
-                    BottomShouldBeOpened = false;
-                    UpShouldBeOpened = false;
-                }
-            }
-            else if(UpShouldBeOpened)
-            {
-                LeftBottomTileY += TILE_COUNT_Y;
-                BottomShouldBeOpened = true;
-                u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
-                if(RandomNumber % 2)
-                {
-                    // NOTE : map with up & bottom opened
-                    UpShouldBeOpened = true;
-                    LeftShouldBeOpened = false;
-                    RightShouldBeOpened = false;
-                }
-                else
-                {
-                    // NOTE : map with bottom & right opened
-                    RightShouldBeOpened = true;
-                    LeftShouldBeOpened = false;
-                    UpShouldBeOpened = false;
+                    LeftBottomTileY += TILE_COUNT_Y;
+                    BottomShouldBeOpened = true;
+                    u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
+                    if(RandomNumber % 2)
+                    {
+                        // NOTE : map with up & bottom opened
+                        UpShouldBeOpened = true;
+                        LeftShouldBeOpened = false;
+                        RightShouldBeOpened = false;
+                    }
+                    else
+                    {
+                        // NOTE : map with bottom & right opened
+                        RightShouldBeOpened = true;
+                        LeftShouldBeOpened = false;
+                        UpShouldBeOpened = false;
+                    }
                 }
             }
         }
@@ -594,37 +681,37 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
         state->sampleBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/sample.bmp");
 
-        state->headBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_head.bmp");
-        state->headBMP.alignment = V2(48, 40);
-        state->torsoBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_torso.bmp");
-        state->torsoBMP.alignment = V2(48, 40);
-        state->capeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_cape.bmp");
-        state->capeBMP.alignment = V2(48, 40);
+        state->headBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_head.bmp",
+                                        V2(48, 40));
+        state->torsoBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_torso.bmp",
+                                       V2(48, 40));
+        state->capeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_cape.bmp",
+                                    V2(48, 40));
 
-        state->rockBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock00.bmp");
-        state->rockBMP[0].alignment = V2(35, 40);
-        state->rockBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock01.bmp");
-        state->rockBMP[1].alignment = V2(35, 40);
-        state->rockBMP[2] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock02.bmp");
-        state->rockBMP[2].alignment = V2(35, 40);
-        state->rockBMP[3] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock03.bmp");
-        state->rockBMP[3].alignment = V2(35, 40);
+        state->rockBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock00.bmp",
+                                        V2(35, 40));
+        state->rockBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock01.bmp",
+                                        V2(35, 40));
+        state->rockBMP[2] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock02.bmp",
+                                        V2(35, 40));
+        state->rockBMP[3] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock03.bmp",
+                                        V2(35, 40));
 
-        state->groundBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground00.bmp");
-        state->groundBMP[0].alignment = V2(136, 60);
-        state->groundBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground01.bmp");
-        state->groundBMP[1].alignment = V2(136, 60);
-        state->groundBMP[2] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground02.bmp");
-        state->groundBMP[2].alignment = V2(136, 60);
-        state->groundBMP[3] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground03.bmp");
-        state->groundBMP[3].alignment = V2(136, 60);
+        state->groundBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground00.bmp",
+                                            V2(136, 60));
+        state->groundBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground01.bmp",
+                                            V2(136, 60));
+        state->groundBMP[2] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground02.bmp",
+                                            V2(136, 60));
+        state->groundBMP[3] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/Ground03.bmp",
+                                            V2(136, 60));
 
-        state->grassBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/grass00.bmp");
-        state->grassBMP[0].alignment = V2(82, 65);
-        state->grassBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/grass01.bmp");
-        state->grassBMP[1].alignment = V2(82, 65);
+        state->grassBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/grass00.bmp",
+                                            V2(82, 65));
+        state->grassBMP[1] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/grass01.bmp",
+                                            V2(82, 65));
 
-        state->renderArena = StartMemoryArena((u8 *)Memory->transientStorage + Megabytes(256), Megabytes(256));
+        state->renderArena = StartMemoryArena((u8 *)Memory->transientStorage, Megabytes(512));
         state->backgroundBuffer.width = 800;
         state->backgroundBuffer.height = 600;
         state->backgroundBuffer.bytesPerPixel = 4;
@@ -706,7 +793,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         }
     }
 
-    v2 ddPlayer = {};
+    v3 ddPlayer = {};
     if(Input.moveRight)
     {
         ddPlayer.x += 1.0f;
@@ -724,6 +811,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         ddPlayer.y -= 1.0f;
     }
 
+    // TODO : This is also wrong for 3D
     // TODO : This is wrong when the player is using controller.
     if(ddPlayer.x != 0.0f && ddPlayer.y != 0.0f)
     {
@@ -736,10 +824,10 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         playerSpeed = 150.f;
     }
 
-    //state->cameraPos = state->player->worldP;
+    state->cameraPos = state->player->worldP;
     sim_region simRegion = {};
     // TODO : Accurate max entity delta for the sim region!
-    StartSimRegion(world, &simRegion, state->cameraPos, world->chunkDim, V2(10, 10));
+    StartSimRegion(world, &simRegion, state->cameraPos, world->chunkDim, V3(2, 2, 1));
 
     for(u32 entityIndex = 0;
         entityIndex < simRegion.entityCount;
@@ -756,12 +844,19 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         }
     }
 
+
     render_group renderGroup = {};
     // TODO : How can I keep track of used memory without explicitly mentioning it?
-    renderGroup.renderMemory = StartTemporaryMemory(&state->renderArena, Megabytes(16));
+    renderGroup.renderMemory = StartTemporaryMemory(&state->renderArena, Megabytes(256));
     renderGroup.metersToPixels = (r32)offscreenBuffer->width/((TILE_COUNT_X+1)*world->tileSideInMeters);
     //renderGroup.MetersToPixels = 10;
     renderGroup.bufferHalfDim = 0.5f*V2(offscreenBuffer->width, offscreenBuffer->height);
+
+#if 0
+    MakeCheckerBoard(&state->envMaps[0].LOD, V4(0, 0, 1, 1));
+    MakeCheckerBoard(&state->envMaps[1].LOD, V4(0, 1, 0, 1));
+    MakeCheckerBoard(&state->envMaps[2].LOD, V4(1, 0, 0, 1));
+#endif
 
     for(u32 entityIndex = 0;
         entityIndex < simRegion.entityCount;
@@ -769,26 +864,36 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     {
         sim_entity *entity = simRegion.entities + entityIndex;
 
+        r32 cameraZ = 5.0f;
+        r32 alphaBasedOnZ = Clamp01((255 + 10.0f*entity->p.z)/255.0f);
+
         switch(entity->type)
         {
             case EntityType_Wall:
             {
-                PushRect(&renderGroup, entity->p, entity->dim, V3(1.0f, 1.0f, 1.0f));
+                PushBMP(&renderGroup, &state->treeBMP, entity->p, entity->dim,
+                        V4(1, 1, 1, alphaBasedOnZ));
             }break;
 
             case EntityType_Player: 
             {
                 r32 cos = Cos(state->theta);
                 r32 sin = Sin(state->theta);
+#if 0
                 v2 xAxis = V2(cos, sin);
                 v2 yAxis = V2(-sin, cos);
 
-                v3 bitmapDimInMeter = V3(state->testDiffuse.width/renderGroup.metersToPixels, 
-                                        state->testDiffuse.height/renderGroup.metersToPixels,
-                                        0);
-                PushBMP(&renderGroup, &state->testDiffuse, entity->p + 1.0f*V3(cos, 0, 0), V3(10, 10, 1),
-                        xAxis, yAxis,
-                        &state->sphereNormalMap, state->envMaps);
+#else
+
+                v2 xAxis = V2(1, 0);
+                v2 yAxis = V2(0, 1);
+#endif
+
+                PushBMP(&renderGroup, &state->treeBMP, 
+                        entity->p,
+                        entity->dim,
+                        V4(1, 1, 1, alphaBasedOnZ),
+                        xAxis, yAxis);
                 /*
                 PushBMP(&renderGroup, &state->headBMP, entity->p + 1.0f*V3(Cos(state->theta), 0, 0), bitmapDimInMeter,
                         V2(1, 0), V2(0, 1),
@@ -797,9 +902,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             }break;
         }
     }
-
-    EndSimRegion(world, &state->worldArena, &simRegion);
-    ClearPixelBuffer(&state->finalBuffer, V4(0.5f, 0.5f, 0.5f, 1));
+    ClearPixelBuffer32(&state->finalBuffer, V4(0.5f, 0.5f, 0.5f, 1));
 
 #if 0
     // NOTE : Backgrounds are not affected by the MetersToPixels value. 
@@ -819,6 +922,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
     RenderRenderGroup(&renderGroup, &state->finalBuffer);
 
+#if 0
     // NOTE : Test code for normal maps
     DrawBMPSimple(&state->finalBuffer, &state->envMaps[2].LOD,
             V2(50, 800), V2(state->envMaps[2].LOD.width, state->envMaps[2].LOD.height));
@@ -826,10 +930,13 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             V2(50, 500), V2(state->envMaps[1].LOD.width, state->envMaps[1].LOD.height));
     DrawBMPSimple(&state->finalBuffer, &state->envMaps[0].LOD,
             V2(50, 200), V2(state->envMaps[0].LOD.width, state->envMaps[0].LOD.height));
+#endif
 
     DrawOffScreenBuffer(offscreenBuffer, &state->finalBuffer);
 
     state->theta += 0.05f;
+
+    EndSimRegion(world, &state->worldArena, &simRegion);
 
     // NOTE : Temporary memories should all be cleared.
     EndTemporaryMemory(renderGroup.renderMemory);

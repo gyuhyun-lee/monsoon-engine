@@ -3,6 +3,17 @@
 
 
 inline r32
+Abs(r32 value)
+{
+    if(value < 0.f)
+    {
+        value *= -1.0f;
+    }
+
+    return value;
+}
+
+inline r32
 Clamp(r32 value, r32 min, r32 max)
 {
     if(value < min)
@@ -109,7 +120,8 @@ inline v2 &operator-=(v2 &A, v2 B)
     return A;
 }
 
-inline v2 operator-(v2 &A)
+inline v2 
+operator-(v2 &A)
 {
     v2 result = {};
 
@@ -119,7 +131,8 @@ inline v2 operator-(v2 &A)
     return result;
 }
 
-inline v2 &operator*=(v2 &A, r32 Value)
+inline v2 &
+operator*=(v2 &A, r32 Value)
 {
     A.x *= Value;
     A.y *= Value;
@@ -127,7 +140,8 @@ inline v2 &operator*=(v2 &A, r32 Value)
     return A;
 }
 
-inline v2 Hadamard(v2 A, v2 B)
+inline v2 
+Hadamard(v2 A, v2 B)
 {
     v2 result;
 
@@ -137,13 +151,15 @@ inline v2 Hadamard(v2 A, v2 B)
     return result;
 }
 
-inline r32 Dot(v2 A, v2 B)
+inline r32 
+Dot(v2 A, v2 B)
 {
     r32 result = A.x*B.x + A.y*B.y;
     return result;
 }
 
-inline r32 LengthSquare(v2 A)
+inline r32 
+LengthSquare(v2 A)
 {
     return A.x * A.x + A.y * A.y;
 }
@@ -211,6 +227,17 @@ V3(r32 x, r32 y, r32 z)
 
     result.x = x;
     result.y = y;
+    result.z = z;
+
+    return result;
+}
+
+inline v3
+V3(v2 xy, r32 z)
+{
+    v3 result = {};
+
+    result.xy = xy;
     result.z = z;
 
     return result;
@@ -575,6 +602,23 @@ Normalize(v4 A)
 {
     v4 result = A;
     result *= 1.0f/Length(A);
+
+    return result;
+}
+
+struct rect3
+{
+    v3 min;
+    v3 max;
+};
+
+inline rect3
+Rect3(v3 min, v3 max)
+{
+    rect3 result = {};
+    
+    result.min = min;
+    result.max = max;
 
     return result;
 }

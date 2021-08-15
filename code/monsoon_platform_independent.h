@@ -187,12 +187,14 @@ struct debug_game_input_record
 {
     /*NOTE : 
      *  Input record starts with 20 seconds worth of memory, 
-     *  and reallocates twice as much memory when the memory is depleted.
+     *  and has fixed size for now.
      *  Input record memory first comes with the initial game_state,
      *  followed by each frame worth of game_input
     */
-    void *memory;
-    u32 memorySize;
+    void *inputMemory;
+    // TODO : For now we only copy the permanent Storage, but might wanna
+    // copy from transient storage later.
+    void *permanentStorage;
 
     u32 playIndex;
     u32 playIndexCount;
@@ -213,6 +215,7 @@ struct memory_arena
     u8 *base;
 };
 
+// TODO : Should I clear the memory to 0 whenever I push size to the arena?
 inline u8 *
 PushSize(memory_arena *Arena, memory_index Size)
 {

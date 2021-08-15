@@ -44,7 +44,21 @@ MachTimeDifferenceInMicroSecond(u64 BeginMachTime, u64 EndMachTime, r32 NanoSeco
 }
 
 internal void
-MacOShandleEvents(NSApplication *App, game_input_manager *inputManager, debug_game_input_record *DEBUGInputRecord)
+CopyPermanentStorage(memory_arena *dest, memory_arena *source)
+{
+    // NOTE : We also need to copy the world arena,
+    // If we don't, we will lose all the entity information
+    dest->used = source->used;
+    dest->totalSize = source->totalSize;
+    dest->temporaryMemoryCount = source->temporaryMemoryCount;
+    memcpy((void *)dest->base, 
+            (void *)source->base,
+            source->used);
+}
+
+internal void
+MacOShandleEvents(NSApplication *App, game_input_manager *inputManager, debug_game_input_record *DEBUGInputRecord, 
+                game_state *gameState)
 {
     game_input_raw *newInput = inputManager->rawInputs + inputManager->newInputIndex;
     game_controller *keyboardController = newInput->controllers + 0;
@@ -98,15 +112,7 @@ MacOShandleEvents(NSApplication *App, game_input_manager *inputManager, debug_ga
                         {
                             if(isDown)
                             {
-                                if(DEBUGInputRecord->memory)
-                                {
-                                    free(DEBUGInputRecord->memory);
-                                    DEBUGInputRecord->memorySize = 0;
-                                }
-
                                 // NOTE : Start input recording
-                                DEBUGInputRecord->memorySize = sizeof(game_state) + sizeof(game_input_raw)*DEBUGInputRecord->maxPlayIndexCount;
-                                DEBUGInputRecord->memory = malloc(DEBUGInputRecord->memorySize);
 
                                 DEBUGInputRecord->playIndex = 0;
                                 DEBUGInputRecord->playIndexCount = 0;
@@ -125,6 +131,8 @@ MacOShandleEvents(NSApplication *App, game_input_manager *inputManager, debug_ga
                             {
                                 if(DEBUGInputRecord->isPlaying == false)
                                 {
+                                    Assert(DEBUGInputRecord->inputMemory && DEBUGInputRecord->permanentStorage);
+
                                     // NOTE : play & Stop input recording
                                     DEBUGInputRecord->playIndexCount = DEBUGInputRecord->playIndex;
                                     DEBUGInputRecord->playIndex = 0;
@@ -675,6 +683,7 @@ MacOSGetFileModifiedTime(char *fileName)
     return Result;
 }
 
+
 internal void
 MacOSGetGameCode(game_code *GameCode, char *fileName)
 {
@@ -719,7 +728,7 @@ int main(int argc, char **argv)
     MacOSGetGameCode(&GameCode, DynamicLibraryPath);
 
     game_memory GameMemory = {};
-    GameMemory.permanentStorageSize = Megabytes(4);
+    GameMemory.permanentStorageSize = Megabytes(512);
     GameMemory.transientStorageSize = Gigabytes(1);
     u64 totalSize = GameMemory.permanentStorageSize + GameMemory.transientStorageSize; 
     // NOTE : vm_allocate will always clear the memory to zero. Great!
@@ -769,6 +778,8 @@ int main(int argc, char **argv)
 
         debug_game_input_record DEBUGInputRecord = {};
         DEBUGInputRecord.maxPlayIndexCount = TargetFramesPerSecond * 20;
+        DEBUGInputRecord.inputMemory = malloc(sizeof(game_input_raw)*DEBUGInputRecord.maxPlayIndexCount);
+        DEBUGInputRecord.permanentStorage = malloc(GameMemory.permanentStorageSize);
 
         macos_offscreen_buffer MacOSBuffer = {};
         MacOSBuffer.width = 1920;
@@ -818,6 +829,7 @@ int main(int argc, char **argv)
         // NOTE : Here's the game loop
         while(isGamerunning)
         {
+            game_state *gameState = (game_state *)(GameMemory.permanentStorage);
             game_input_raw *newInput = inputManager.rawInputs + inputManager.newInputIndex;
 
             int DynamicLibraryLock = open("DynamicLibraryLockPath", O_RDONLY);
@@ -827,29 +839,26 @@ int main(int argc, char **argv)
                 close(DynamicLibraryLock);
             }
 
-            MacOShandleEvents(App, &inputManager, &DEBUGInputRecord);
+
+            MacOShandleEvents(App, &inputManager, &DEBUGInputRecord, gameState);
 
             if(DEBUGInputRecord.isRecording)
             {
+                // NOTE : Just started recording
                 if(DEBUGInputRecord.playIndex == 0)
                 {
-                    game_state *gameState = (game_state *)(GameMemory.permanentStorage);
-                    *((game_state *)DEBUGInputRecord.memory) = *gameState;
+                    memcpy(DEBUGInputRecord.permanentStorage, 
+                            GameMemory.permanentStorage, 
+                            GameMemory.permanentStorageSize);
                 }
-                game_input_raw *RecordedInputs = (game_input_raw *)((u8 *)DEBUGInputRecord.memory + 
-                                                                        sizeof(game_state));
+                game_input_raw *RecordedInputs = (game_input_raw *)DEBUGInputRecord.inputMemory;
+                                                                        
                 game_input_raw *CurrentInputRecord = RecordedInputs + DEBUGInputRecord.playIndex++;
                 *CurrentInputRecord = *(inputManager.rawInputs + inputManager.newInputIndex);
 
                 if(DEBUGInputRecord.playIndex == DEBUGInputRecord.maxPlayIndexCount)
                 {
-                    DEBUGInputRecord.maxPlayIndexCount *= 2;
-                    u32 newMemorySize = sizeof(game_state) + sizeof(game_input_raw)*DEBUGInputRecord.maxPlayIndexCount;
-                    void *newMemory = malloc(newMemorySize);
-                    memcpy(newMemory, DEBUGInputRecord.memory, DEBUGInputRecord.memorySize);
-                    free(DEBUGInputRecord.memory);
-                    DEBUGInputRecord.memory = newMemory;
-                    DEBUGInputRecord.memorySize = newMemorySize;
+                    Assert(0);
                 }
             }
 
@@ -860,17 +869,17 @@ int main(int argc, char **argv)
             GameOffscreenBuffer.pitch = MacOSBuffer.pitch;
             GameOffscreenBuffer.memory = MacOSBuffer.memory;
 
-
             if(DEBUGInputRecord.isPlaying)
             {
+                // NOTE : Record playing just started
                 if(DEBUGInputRecord.playIndex == 0)
                 {
-                    game_state *gameState = (game_state *)(GameMemory.permanentStorage);
-                    *gameState = *((game_state *)DEBUGInputRecord.memory);
+                    memcpy(GameMemory.permanentStorage, 
+                            DEBUGInputRecord.permanentStorage, 
+                            GameMemory.permanentStorageSize);
                 }
                 
-                game_input_raw *RecordedInputs = (game_input_raw *)((u8 *)DEBUGInputRecord.memory + 
-                                                                        sizeof(game_state));
+                game_input_raw *RecordedInputs = (game_input_raw *)DEBUGInputRecord.inputMemory;
                 game_input_raw *CurrentInputRecord = RecordedInputs + DEBUGInputRecord.playIndex++; 
                 *newInput = *CurrentInputRecord;
 

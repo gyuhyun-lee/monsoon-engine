@@ -108,6 +108,14 @@ MacOShandleEvents(NSApplication *App, game_input_manager *inputManager, debug_ga
                         {
                             keyboardController->AButton = isDown;
                         }
+                        else if(KeyCode == MACOS_B)
+                        {
+                            keyboardController->BButton = isDown;
+                        }
+                        else if(KeyCode == MACOS_N)
+                        {
+                            keyboardController->YButton = isDown;
+                        }
                         else if(KeyCode == MACOS_F10)
                         {
                             if(isDown)

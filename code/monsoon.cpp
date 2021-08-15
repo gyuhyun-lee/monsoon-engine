@@ -560,12 +560,13 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         b32 BottomShouldBeOpened = false;
         b32 RightShouldBeOpened = false;
         b32 UpShouldBeOpened = true;
-
         
+        // TODO : Massive change of map construction is needed!
+        // so that I don't have to think about this tile & chunk stuff all the time..
 #if 1
         for(u32 z = 0;
             z < 3*TILE_COUNT_Z;
-            z += TILE_COUNT_Z)
+            z += TILE_COUNT_Z/2)
 #endif
         {
             u32 LeftBottomTileX = 0;
@@ -791,6 +792,14 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         {
             Input.actionRight = rawController->AButton||Input.actionRight;
         }
+        if(rawController->BButton)
+        {
+            Input.actionDown = rawController->BButton||Input.actionDown;
+        }
+        if(rawController->YButton)
+        {
+            Input.actionUp = rawController->YButton||Input.actionUp;
+        }
     }
 
     v3 ddPlayer = {};
@@ -810,6 +819,14 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     {
         ddPlayer.y -= 1.0f;
     }
+    if(Input.actionDown)
+    {
+        ddPlayer.z -= 1.0f;
+    }
+    if(Input.actionUp)
+    {
+        ddPlayer.z += 1.0f;
+    }
 
     // TODO : This is also wrong for 3D
     // TODO : This is wrong when the player is using controller.
@@ -827,7 +844,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     state->cameraPos = state->player->worldP;
     sim_region simRegion = {};
     // TODO : Accurate max entity delta for the sim region!
-    StartSimRegion(world, &simRegion, state->cameraPos, world->chunkDim, V3(2, 2, 1));
+    StartSimRegion(world, &simRegion, state->cameraPos, 0.5f*world->chunkDim, V3(2, 2, 1));
 
     for(u32 entityIndex = 0;
         entityIndex < simRegion.entityCount;
@@ -864,8 +881,15 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     {
         sim_entity *entity = simRegion.entities + entityIndex;
 
+        r32 zDiff = Abs(entity->p.z);
+
         r32 cameraZ = 5.0f;
-        r32 alphaBasedOnZ = Clamp01((255 + 10.0f*entity->p.z)/255.0f);
+        r32 alphaBasedOnZ = 1.0f;
+        r32 clipPlaneZ = 0.5f*world->chunkDim.z;
+        if(zDiff > clipPlaneZ)
+        {
+            alphaBasedOnZ = Clamp01(1.0f - (zDiff - clipPlaneZ)/clipPlaneZ);
+        }
 
         switch(entity->type)
         {
@@ -943,7 +967,6 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     CheckMemoryArenaTemporaryMemory(&state->renderArena);
     CheckMemoryArenaTemporaryMemory(&state->worldArena);
 }
-
 extern "C"
 GAME_FILL_AUDIO_BUFFER(GameFillAudioBuffer)
 {

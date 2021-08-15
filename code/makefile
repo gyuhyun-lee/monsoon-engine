@@ -2,7 +2,8 @@ COMPILER = clang
 ARCHITECTURE = -arch arm64
 MAKEFLAGS += --silent
 
-COMPILER_FLAGS = -g -Wall -O0 -std=c++11 -D MONSOON_DEBUG=1
+# -O0 = unoptimized, -O2 = compiler optimized
+COMPILER_FLAGS = -g -Wall -O2 -std=c++11 -D MONSOON_DEBUG=1
 # to disable warning, prefix the name of the warning with no-
 COMPILER_IGNORE_WARNINGS = -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-writable-strings -Wno-switch -Wno-objc-missing-super-calls -Wno-missing-braces
 UNIVERSAL_CODE_PATH = ../code

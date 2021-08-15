@@ -633,6 +633,16 @@ PushRect(render_group *renderGroup, v3 p, v3 dim, v4 color, v2 xAxis = V2(1, 0),
     renderGroup->elementCount++;
 }
 
+internal v2
+GetPerspectiveP(v3 p, r32 distanceToMonitor, r32 cameraZ)
+{
+    v2 result = {};
+
+    result = (distanceToMonitor/(cameraZ - p.z))*p.xy;
+
+    return result;
+}
+
 // TODO : Allow xAxis and yAxis not to be perpendicular? -> 
 // If we do allow them to be not perpendicular, the routine we are using for checking whether the pixel is inside the boundary
 // or not will be invalid
@@ -645,8 +655,8 @@ PushBMP(render_group *renderGroup, pixel_buffer_32 *sourceBuffer, v3 p, v3 dim,
     u8 *Memory = PushSize(&renderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_bmp));
     render_element_header *header = (render_element_header *)Memory;
     render_element_bmp *element = (render_element_bmp *)(Memory + sizeof(render_element_header));
-
-    // NOTE : These are in meters
+    //v2 perspectiveP = GetPerspectiveP(p, distanceToMonitor, cameraZ);
+    //
     r32 distanceToMonitor = 15.0f;
     r32 cameraZ = 20.0f;
     r32 cameraToPz = cameraZ - p.z;

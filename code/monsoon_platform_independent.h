@@ -137,6 +137,9 @@ struct game_input
     b32 moveRight;
 
     b32 actionRight;
+    b32 actionLeft;
+    b32 actionUp;
+    b32 actionDown;
 };
 
 struct game_memory

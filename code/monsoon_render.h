@@ -9,11 +9,11 @@ struct pixel_buffer_32
     // NOTE : Make sure these are int, not uint.
     i32 width;
     i32 height;
+    r32 widthOverHeight;
     i32 pitch;
 
     u32 bytesPerPixel;
-
-    v2 alignment;
+    v2 alignPercentage;
     
     u32 *memory;
 };
@@ -25,12 +25,6 @@ struct environment_map
     pixel_buffer_32 LOD;
 };
 
-struct debug_loaded_bmp
-{
-    game_offscreen_buffer BMP;
-    v2 Alignment;
-};
-
 enum render_element_type
 {
     RenderElementType_Rect,
@@ -39,10 +33,13 @@ enum render_element_type
 
 struct render_element_header
 {
-    render_element_type Type;
+    render_element_type type;
     // TODO : This should be v3 so can we can sort using Z
-    v2 p;
+    v3 p;
+    v3 dim;
+
     v4 color;
+
     v2 xAxis;
     v2 yAxis;
 };
@@ -57,23 +54,31 @@ struct render_element_bmp
     // Maybe store a pointer to the memory_loaded asset?
     pixel_buffer_32 *sourceBuffer;
 
-    // TODO : Do we even need this alignment value?
-    // because we always starts at p - halfDim to p + halfdim, and
-    // the bmp will just fill up the space that we requested.
-    // If it turns out that we need this alignment value, we have to adjust
-    // the value based on the dim?
+    // TODO : This is also in meters, and the p will be subtract this value from itself
+    // before transforming into perspective p. Don't know the calculation is correct : double-check!
     v2 alignment;
 
     environment_map *envMaps;
     pixel_buffer_32 *normalMap;
 };
 
+struct render_group_camera
+{
+    r32 z;
+    r32 focalLength;
+    v2 projectedMonitorDim;
+    r32 metersToPixels;
+};
+
 struct render_group
 {
+    // NOTE : Camera values, in meters
+    render_group_camera renderCamera; // camera that will be used for rendering
+    render_group_camera gameCamera; // camera that will be used for getting entities
+    
     temporary_memory renderMemory;
 
     u32 elementCount;
-    r32 metersToPixels;
 
     v2 bufferHalfDim;
 };

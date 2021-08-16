@@ -251,7 +251,7 @@ DrawRectangle(pixel_buffer_32 *buffer, v2 p, v2 xAxis, v2 yAxis, v4 color)
 // TODO : A lot of mangling of pixel - meter here, 
 // maybe we can clear this by pre-computing the stuff outside the rendering loop
 // This also makes much more sense for multi-light reflections, where the light
-// can bounce multiple times
+// can bounce multiple times! Also with that, I can get rid of metersToPixels value totally
 // NOTE : This will produce 0 to 1 linear value
 internal v4
 SampleFromEnvironmentMap(environment_map *envMap, 
@@ -314,12 +314,6 @@ DrawBMPSimple(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
 {
     Assert(destBuffer && sourceBuffer);
 
-    // TODO : Do we even need this alignment value?
-    // because we always starts at p - halfDim to p + halfdim, and
-    // the bmp will just fill up the space that we requested.
-    // If it turns out that we need this alignment value, we have to adjust
-    // the value based on the dim?
-    //p += alignment;
     v2 p0 = p;
     v2 p1 = p + V2(dim.x, 0);
     v2 p2 = p + V2(0, dim.y);
@@ -382,7 +376,7 @@ DrawBMPSimple(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
 // NOTE : p and the two axises are in pixel!
 internal void
 DrawBMP(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
-        v2 p, v4 color = V4(1, 1, 1, 1), v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1), v2 alignment = V2(0, 0),
+        v2 p, v4 color = V4(1, 1, 1, 1), v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1),
         pixel_buffer_32 *normalMap = 0, environment_map *envMaps = 0, r32 metersToPixels = 0.0f)
 {
     color.rgb *= color.a;
@@ -606,6 +600,72 @@ DrawBMP(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
     }
 }
 
+internal render_group_camera
+GetRenderGroupCamera(r32 cameraZ, r32 focalLength, r32 monitorWidthInMeter, i32 destBufferWidth, i32 destBufferHeight)
+{
+    render_group_camera result = {};
+    result.z = cameraZ;
+    result.focalLength = focalLength;
+
+    // TODO : Handmade hero uses destBufferWidth*monitorWidthInMeter, why??
+    result.metersToPixels = (r32)destBufferWidth/monitorWidthInMeter;
+
+    result.projectedMonitorDim.x = ((destBufferWidth/result.metersToPixels)*(result.z))/
+                                        focalLength;
+    result.projectedMonitorDim.y = ((destBufferHeight/result.metersToPixels)*(result.z))/
+                                        focalLength;
+
+    return result;
+}
+
+internal void
+StartRenderGroup(render_group *renderGroup, memory_arena *arena, memory_index renderMemorySize,
+                i32 destBufferWidth, i32 destBufferHeight)
+{
+    // TODO : How can I keep track of used memory without explicitly mentioning it?
+    renderGroup->renderMemory = StartTemporaryMemory(arena, renderMemorySize);
+    renderGroup->bufferHalfDim = 0.5f*V2(destBufferWidth, destBufferHeight);
+
+    renderGroup->renderCamera = GetRenderGroupCamera(100.0f, 0.6f, 0.635f, 
+                                                    destBufferWidth, destBufferHeight);
+    renderGroup->gameCamera = GetRenderGroupCamera(20.0f, 0.6f, 0.635f, 
+                                                    destBufferWidth, destBufferHeight);
+}
+
+internal v2
+Project(v2 p, r32 focalLength, r32 cameraToTarget)
+{
+    return (focalLength/cameraToTarget)*(p);
+}
+
+struct render_element_pixel_basis
+{
+    // NOTE : These are 
+    v2 p;
+    v2 xAxis;
+    v2 yAxis;
+};
+
+internal render_element_pixel_basis
+GetRenderElementPixelBasis(render_group *renderGroup, render_group_camera *camera, 
+                        v3 p, v3 dim, v2 xAxis, v2 yAxis, v2 alignment, v2 outputBufferHalfDim)
+{
+    render_element_pixel_basis basis = {};
+
+    r32 cameraToTarget = camera->z - p.z;
+    v2 perspectiveP = Project(p.xy - alignment, camera->focalLength, cameraToTarget);
+    v2 perspectiveDim = Project(dim.xy, camera->focalLength, cameraToTarget);
+
+    basis.xAxis = camera->metersToPixels*perspectiveDim.x*xAxis;
+    basis.yAxis = camera->metersToPixels*perspectiveDim.y*yAxis;
+    // NOTE : So this assumes that center of the render group = center of the sim region
+    basis.p = outputBufferHalfDim + camera->metersToPixels*perspectiveP - 
+                (0.5f*basis.xAxis + 0.5f*basis.yAxis);
+
+    return basis;
+}
+
+
 internal void
 PushRect(render_group *renderGroup, v3 p, v3 dim, v4 color, v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
 {
@@ -613,34 +673,16 @@ PushRect(render_group *renderGroup, v3 p, v3 dim, v4 color, v2 xAxis = V2(1, 0),
     render_element_header *header = (render_element_header *)Memory;
     render_element_rect *element = (render_element_rect *)(Memory + sizeof(render_element_header));
 
-    // NOTE : These are in meters
-    r32 distanceToMonitor = 0.3f;
-    r32 cameraZ = 5.0f;
-    r32 cameraToPz = cameraZ - p.z;
-    v2 perspectiveP = (distanceToMonitor/cameraToPz)*p.xy;
+    header->p = p;
+    header->dim = dim;
 
-    v2 pixelDim = renderGroup->metersToPixels*dim.xy;
-    header->xAxis = pixelDim.x*xAxis;
-    header->yAxis = pixelDim.y*yAxis;
-    v2 pixelP = renderGroup->bufferHalfDim + renderGroup->metersToPixels*p.xy - 
-                (0.5f*header->xAxis + 0.5f*header->yAxis);
+    header->xAxis = xAxis;
+    header->yAxis = yAxis;
 
-    header->Type = RenderElementType_Rect;
-    header->p = pixelP;
-
+    header->type = RenderElementType_Rect;
     header->color = color;
 
     renderGroup->elementCount++;
-}
-
-internal v2
-GetPerspectiveP(v3 p, r32 distanceToMonitor, r32 cameraZ)
-{
-    v2 result = {};
-
-    result = (distanceToMonitor/(cameraZ - p.z))*p.xy;
-
-    return result;
 }
 
 // TODO : Allow xAxis and yAxis not to be perpendicular? -> 
@@ -655,30 +697,21 @@ PushBMP(render_group *renderGroup, pixel_buffer_32 *sourceBuffer, v3 p, v3 dim,
     u8 *Memory = PushSize(&renderGroup->renderMemory, sizeof(render_element_header) + sizeof(render_element_bmp));
     render_element_header *header = (render_element_header *)Memory;
     render_element_bmp *element = (render_element_bmp *)(Memory + sizeof(render_element_header));
-    //v2 perspectiveP = GetPerspectiveP(p, distanceToMonitor, cameraZ);
-    //
-    r32 distanceToMonitor = 15.0f;
-    r32 cameraZ = 20.0f;
-    r32 cameraToPz = cameraZ - p.z;
-    v2 perspectiveP = (distanceToMonitor/cameraToPz)*p.xy;
 
-    v2 pixelDim = renderGroup->metersToPixels*dim.xy;
-    header->xAxis = pixelDim.x*xAxis;
-    header->yAxis = pixelDim.y*yAxis;
-    // NOTE : So this assumes that center of the render group = center of the sim region
-    v2 pixelP = renderGroup->bufferHalfDim + renderGroup->metersToPixels*perspectiveP - 
-                (0.5f*header->xAxis + 0.5f*header->yAxis);
+    header->p = p;
+    header->dim = dim;
 
-    header->Type = RenderElementType_BMP;
-    header->p = pixelP;
+    header->xAxis = xAxis;
+    header->yAxis = yAxis;
+
+    header->type = RenderElementType_BMP;
     header->color = color;
 
-    element->sourceBuffer = sourceBuffer;
-    // NOTE : Adjust the alignment based on the scaled pixel dim
-    element->alignment.x = (((r32)sourceBuffer->alignment.x/(r32)sourceBuffer->width)*pixelDim.x);
-    element->alignment.y = (((r32)sourceBuffer->alignment.y/(r32)sourceBuffer->height)*pixelDim.y);
+    element->alignment.x = dim.x*sourceBuffer->alignPercentage.x;
+    element->alignment.y = dim.y*sourceBuffer->alignPercentage.y;
     element->envMaps = envMaps;
     element->normalMap = normalMap;
+    element->sourceBuffer = sourceBuffer;
 
     renderGroup->elementCount++;
 }
@@ -708,23 +741,33 @@ ClearBuffer(game_offscreen_buffer *Buffer, v3 color)
     }
 }
 
+// NOTE : Only this function is responsible for converting the meter to pixels!!
 internal void
 RenderRenderGroup(render_group *renderGroup, pixel_buffer_32 *destBuffer)
 {
     u8 *Base = renderGroup->renderMemory.base;
+    
+    render_group_camera *camera = &renderGroup->renderCamera;
+
     for(u32 ElementIndex = 0;
         ElementIndex < renderGroup->elementCount;
         ++ElementIndex)
     {
         render_element_header *header = (render_element_header *)Base;
         Base += sizeof(*header);
-        switch(header->Type)
+        switch(header->type)
         {
 #if 1
             case RenderElementType_Rect :
             {
                 render_element_rect *element = (render_element_rect *)Base;
-                DrawRectangle(destBuffer, header->p, header->xAxis, header->yAxis,
+
+                render_element_pixel_basis basis = 
+                    GetRenderElementPixelBasis(renderGroup, camera, header->p, header->dim, header->xAxis, header->yAxis, 
+                                            V2(0, 0),
+                                            renderGroup->bufferHalfDim);
+                
+                DrawRectangle(destBuffer, basis.p, basis.xAxis, basis.yAxis,
                                 header->color);
                 Base += sizeof(*element);
             }break;
@@ -733,9 +776,16 @@ RenderRenderGroup(render_group *renderGroup, pixel_buffer_32 *destBuffer)
             case RenderElementType_BMP :
             {
                 render_element_bmp *element = (render_element_bmp *)Base;
+
+                render_element_pixel_basis basis = 
+                    GetRenderElementPixelBasis(renderGroup, camera, header->p, header->dim, header->xAxis, header->yAxis, 
+                                            element->alignment,
+                                            renderGroup->bufferHalfDim);
+                
                 DrawBMP(destBuffer, element->sourceBuffer, 
-                        header->p, header->color, header->xAxis, header->yAxis,
-                        element->alignment, element->normalMap, element->envMaps, renderGroup->metersToPixels);
+                        basis.p, header->color, basis.xAxis, basis.yAxis,
+                        element->normalMap, element->envMaps, camera->metersToPixels);
+
                 Base += sizeof(*element);
             }break;
         }
@@ -754,7 +804,7 @@ DrawOffScreenBuffer(game_offscreen_buffer *OffscreenBuffer, pixel_buffer_32 *Fin
 }
 
 internal pixel_buffer_32
-MakeEmptyPixelBuffer32(memory_arena *arena, i32 width, i32 height, v2 alignment = V2(0, 0),
+MakeEmptyPixelBuffer32(memory_arena *arena, i32 width, i32 height, v2 alignPercentage = V2(0, 0),
                         v4 color = V4(0, 0, 0, 0))
 {
     pixel_buffer_32 buffer = {};
@@ -763,7 +813,7 @@ MakeEmptyPixelBuffer32(memory_arena *arena, i32 width, i32 height, v2 alignment 
     buffer.height = height;
     buffer.bytesPerPixel = 4;
     buffer.pitch = buffer.bytesPerPixel * buffer.width;
-    buffer.alignment = alignment;
+    buffer.alignPercentage = alignPercentage;
     buffer.memory = (u32 *)PushArray(arena, u32, width*height);
 
     ClearPixelBuffer32(&buffer, color);

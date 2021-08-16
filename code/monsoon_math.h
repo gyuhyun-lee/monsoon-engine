@@ -606,6 +606,23 @@ Normalize(v4 A)
     return result;
 }
 
+struct rect2
+{
+    v2 min;
+    v2 max;
+};
+
+inline rect2
+Rect2(v2 min, v2 max)
+{
+    rect2 result = {};
+
+    result.min = min;
+    result.max = max;
+
+    return result;
+}
+
 struct rect3
 {
     v3 min;

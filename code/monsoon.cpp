@@ -168,9 +168,11 @@ DEBUGLoadBMP(debug_read_entire_file *ReadEntireFile, char *FileName, v2 alignmen
 
     result.width = Header->width;
     result.height = Header->height;
+    result.widthOverHeight = (r32)result.width/(r32)result.height;
     result.bytesPerPixel = Header->BitsPerPixel/8;
     result.pitch = result.width * result.bytesPerPixel;
-    result.alignment = alignment;
+    result.alignPercentage.x = alignment.x/(r32)result.width;
+    result.alignPercentage.y = alignment.y/(r32)result.height;
 
     result.memory = (u32 *)((u8 *)Header + Header->pixelOffset);
 
@@ -233,293 +235,6 @@ internal void
 AddPlayerentity(game_state *state, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, v3 Dim)
 {
     state->player = AddLowEntity(state, EntityType_Player, AbsTileX, AbsTileY, AbsTileZ, Dim);
-}
-
-// TODO : DrawBMP is used here, which is not what I am fond with,
-// because these alignment values are bitmap specific
-// which means if the bitmap size gets scales, this will mess up the alignment value
-// PushBMP does not have this issue, so maybe pass through the render group 
-// when constructing the background?
-internal void
-MakeBackground(game_state *state, pixel_buffer_32 *buffer)
-{
-    ClearPixelBuffer32(buffer, V4(0, 0, 0, 0));
-
-    u32 GroundCount = 500;
-    u32 RockCount = 100;
-    u32 grassCount = 100;
-
-    random_series Series = Seed(13);
-    v2 bufferHalfDim = V2(buffer->width/2, buffer->height/2);
-
-    for(u32 GroundIndex = 0;
-        GroundIndex < GroundCount;
-        ++GroundIndex)
-    {
-        u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
-        pixel_buffer_32 *BMPToUse = state->groundBMP + RandomNumber%ArrayCount(state->groundBMP);
-        v2 pixelP = V2(GetRandomBetween(&Series, 0, buffer->width), GetRandomBetween(&Series, 0, buffer->height));
-        v2 BMPBottomLeftCorner = pixelP - BMPToUse->alignment;
-        v2 BMPUpperRightCorner = pixelP - BMPToUse->alignment + V2(BMPToUse->width, BMPToUse->height);
-
-        if(!(BMPUpperRightCorner.x > buffer->width ||
-            BMPBottomLeftCorner.x < 0 ||
-            BMPUpperRightCorner.y > buffer->height  ||
-            BMPBottomLeftCorner.y < 0))    
-        {
-            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-        }
-        else
-        {
-            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-
-            if(BMPBottomLeftCorner.y < 0 &&
-                BMPBottomLeftCorner.x < 0)
-            {
-                int a = 1;
-            }
-
-            // NOTE : Draw the clipped region of the bmp by 
-            // simply repositioning the BMPs
-            if(BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPUpperRightCorner.x > buffer->width)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPBottomLeftCorner.x < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-
-            if(BMPBottomLeftCorner.x < 0 &&
-                BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPBottomLeftCorner.x < 0 &&
-                BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPUpperRightCorner.x > buffer->width &&
-                BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPUpperRightCorner.x > buffer->width &&
-                BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-        }
-    }
-
-#if 1
-    for(u32 RockIndex = 0;
-        RockIndex < RockCount;
-        ++RockIndex)
-    {
-        u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
-        pixel_buffer_32 *BMPToUse = state->rockBMP + RandomNumber%ArrayCount(state->rockBMP);
-        v2 pixelP = V2(GetRandomBetween(&Series, 0, buffer->width), GetRandomBetween(&Series, 0, buffer->height));
-        v2 BMPBottomLeftCorner = pixelP - BMPToUse->alignment;
-        v2 BMPUpperRightCorner = pixelP - BMPToUse->alignment + V2(BMPToUse->width, BMPToUse->height);
-
-        if(!(BMPUpperRightCorner.x > buffer->width ||
-            BMPBottomLeftCorner.x < 0 ||
-            BMPUpperRightCorner.y > buffer->height  ||
-            BMPBottomLeftCorner.y < 0))    
-        {
-            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-        }
-        else
-        {
-            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-
-            if(BMPBottomLeftCorner.y < 0 &&
-                BMPBottomLeftCorner.x < 0)
-            {
-                int a = 1;
-            }
-
-            // NOTE : Draw the clipped region of the bmp by 
-            // simply repositioning the BMPs
-            if(BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPUpperRightCorner.x > buffer->width)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPBottomLeftCorner.x < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-
-            if(BMPBottomLeftCorner.x < 0 &&
-                BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPBottomLeftCorner.x < 0 &&
-                BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPUpperRightCorner.x > buffer->width &&
-                BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPUpperRightCorner.x > buffer->width &&
-                BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-        }
-    }
-
-    for(u32 grassIndex = 0;
-        grassIndex < grassCount;
-        ++grassIndex)
-    {
-        u32 RandomNumber = GetNextRandomNumberInSeries(&Series);
-        pixel_buffer_32 *BMPToUse = state->grassBMP + RandomNumber%ArrayCount(state->grassBMP);
-        v2 pixelP = V2(GetRandomBetween(&Series, 0, buffer->width), GetRandomBetween(&Series, 0, buffer->height));
-        v2 BMPBottomLeftCorner = pixelP - BMPToUse->alignment;
-        v2 BMPUpperRightCorner = pixelP - BMPToUse->alignment + V2(BMPToUse->width, BMPToUse->height);
-
-        if(!(BMPUpperRightCorner.x > buffer->width ||
-            BMPBottomLeftCorner.x < 0 ||
-            BMPUpperRightCorner.y > buffer->height  ||
-            BMPBottomLeftCorner.y < 0))    
-        {
-            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-        }
-        else
-        {
-            DrawBMP(buffer, BMPToUse, pixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-
-            if(BMPBottomLeftCorner.y < 0 &&
-                BMPBottomLeftCorner.x < 0)
-            {
-                int a = 1;
-            }
-
-            // NOTE : Draw the clipped region of the bmp by 
-            // simply repositioning the BMPs
-            if(BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPUpperRightCorner.x > buffer->width)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            if(BMPBottomLeftCorner.x < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-
-            if(BMPBottomLeftCorner.x < 0 &&
-                BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPBottomLeftCorner.x < 0 &&
-                BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x += buffer->width;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPUpperRightCorner.x > buffer->width &&
-                BMPUpperRightCorner.y > buffer->height)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                newPixelP.y -= buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-            else if(BMPUpperRightCorner.x > buffer->width &&
-                BMPBottomLeftCorner.y < 0)
-            {
-                v2 newPixelP = pixelP;
-                newPixelP.x -= buffer->width;
-                newPixelP.y += buffer->height;
-                DrawBMP(buffer, BMPToUse, newPixelP, V4(1, 1, 1, 1), V2(1, 0), V2(0, 1), BMPToUse->alignment);
-            }
-        }
-    }
-#endif
 }
 
 // TODO : This should go away!
@@ -683,11 +398,11 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         state->sampleBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/sample.bmp");
 
         state->headBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_head.bmp",
-                                        V2(48, 40));
+                                        V2(0, 34));
         state->torsoBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_torso.bmp",
-                                       V2(48, 40));
+                                       V2(0, 34));
         state->capeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test/test_hero_front_cape.bmp",
-                                    V2(48, 40));
+                                    V2(0, 34));
 
         state->rockBMP[0] = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/soma/data/test2/rock00.bmp",
                                         V2(35, 40));
@@ -842,9 +557,14 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     }
 
     state->cameraPos = state->player->worldP;
+    render_group renderGroup = {};
+    StartRenderGroup(&renderGroup, &state->renderArena, Megabytes(256), offscreenBuffer->width, offscreenBuffer->height);
+
     sim_region simRegion = {};
     // TODO : Accurate max entity delta for the sim region!
-    StartSimRegion(world, &simRegion, state->cameraPos, 0.5f*world->chunkDim, V3(2, 2, 1));
+    StartSimRegion(&simRegion, world, state->cameraPos, 
+                    V3(renderGroup.gameCamera.projectedMonitorDim, world->chunkDim.z), 
+                    V3(2, 2, 1));
 
     for(u32 entityIndex = 0;
         entityIndex < simRegion.entityCount;
@@ -860,14 +580,6 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             }break;
         }
     }
-
-
-    render_group renderGroup = {};
-    // TODO : How can I keep track of used memory without explicitly mentioning it?
-    renderGroup.renderMemory = StartTemporaryMemory(&state->renderArena, Megabytes(256));
-    renderGroup.metersToPixels = (r32)offscreenBuffer->width/((TILE_COUNT_X+1)*world->tileSideInMeters);
-    //renderGroup.MetersToPixels = 10;
-    renderGroup.bufferHalfDim = 0.5f*V2(offscreenBuffer->width, offscreenBuffer->height);
 
 #if 0
     MakeCheckerBoard(&state->envMaps[0].LOD, V4(0, 0, 1, 1));
@@ -913,10 +625,12 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
                 v2 yAxis = V2(0, 1);
 #endif
 
-                PushBMP(&renderGroup, &state->treeBMP, 
-                        entity->p,
-                        entity->dim,
-                        V4(1, 1, 1, alphaBasedOnZ),
+                PushRect(&renderGroup, entity->p, entity->dim, V4(1, 1, 0, 1), xAxis, yAxis);
+                PushBMP(&renderGroup, &state->headBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
+                        xAxis, yAxis);
+                PushBMP(&renderGroup, &state->torsoBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
+                        xAxis, yAxis);
+                PushBMP(&renderGroup, &state->capeBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
                         xAxis, yAxis);
                 /*
                 PushBMP(&renderGroup, &state->headBMP, entity->p + 1.0f*V3(Cos(state->theta), 0, 0), bitmapDimInMeter,

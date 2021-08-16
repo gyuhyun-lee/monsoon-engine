@@ -141,11 +141,11 @@ MoveEntity(sim_region *simRegion, sim_entity *entity, v3 ddP, r32 speed, r32 dtP
 
 
 internal void
-StartSimRegion(world *world, sim_region *simRegion, world_position center, v3 halfDim, v3 MaxEntityDelta)
+StartSimRegion(sim_region *simRegion, world *world, world_position center, v3 dim, v3 MaxEntityDelta)
 {
     simRegion->entityCount = 0;
     simRegion->center = center;
-    simRegion->halfDim = halfDim + MaxEntityDelta;
+    simRegion->halfDim = 0.5f*dim + MaxEntityDelta;
 
     // IMPORTANT : NOTE : Sim region should NOT be bigger than the maximum movable length of
     // the base(centered, most likely the player) entity. If the sim region somehow 

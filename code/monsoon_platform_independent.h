@@ -142,15 +142,7 @@ struct game_input
     b32 actionDown;
 };
 
-struct game_memory
-{
-    void *permanentStorage;
-    void *transientStorage;
-
-    u64 permanentStorageSize;
-    u64 transientStorageSize;
-};
-
+#if MONSOON_DEBUG
 struct debug_platform_read_file_result
 {
     void *memory;
@@ -167,23 +159,6 @@ struct game_platform_api
     debug_read_entire_file *DEBUGReadEntireFile;
     debug_write_entire_file *DEBUGWriteEntireFile;
     debug_free_file_memory *DEBUGFreeFileMemory;
-};
-
-#define GAME_UPDATE_AND_RENDER(name) void (name)(game_offscreen_buffer *offscreenBuffer, game_memory *Memory, game_input_raw *RawInput, game_platform_api *PlatformAPI, r32 dtPerFrame)
-typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
-GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub){}
-
-#define GAME_FILL_AUDIO_BUFFER(name) void (name)(game_audio_buffer *audioBuffer, r32 dtPerFrame)
-typedef GAME_FILL_AUDIO_BUFFER(game_fill_audio_buffer);
-GAME_FILL_AUDIO_BUFFER(GameFillAudioBufferStub){}
-
-struct game_code
-{
-    void *handle;
-    u64 lastModifiedTime;
-
-    game_update_and_render *UpdateAndRender;
-    game_fill_audio_buffer *FillAudioBuffer;
 };
 
 struct debug_game_input_record
@@ -205,6 +180,63 @@ struct debug_game_input_record
 
     b32 isRecording;
     b32 isPlaying;
+};
+
+enum debug_game_cycle_counter_id
+{
+    DEBUGCycleCounter_GameUpdateAndRender,
+    DEBUGCycleCounter_RenderRenderGroup,
+    DEBUGCycleCounter_TestPixel,
+    DEBUGCycleCounter_FillPixel,
+    DEBUGCycleCounter_Count,
+};
+
+struct debug_game_cycle_counter
+{
+    u64 cycleCount;
+    u32 hitCount;
+};
+
+#if COMPILER_LLVM 
+u64 rdtsc(void)
+{
+	u64 val;
+	asm volatile("mrs %0, cntvct_el0" : "=r" (val));
+
+	return val;
+}
+#endif
+
+#define BeginCycleCounter(ID) u64 beginCycleCounter##ID = rdtsc();
+#define EndCycleCounter(ID) DEBUGGlobalCycleCounter[DEBUGCycleCounter_##ID].cycleCount += rdtsc() - beginCycleCounter##ID; DEBUGGlobalCycleCounter[DEBUGCycleCounter_##ID].hitCount++;
+#endif
+
+struct game_memory
+{
+    void *permanentStorage;
+    void *transientStorage;
+
+    u64 permanentStorageSize;
+    u64 transientStorageSize;
+
+    debug_game_cycle_counter DEBUGCycleCounters[DEBUGCycleCounter_Count];
+};
+
+#define GAME_UPDATE_AND_RENDER(name) void (name)(game_offscreen_buffer *offscreenBuffer, game_memory *Memory, game_input_raw *RawInput, game_platform_api *PlatformAPI, r32 dtPerFrame)
+typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
+GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub){}
+
+#define GAME_FILL_AUDIO_BUFFER(name) void (name)(game_audio_buffer *audioBuffer, r32 dtPerFrame)
+typedef GAME_FILL_AUDIO_BUFFER(game_fill_audio_buffer);
+GAME_FILL_AUDIO_BUFFER(GameFillAudioBufferStub){}
+
+struct game_code
+{
+    void *handle;
+    u64 lastModifiedTime;
+
+    game_update_and_render *UpdateAndRender;
+    game_fill_audio_buffer *FillAudioBuffer;
 };
 
 #define memory_index size_t
@@ -279,7 +311,6 @@ CheckMemoryArenaTemporaryMemory(memory_arena *Arena)
     Assert(Arena->temporaryMemoryCount == 0);
 }
 
-
 #define PushStruct(Arena, type) (type *)PushSize(Arena, sizeof(type))
 #define PushArray(Arena, type, count) (type *)PushSize(Arena, sizeof(type)*count)
 
@@ -293,5 +324,6 @@ StartMemoryArena(u8 *base, memory_index totalSize)
 
     return Result;
 }
+
 
 #endif

@@ -3,29 +3,17 @@
 
 /*
  * NOTE : Here is how I will construct the world chunk.
- * 1. 
-.XY *  Chunk is not variable sized(at least for now). If it is, there is too much to think
- *  how much the chunk size should vary, or what if the entity is not inside any of the chunk,
- *  should I make a new chunk(and also somehow know how big that chunk should be without interupting
- *  other chunks), or should I make any of the close chunk bigger...
- *  
- *  So the chunk is nice and evenly distributed with same sizes across the world. The game will just
+ *
+ *  1. World chunks are nice and evenly distributed with the same sizes across the world. The game will just
  *  not simulate the chunks that are outside the boundary or if there is no entity that the game
  *  updates.
  *
- * 2. 
- *  To get the chunk X, Y, or Z from the Absolute Tile posiiton, because the chunks are evenly cut,
- *  we can just do AbsTile/ChunkDim;
- * 
- * 
- *
+ *  2. Left Bottom corner of the world chunk with chunk pos (0, 0, 0) is the center of the Cartesian coordinate system.
+    left bottom corner of the tile with AbsTilePos (0, 0, 0) is also the center of the Cartesian coordinate system.
+    Also, tile (0, 0, 0)'s left bottom corner matches the left bottom corner of the chunk
 */
 
-// IMPORTANT : NOTE : Left Bottom corner of the world chunk with chunk pos (0, 0, 0) 
-// is the center of the Cartesian coordinate system.
-// left bottom corner of the tile with AbsTilePos (0, 0, 0) 
-// is also the center of the Cartesian coordinate system.
-// Also, tile (0, 0, 0)'s left bottom corner matches the left bottom corner of the chunk
+// IMPORTANT : NOTE : 
 struct world_position
 {
     // NOTE : All chunks has same sizes and evenly distributed across the world.

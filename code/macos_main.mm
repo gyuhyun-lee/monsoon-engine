@@ -9,7 +9,12 @@
     input recording
 */
 
+#include "monsoon_platform_independent.h"
+#include "monsoon.cpp"
+#include "macos_keycode.h"
+
 // NOTE : Cocoa.h is already using internal.. so I need to do this :(
+#include <mach/thread_info.h>
 #undef internal 
 #include <Cocoa/Cocoa.h> // APPKIT
 #include <mach/mach_time.h> // mach_absolute_time
@@ -20,13 +25,11 @@
 #include <IOKit/hid/IOHIDLib.h> //IOHIDManager, IOHIDElement
 #include <AudioUnit/AudioUnit.h> 
 
-#include "monsoon_platform_independent.h"
-#include "monsoon.cpp"
-#include "macos_keycode.h"
-#include "macos_support.cpp"
 
 #define internal static
 #define MACOS_CALLBACK static
+
+#include "macos_support.cpp"
 
 global_variable b32 isGamerunning;
 global_variable IOHIDManagerRef HIDManager; // TODO : Any way to get rid of this global variable?
@@ -896,8 +899,26 @@ int main(int argc, char **argv)
                     DEBUGInputRecord.playIndex = 0;
                 }
             }
-            GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameMemory, newInput, &GameplatformAPI, TargetSecondsPerFrame);
-            GameCode.FillAudioBuffer(&GameAudioBuffer, TargetSecondsPerFrame);
+            if(GameCode.UpdateAndRender)
+            {
+                GameCode.UpdateAndRender(&GameOffscreenBuffer, &GameMemory, newInput, &GameplatformAPI, TargetSecondsPerFrame);
+                for(u32 cycleCounterIndex = 0;
+                    cycleCounterIndex < DEBUGCycleCounter_Count;
+                    ++cycleCounterIndex)
+                {
+                    debug_game_cycle_counter *cycleCounter = GameMemory.DEBUGCycleCounters + cycleCounterIndex;
+                    printf("%u, cycles : %llu, hits : %u\n", cycleCounterIndex, cycleCounter->cycleCount, cycleCounter->hitCount);
+
+                    cycleCounter->cycleCount = 0;
+                    cycleCounter->hitCount = 0;
+                }
+                
+                printf("\n");
+            }
+            if(GameCode.FillAudioBuffer)
+            {
+                GameCode.FillAudioBuffer(&GameAudioBuffer, TargetSecondsPerFrame);
+            }
 
             // Rendering loop with OpenGL.
             {
@@ -971,7 +992,7 @@ int main(int argc, char **argv)
 
             endTime = mach_absolute_time();
             // TODO : More precise frame rate
-            printf("%f\n", (r32)(MachTimeDifferenceToNanoSecond(beginTime, endTime, NanoSecondPerTick))/SecToNanoSec);
+            //printf("%f\n", (r32)(MachTimeDifferenceToNanoSecond(beginTime, endTime, NanoSecondPerTick))/SecToNanoSec);
             beginTime = endTime;
 
         }

@@ -1,7 +1,6 @@
 #ifndef MONSOON_MATH_H
 #define MONSOON_MATH_H
 
-
 inline r32
 Abs(r32 value)
 {
@@ -298,7 +297,8 @@ operator/(v3 a, r32 value)
     return result;
 }
 
-inline v3 &operator-=(v3 &A, v3 B)
+inline v3 
+&operator-=(v3 &A, v3 B)
 {
     A.x -= B.x;
     A.y -= B.y;
@@ -307,7 +307,8 @@ inline v3 &operator-=(v3 &A, v3 B)
     return A;
 }
 
-inline v3 operator-(v3 &A)
+inline v3 
+operator-(v3 &A)
 {
     v3 result = {};
 
@@ -318,7 +319,8 @@ inline v3 operator-(v3 &A)
     return result;
 }
 
-inline v3 &operator*=(v3 &A, r32 Value)
+inline v3 
+&operator*=(v3 &A, r32 Value)
 {
     A.x *= Value;
     A.y *= Value;
@@ -327,7 +329,8 @@ inline v3 &operator*=(v3 &A, r32 Value)
     return A;
 }
 
-inline v3 Hadamard(v3 A, v3 B)
+inline v3 
+Hadamard(v3 A, v3 B)
 {
     v3 result;
 

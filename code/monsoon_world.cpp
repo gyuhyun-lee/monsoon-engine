@@ -1,6 +1,6 @@
 #include "monsoon_world.h"
 // TODO : Properly handle this value
-#define WORLD_CHUNK_UNINITIALIZED_VALUE INT_MAX
+#define WORLD_CHUNK_UNINITIALIZED_VALUE UINT_MAX
 
 internal void
 InitializeWorld(world *World)
@@ -73,7 +73,9 @@ GetWorldChunk(world *World, u32 chunkX, u32 chunkY, u32 chunkZ, b32 shouldCreate
 
         if(shouldCreate && !emptyWorldChunk)
         {
-            if(FirstInHash->chunkX == WORLD_CHUNK_UNINITIALIZED_VALUE)
+            if(FirstInHash->chunkX == WORLD_CHUNK_UNINITIALIZED_VALUE &&
+                FirstInHash->chunkY == WORLD_CHUNK_UNINITIALIZED_VALUE &&
+                FirstInHash->chunkZ == WORLD_CHUNK_UNINITIALIZED_VALUE)
             {
                 emptyWorldChunk = FirstInHash;
             }
@@ -94,6 +96,10 @@ GetWorldChunk(world *World, u32 chunkX, u32 chunkY, u32 chunkZ, b32 shouldCreate
     // TODO : What should we do if the world chunk is somehow empty??
     // Maybe if it is not urgent(i.e we don't need to simulate the entity inside this world chunk
     // for now), put onto the queue or something?
+    if(shouldCreate)
+    {
+        Assert(result);
+    }
 
     return result;
 }

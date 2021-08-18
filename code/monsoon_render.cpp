@@ -448,6 +448,7 @@ DrawBMP(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             x < maxX;
             ++x)
         {
+            BeginCycleCounter(TestPixel);
             // TODO : if the p has fractional value, it might make the dot value
             // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
             // What will be a proper way to handle this?(Round?)
@@ -459,6 +460,7 @@ DrawBMP(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             if(vDotXAxis >= 0 && vDotYAxis >= 0 &&
                 vDotXAxis <= LengthSquareOfXAxis && vDotYAxis <= LengthSquareOfYAxis)
             {
+                BeginCycleCounter(FillPixel);
                 v2 uv = V2(vDotXAxis/LengthSquareOfXAxis, vDotYAxis/LengthSquareOfYAxis);
                 v2 textureCoord = NonEdgedTextureCoordForBilinearSample(uv, sourceBuffer->width, sourceBuffer->height);
 
@@ -589,10 +591,238 @@ DrawBMP(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
                         (RoundR32ToUInt32(resultColor255.r) << 16) |
                         (RoundR32ToUInt32(resultColor255.g) << 8) |
                         (RoundR32ToUInt32(resultColor255.b) << 0));
-
+                EndCycleCounter(FillPixel);
             }
 
             pixel++;
+            EndCycleCounter(TestPixel);
+        }
+
+
+        row += destBuffer->pitch;
+    }
+}
+
+// NOTE : p is ALWAYS the pixel p based on the entity p.
+// only the alignment can be used to adjust the bmp drawing position.
+// NOTE : p and the two axises are in pixel!
+internal void
+DrawBMPQuickly(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
+        v2 p, v4 color = V4(1, 1, 1, 1), v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
+
+{
+    color.rgb *= color.a;
+
+    r32 lengthOfXAxis = Length(xAxis);
+    r32 lengthOfYAxis = Length(yAxis);
+    r32 lengthOfXAxisOverYAxis = lengthOfXAxis/lengthOfYAxis;
+    r32 LengthSquareOfXAxis = LengthSquare(xAxis);
+    r32 LengthSquareOfYAxis = LengthSquare(yAxis);
+
+    r32 oneOver255 = 1.0f/255.0f;
+    r32 oneOver255Sq = oneOver255*oneOver255;
+
+    // NOTE : When we have a non-uniform scaled axises, normals will change in scale,
+    // but only the X and Y components will be affected. Therefore, if we normalize 
+    // the changed normal, Z value will be overwhelmed by the scaled X and Y value
+    // This value is to negate that affect as much as possible.
+    r32 normalZScale = 0.5f*(lengthOfXAxis + lengthOfYAxis);
+
+    r32 asdf = lengthOfXAxis/(r32)sourceBuffer->width;
+    Assert(sourceBuffer);
+
+    // TODO : Do we even need this alignment value?
+    // because we always starts at p - halfDim to p + halfdim, and
+    // the bmp will just fill up the space that we requested.
+    // If it turns out that we need this alignment value, we have to adjust
+    // the value based on the dim?
+    //p += alignment;
+    v2 p0 = p;
+    v2 p1 = p + xAxis;
+    v2 p2 = p + yAxis;
+    v2 p3 = p + xAxis + yAxis;
+
+    i32 minX = RoundR32ToInt32(Minimum(Minimum(p0.x, p1.x), Minimum(p2.x, p3.x)));
+    i32 minY = RoundR32ToInt32(Minimum(Minimum(p0.y, p1.y), Minimum(p2.y, p3.y)));
+    i32 maxX = RoundR32ToInt32(Maximum(Maximum(p0.x, p1.x), Maximum(p2.x, p3.x)));
+    i32 maxY = RoundR32ToInt32(Maximum(Maximum(p0.y, p1.y), Maximum(p2.y, p3.y)));
+
+    if(minX < 0) 
+    {
+        minX = 0;
+    }
+    if(maxX > destBuffer->width)
+    {
+        maxX = destBuffer->width;
+    }
+    if(minY < 0)
+    {
+        minY = 0;
+    }
+    if(maxY > destBuffer->height)
+    {
+        maxY = destBuffer->height;
+    }   
+
+    r32 pDotXAxis = Dot(p, xAxis);
+    r32 pDotYAxis = Dot(p, yAxis);
+
+#if 0
+    // NOTE : To see the region of the whole BMP, enable this.
+    DrawRectangle(destBuffer, V2(minX, minY), dim, 1, 0, 0);
+#endif
+
+    u8 *row = (u8 *)destBuffer->memory + 
+                    destBuffer->pitch*minY + 
+                    destBuffer->bytesPerPixel*minX;
+    for(i32 y = minY;
+        y < maxY;
+        ++y)
+    {
+        u32 *pixel = (u32 *)row;
+        for(i32 x = minX;
+            x < maxX;
+            ++x)
+        {
+            BeginCycleCounter(TestPixel);
+
+            // TODO : if the p has fractional value, it might make the dot value
+            // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
+            // What will be a proper way to handle this?(Round?)
+            // NOTE : This will also handle what the 'sourceOffset' value was doing
+            r32 u = (Dot(V2(x, y), xAxis) - pDotXAxis)/LengthSquareOfXAxis;
+            r32 v = (Dot(V2(x, y), yAxis) - pDotYAxis)/LengthSquareOfYAxis;
+
+            if(u >= 0.0f && u < 1.0f &&
+                v >= 0.0f && v < 1.0f)
+            {
+                BeginCycleCounter(FillPixel);
+
+                v2 textureCoord = V2(u*((r32)sourceBuffer->width - 2) + 1.0f, 
+                                    v*((r32)sourceBuffer->height - 2) + 1.0f);
+
+                // NOTE : Get linear interpolation value
+                u32 truncatedTextureCoordX = TruncateR32ToUInt32(textureCoord.x);
+                u32 truncatedTextureCoordY = TruncateR32ToUInt32(textureCoord.y);
+                i32 texelOffsetX = textureCoord.x - truncatedTextureCoordX >= 0.5f ? 1 : -1;
+                i32 texelOffsetY = textureCoord.y - truncatedTextureCoordY >= 0.5f ? 1 : -1;
+                // TODO : Simplify these linear values? Handmade hero always uses upper & right side texels. Do we want to use that?
+                r32 linearXt = textureCoord.x - (r32)truncatedTextureCoordX;
+                if(linearXt >= 0.5f)
+                    linearXt -= 0.5f;
+                else
+                    linearXt = 1.0f - (linearXt + 0.5f);
+
+                r32 linearYt = textureCoord.y - (r32)truncatedTextureCoordY;
+                if(linearYt >= 0.5f)
+                    linearYt -= 0.5f;
+                else
+                    linearYt = 1.0f - (linearYt + 0.5f);
+
+                // NOTE : Bilinear Sampling
+                u32 *texelAPtr = (u32 *)sourceBuffer->memory + truncatedTextureCoordY*sourceBuffer->width + truncatedTextureCoordX;
+                u32 *texelBPtr = texelAPtr + texelOffsetX;
+                u32 *texelCPtr = texelAPtr + texelOffsetY*sourceBuffer->width;
+                u32 *texelDPtr = texelAPtr + texelOffsetX + texelOffsetY*sourceBuffer->width;
+
+                // NOTE : Unpack Bilinear Samples
+                r32 texelAr = (*texelAPtr >> 16) & 0x000000ff;
+                r32 texelAg = (*texelAPtr >> 8) & 0x000000ff; 
+                r32 texelAb = (*texelAPtr >> 0) & 0x000000ff;
+                r32 texelAa = (*texelAPtr >> 24) & 0x000000ff;
+
+                r32 texelBr = (*texelBPtr >> 16) & 0x000000ff;
+                r32 texelBg = (*texelBPtr >> 8) & 0x000000ff; 
+                r32 texelBb = (*texelBPtr >> 0) & 0x000000ff;
+                r32 texelBa = (*texelBPtr >> 24) & 0x000000ff;
+
+                r32 texelCr = (*texelCPtr >> 16) & 0x000000ff;
+                r32 texelCg = (*texelCPtr >> 8) & 0x000000ff; 
+                r32 texelCb = (*texelCPtr >> 0) & 0x000000ff;
+                r32 texelCa = (*texelCPtr >> 24) & 0x000000ff;
+
+                r32 texelDr = (*texelDPtr >> 16) & 0x000000ff;
+                r32 texelDg = (*texelDPtr >> 8) & 0x000000ff; 
+                r32 texelDb = (*texelDPtr >> 0) & 0x000000ff;
+                r32 texelDa = (*texelDPtr >> 24) & 0x000000ff;
+
+                // NOTE : Convert from sRGB255 to Linear 0 to 1
+                texelAr = oneOver255Sq*texelAr*texelAr;
+                texelAg = oneOver255Sq*texelAg*texelAg;
+                texelAb = oneOver255Sq*texelAb*texelAb;
+                texelAa = oneOver255*texelAa;
+
+                texelBr = oneOver255Sq*texelBr*texelBr;
+                texelBg = oneOver255Sq*texelBg*texelBg;
+                texelBb = oneOver255Sq*texelBb*texelBb;
+                texelBa = oneOver255*texelBa;
+
+                texelCr = oneOver255Sq*texelCr*texelCr;
+                texelCg = oneOver255Sq*texelCg*texelCg;
+                texelCb = oneOver255Sq*texelCb*texelCb;
+                texelCa = oneOver255*texelCa;
+
+                texelDr = oneOver255Sq*texelDr*texelDr;
+                texelDg = oneOver255Sq*texelDg*texelDg;
+                texelDb = oneOver255Sq*texelDb*texelDb;
+                texelDa = oneOver255*texelDa;
+
+                r32 invLinearXt = 1.0f-linearXt;
+                r32 invLinearYt = 1.0f-linearYt;
+
+                // NOTE : Interpolate Linear to get the blended color
+                r32 texelr = invLinearYt*invLinearXt*texelAr + invLinearYt*linearXt*texelBr + linearYt*invLinearXt*texelCr + linearYt*linearXt*texelDr;
+                r32 texelg = invLinearYt*invLinearXt*texelAg + invLinearYt*linearXt*texelBg + linearYt*invLinearXt*texelCg + linearYt*linearXt*texelDg;
+                r32 texelb = invLinearYt*invLinearXt*texelAb + invLinearYt*linearXt*texelBb + linearYt*invLinearXt*texelCb + linearYt*linearXt*texelDb;
+                r32 texela = invLinearYt*invLinearXt*texelAa + invLinearYt*linearXt*texelBa + linearYt*invLinearXt*texelCa + linearYt*linearXt*texelDa;
+
+                // NOTE : Hadamard with color value
+                texelr = texelr*color.r;
+                texelg = texelg*color.g;
+                texelb = texelb*color.b;
+                texela = texela*color.a;
+
+                texelr = Clamp01(texelr);
+                texelg = Clamp01(texelg);
+                texelb = Clamp01(texelb);
+
+                // NOTE : Unpack dest texel
+                r32 destr = (*pixel >> 16) & 0x000000f;
+                r32 destg = (*pixel >> 8) & 0x000000ff;
+                r32 destb = (*pixel >> 0) & 0x000000ff;
+                r32 desta = (*pixel >> 24) & 0x000000ff; 
+
+                // NOTE : Convert dest texel from sRGB to linear 01
+                destr = oneOver255Sq*texelAr*texelAr;
+                destg = oneOver255Sq*texelAg*texelAg;
+                destb = oneOver255Sq*texelAb*texelAb;
+                desta = oneOver255*texelAa;
+
+                // NOTE : Blend between texel and dest texel
+                r32 InvSourceA = 1.0f - texela;
+                // NOTE : Source R, G, B are pre multiplied by the SourceA
+                r32 resultr = Clamp01(destr*InvSourceA + texelr);
+                r32 resultg = Clamp01(destg*InvSourceA + texelg);
+                r32 resultb = Clamp01(destb*InvSourceA + texelb);
+                r32 resulta = desta*InvSourceA + texela; 
+
+                // NOTE : Convert result from linear 01 to sRGB255
+                resultr = 255.0f*SquareRoot2(resultr);
+                resultg = 255.0f*SquareRoot2(resultg);
+                resultb = 255.0f*SquareRoot2(resultb);
+                resulta = 255.0f*resulta;
+
+                // NOTE : Pack the result to pixel
+                *pixel = (RoundR32ToUInt32(resulta) << 24 |
+                        (RoundR32ToUInt32(resultr) << 16) |
+                        (RoundR32ToUInt32(resultg) << 8) |
+                        (RoundR32ToUInt32(resultb) << 0));
+
+                EndCycleCounter(FillPixel);
+            }
+
+            pixel++;
+            EndCycleCounter(TestPixel);
         }
 
 
@@ -626,10 +856,11 @@ StartRenderGroup(render_group *renderGroup, memory_arena *arena, memory_index re
     renderGroup->renderMemory = StartTemporaryMemory(arena, renderMemorySize);
     renderGroup->bufferHalfDim = 0.5f*V2(destBufferWidth, destBufferHeight);
 
-    renderGroup->renderCamera = GetRenderGroupCamera(100.0f, 0.6f, 0.635f, 
+    renderGroup->renderCamera = GetRenderGroupCamera(20.0f, 0.6f, 0.635f, 
                                                     destBufferWidth, destBufferHeight);
-    renderGroup->gameCamera = GetRenderGroupCamera(20.0f, 0.6f, 0.635f, 
-                                                    destBufferWidth, destBufferHeight);
+    //renderGroup->gameCamera = GetRenderGroupCamera(20.0f, 0.6f, 0.635f, 
+     //                                               destBufferWidth, destBufferHeight);
+    renderGroup->gameCamera = renderGroup->renderCamera;
 }
 
 internal v2

@@ -6,12 +6,15 @@
 #include "monsoon_random.h"
 #include "monsoon_world.h"
 
+#if MONSOON_DEBUG
+debug_game_cycle_counter *DEBUGGlobalCycleCounter;
+#endif
+
 #include "monsoon_world.cpp"
 #include "monsoon_sim_region.cpp"
 #include "monsoon_render.cpp"
 
 #include "monsoon.h"
-#include <stdio.h>
 
 internal void
 MakeCheckerBoard(pixel_buffer_32 *LOD, v4 color)
@@ -241,9 +244,15 @@ AddPlayerentity(game_state *state, u32 AbsTileX, u32 AbsTileY, u32 AbsTileZ, v3 
 #define TILE_COUNT_X 10
 #define TILE_COUNT_Y 10
 #define TILE_COUNT_Z 10
+
 extern "C"
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
+#if MONSOON_DEBUG
+    DEBUGGlobalCycleCounter = Memory->DEBUGCycleCounters;
+#endif
+    BeginCycleCounter(GameUpdateAndRender);
+
     Assert(sizeof(game_state) <= Memory->permanentStorageSize);
 
     game_state *state = (game_state *)Memory->permanentStorage;
@@ -265,7 +274,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         state->cameraPos.p.x = 0;
         state->cameraPos.p.y = 0;
 
-        AddPlayerentity(state, 6, 4, TILE_COUNT_Z, 
+        AddPlayerentity(state, 6, 4, 1, 
                         V3(0.5f*world->tileSideInMeters, 0.9*world->tileSideInMeters, 1));
 
         random_series Series = Seed(123);
@@ -345,7 +354,6 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
                             }
                             AddLowEntity(state, EntityType_Wall, column, row, z, 
                                         world->tileSideInMeters*V3(1, 1, 1));
-                            printf("%u, %u, %u\n", column, row, z);
                         }
                     }
                 }
@@ -658,7 +666,9 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     DrawBMP(&finalBuffer, &state->backgroundBuffer, BackgroundP + V2(-state->backgroundBuffer.width, state->backgroundBuffer.height), V2(0, 0));
 #endif
 
+    BeginCycleCounter(RenderRenderGroup);
     RenderRenderGroup(&renderGroup, &state->finalBuffer);
+    EndCycleCounter(RenderRenderGroup);
 
 #if 0
     // NOTE : Test code for normal maps
@@ -680,6 +690,8 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     EndTemporaryMemory(renderGroup.renderMemory);
     CheckMemoryArenaTemporaryMemory(&state->renderArena);
     CheckMemoryArenaTemporaryMemory(&state->worldArena);
+
+    EndCycleCounter(GameUpdateAndRender);
 }
 extern "C"
 GAME_FILL_AUDIO_BUFFER(GameFillAudioBuffer)

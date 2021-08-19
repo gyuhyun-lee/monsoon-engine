@@ -825,7 +825,6 @@ DrawBMPQuickly(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             EndCycleCounter(TestPixel);
         }
 
-
         row += destBuffer->pitch;
     }
 }

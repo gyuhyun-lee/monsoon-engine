@@ -733,8 +733,8 @@ MacOSGetGameCode(game_code *GameCode, char *fileName)
 int main(int argc, char **argv)
 {
     // TODO : How to 'build' a path that works no matter where the library is.
-    char *DynamicLibraryPath = "/Volumes/work/soma/build/fox.app/Contents/Resources/monsoon.dylib";
-    char *DynamicLibraryLockPath = "/Volumes/work/soma/build/fox.app/Contents/Resources/monsoon.lock";
+    char *DynamicLibraryPath = "/Volumes/work/build/fox.app/Contents/Resources/monsoon.dylib";
+    char *DynamicLibraryLockPath = "/Volumes/work/build/fox.app/Contents/Resources/monsoon.lock";
     game_code GameCode = {};
     MacOSGetGameCode(&GameCode, DynamicLibraryPath);
 

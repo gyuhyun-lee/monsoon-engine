@@ -647,21 +647,24 @@ DrawBMPQuickly(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
     i32 maxX = RoundR32ToInt32(Maximum(Maximum(p0.x, p1.x), Maximum(p2.x, p3.x)));
     i32 maxY = RoundR32ToInt32(Maximum(Maximum(p0.y, p1.y), Maximum(p2.y, p3.y)));
 
+    i32 maxDestWidth = destBuffer->width - 4;
+    i32 maxDestHeight = destBuffer->height - 4;
+
     if(minX < 0) 
     {
         minX = 0;
     }
-    if(maxX > destBuffer->width)
+    if(maxX > maxDestWidth)
     {
-        maxX = destBuffer->width;
+        maxX = maxDestWidth;
     }
     if(minY < 0)
     {
         minY = 0;
     }
-    if(maxY > destBuffer->height)
+    if(maxY > maxDestHeight)
     {
-        maxY = destBuffer->height;
+        maxY = maxDestHeight;
     }   
 
     r32 pDotXAxis = Dot(p, xAxis);
@@ -682,147 +685,211 @@ DrawBMPQuickly(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
         u32 *pixel = (u32 *)row;
         for(i32 x = minX;
             x < maxX;
-            ++x)
+            x += 4)
         {
-            BeginCycleCounter(TestPixel);
+            v2 uv[4];
+            b32 shouldFill[4];
 
-            // TODO : if the p has fractional value, it might make the dot value
-            // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
-            // What will be a proper way to handle this?(Round?)
-            // NOTE : This will also handle what the 'sourceOffset' value was doing
-            r32 u = (Dot(V2(x, y), xAxis) - pDotXAxis)/LengthSquareOfXAxis;
-            r32 v = (Dot(V2(x, y), yAxis) - pDotYAxis)/LengthSquareOfYAxis;
+            v2 textureCoord[4];
+            r32 linearXt[4];
+            r32 linearYt[4];
 
-            if(u >= 0.0f && u < 1.0f &&
-                v >= 0.0f && v < 1.0f)
+            // NOTE : Bilinear Sampling
+            u32 *texelAPtr[4];
+            u32 *texelBPtr[4];
+            u32 *texelCPtr[4];
+            u32 *texelDPtr[4];
+
+            // NOTE : Unpack Bilinear Samples
+            r32 texelAr[4];
+            r32 texelAg[4];
+            r32 texelAb[4];
+            r32 texelAa[4];
+
+            r32 texelBr[4];
+            r32 texelBg[4];
+            r32 texelBb[4];
+            r32 texelBa[4];
+
+            r32 texelCr[4];
+            r32 texelCg[4];
+            r32 texelCb[4];
+            r32 texelCa[4];
+
+            r32 texelDr[4];
+            r32 texelDg[4];
+            r32 texelDb[4];
+            r32 texelDa[4];
+
+            r32 texelr[4];
+            r32 texelg[4];
+            r32 texelb[4];
+            r32 texela[4];
+
+            r32 destr[4];
+            r32 destg[4];
+            r32 destb[4];
+            r32 desta[4];
+
+            r32 resultr[4];
+            r32 resultg[4];
+            r32 resultb[4];
+            r32 resulta[4];
+
+            for(u32 i = 0;
+                i < 4;
+                ++i)
             {
-                BeginCycleCounter(FillPixel);
-
-                v2 textureCoord = V2(u*((r32)sourceBuffer->width - 2) + 1.0f, 
-                                    v*((r32)sourceBuffer->height - 2) + 1.0f);
-
-                // NOTE : Get linear interpolation value
-                u32 truncatedTextureCoordX = TruncateR32ToUInt32(textureCoord.x);
-                u32 truncatedTextureCoordY = TruncateR32ToUInt32(textureCoord.y);
-                i32 texelOffsetX = textureCoord.x - truncatedTextureCoordX >= 0.5f ? 1 : -1;
-                i32 texelOffsetY = textureCoord.y - truncatedTextureCoordY >= 0.5f ? 1 : -1;
-                // TODO : Simplify these linear values? Handmade hero always uses upper & right side texels. Do we want to use that?
-                r32 linearXt = textureCoord.x - (r32)truncatedTextureCoordX;
-                if(linearXt >= 0.5f)
-                    linearXt -= 0.5f;
-                else
-                    linearXt = 1.0f - (linearXt + 0.5f);
-
-                r32 linearYt = textureCoord.y - (r32)truncatedTextureCoordY;
-                if(linearYt >= 0.5f)
-                    linearYt -= 0.5f;
-                else
-                    linearYt = 1.0f - (linearYt + 0.5f);
-
-                // NOTE : Bilinear Sampling
-                u32 *texelAPtr = (u32 *)sourceBuffer->memory + truncatedTextureCoordY*sourceBuffer->width + truncatedTextureCoordX;
-                u32 *texelBPtr = texelAPtr + texelOffsetX;
-                u32 *texelCPtr = texelAPtr + texelOffsetY*sourceBuffer->width;
-                u32 *texelDPtr = texelAPtr + texelOffsetX + texelOffsetY*sourceBuffer->width;
-
-                // NOTE : Unpack Bilinear Samples
-                r32 texelAr = (*texelAPtr >> 16) & 0x000000ff;
-                r32 texelAg = (*texelAPtr >> 8) & 0x000000ff; 
-                r32 texelAb = (*texelAPtr >> 0) & 0x000000ff;
-                r32 texelAa = (*texelAPtr >> 24) & 0x000000ff;
-
-                r32 texelBr = (*texelBPtr >> 16) & 0x000000ff;
-                r32 texelBg = (*texelBPtr >> 8) & 0x000000ff; 
-                r32 texelBb = (*texelBPtr >> 0) & 0x000000ff;
-                r32 texelBa = (*texelBPtr >> 24) & 0x000000ff;
-
-                r32 texelCr = (*texelCPtr >> 16) & 0x000000ff;
-                r32 texelCg = (*texelCPtr >> 8) & 0x000000ff; 
-                r32 texelCb = (*texelCPtr >> 0) & 0x000000ff;
-                r32 texelCa = (*texelCPtr >> 24) & 0x000000ff;
-
-                r32 texelDr = (*texelDPtr >> 16) & 0x000000ff;
-                r32 texelDg = (*texelDPtr >> 8) & 0x000000ff; 
-                r32 texelDb = (*texelDPtr >> 0) & 0x000000ff;
-                r32 texelDa = (*texelDPtr >> 24) & 0x000000ff;
-
-                // NOTE : Convert from sRGB255 to Linear 0 to 1
-                texelAr = oneOver255Sq*texelAr*texelAr;
-                texelAg = oneOver255Sq*texelAg*texelAg;
-                texelAb = oneOver255Sq*texelAb*texelAb;
-                texelAa = oneOver255*texelAa;
-
-                texelBr = oneOver255Sq*texelBr*texelBr;
-                texelBg = oneOver255Sq*texelBg*texelBg;
-                texelBb = oneOver255Sq*texelBb*texelBb;
-                texelBa = oneOver255*texelBa;
-
-                texelCr = oneOver255Sq*texelCr*texelCr;
-                texelCg = oneOver255Sq*texelCg*texelCg;
-                texelCb = oneOver255Sq*texelCb*texelCb;
-                texelCa = oneOver255*texelCa;
-
-                texelDr = oneOver255Sq*texelDr*texelDr;
-                texelDg = oneOver255Sq*texelDg*texelDg;
-                texelDb = oneOver255Sq*texelDb*texelDb;
-                texelDa = oneOver255*texelDa;
-
-                r32 invLinearXt = 1.0f-linearXt;
-                r32 invLinearYt = 1.0f-linearYt;
-
-                // NOTE : Interpolate Linear to get the blended color
-                r32 texelr = invLinearYt*invLinearXt*texelAr + invLinearYt*linearXt*texelBr + linearYt*invLinearXt*texelCr + linearYt*linearXt*texelDr;
-                r32 texelg = invLinearYt*invLinearXt*texelAg + invLinearYt*linearXt*texelBg + linearYt*invLinearXt*texelCg + linearYt*linearXt*texelDg;
-                r32 texelb = invLinearYt*invLinearXt*texelAb + invLinearYt*linearXt*texelBb + linearYt*invLinearXt*texelCb + linearYt*linearXt*texelDb;
-                r32 texela = invLinearYt*invLinearXt*texelAa + invLinearYt*linearXt*texelBa + linearYt*invLinearXt*texelCa + linearYt*linearXt*texelDa;
-
-                // NOTE : Hadamard with color value
-                texelr = texelr*color.r;
-                texelg = texelg*color.g;
-                texelb = texelb*color.b;
-                texela = texela*color.a;
-
-                texelr = Clamp01(texelr);
-                texelg = Clamp01(texelg);
-                texelb = Clamp01(texelb);
-
-                // NOTE : Unpack dest texel
-                r32 destr = (*pixel >> 16) & 0x000000f;
-                r32 destg = (*pixel >> 8) & 0x000000ff;
-                r32 destb = (*pixel >> 0) & 0x000000ff;
-                r32 desta = (*pixel >> 24) & 0x000000ff; 
-
-                // NOTE : Convert dest texel from sRGB to linear 01
-                destr = oneOver255Sq*texelAr*texelAr;
-                destg = oneOver255Sq*texelAg*texelAg;
-                destb = oneOver255Sq*texelAb*texelAb;
-                desta = oneOver255*texelAa;
-
-                // NOTE : Blend between texel and dest texel
-                r32 InvSourceA = 1.0f - texela;
-                // NOTE : Source R, G, B are pre multiplied by the SourceA
-                r32 resultr = Clamp01(destr*InvSourceA + texelr);
-                r32 resultg = Clamp01(destg*InvSourceA + texelg);
-                r32 resultb = Clamp01(destb*InvSourceA + texelb);
-                r32 resulta = desta*InvSourceA + texela; 
-
-                // NOTE : Convert result from linear 01 to sRGB255
-                resultr = 255.0f*SquareRoot2(resultr);
-                resultg = 255.0f*SquareRoot2(resultg);
-                resultb = 255.0f*SquareRoot2(resultb);
-                resulta = 255.0f*resulta;
-
-                // NOTE : Pack the result to pixel
-                *pixel = (RoundR32ToUInt32(resulta) << 24 |
-                        (RoundR32ToUInt32(resultr) << 16) |
-                        (RoundR32ToUInt32(resultg) << 8) |
-                        (RoundR32ToUInt32(resultb) << 0));
-
-                EndCycleCounter(FillPixel);
+                v2 p = V2(x+i, y);
+                // TODO : if the p has fractional value, it might make the dot value
+                // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
+                // What will be a proper way to handle this?(Round?)
+                // NOTE : This will also handle what the 'sourceOffset' value was doing
+                uv[i].x = (Dot(p, xAxis) - pDotXAxis)/LengthSquareOfXAxis;
+                uv[i].y = (Dot(p, yAxis) - pDotYAxis)/LengthSquareOfYAxis;
+                shouldFill[i] = (uv[i].x >= 0.0f && uv[i].x < 1.0f && uv[i].y >= 0.0f && uv[i].y < 1.0f);
             }
 
-            pixel++;
-            EndCycleCounter(TestPixel);
+            for(u32 i = 0;
+                i < 4;
+                ++i)
+            {
+                if(shouldFill[i])
+                {
+                    textureCoord[i] = V2(uv[i].x*((r32)sourceBuffer->width - 5) + 1.0f, 
+                                        uv[i].y*((r32)sourceBuffer->height - 5) + 1.0f);
+
+                    // NOTE : Get linear interpolation value
+                    u32 truncatedTextureCoordX = TruncateR32ToUInt32(textureCoord[i].x);
+                    u32 truncatedTextureCoordY = TruncateR32ToUInt32(textureCoord[i].y);
+                    i32 texelOffsetX = textureCoord[i].x - truncatedTextureCoordX >= 0.5f ? 1 : -1;
+                    i32 texelOffsetY = textureCoord[i].y - truncatedTextureCoordY >= 0.5f ? 1 : -1;
+                    // TODO : Simplify these linear values? Handmade hero always uses upper & right side texels. Do we want to use that?
+                    linearXt[i] = textureCoord[i].x - (r32)truncatedTextureCoordX;
+                    if(linearXt[i] >= 0.5f) {linearXt[i] -= 0.5f;}
+                    else {linearXt[i] = 1.0f - (linearXt[i] + 0.5f);}
+
+                    linearYt[i] = textureCoord[i].y - (r32)truncatedTextureCoordY;
+                    if(linearYt[i] >= 0.5f) {linearYt[i] -= 0.5f;}
+                    else {linearYt[i] = 1.0f - (linearYt[i] + 0.5f);}
+
+                    // NOTE : Bilinear Sampling
+                    texelAPtr[i] = (u32 *)sourceBuffer->memory + truncatedTextureCoordY*sourceBuffer->width + truncatedTextureCoordX;
+                    texelBPtr[i] = texelAPtr[i] + texelOffsetX;
+                    texelCPtr[i] = texelAPtr[i] + texelOffsetY*sourceBuffer->width;
+                    texelDPtr[i] = texelAPtr[i] + texelOffsetX + texelOffsetY*sourceBuffer->width;
+
+                    // NOTE : Unpack Bilinear Samples
+                    texelAr[i] = (*texelAPtr[i] >> 16) & 0x000000ff;
+                    texelAg[i] = (*texelAPtr[i] >> 8) & 0x000000ff; 
+                    texelAb[i] = (*texelAPtr[i] >> 0) & 0x000000ff;
+                    texelAa[i] = (*texelAPtr[i] >> 24) & 0x000000ff;
+
+                    texelBr[i] = (*texelBPtr[i] >> 16) & 0x000000ff;
+                    texelBg[i] = (*texelBPtr[i] >> 8) & 0x000000ff; 
+                    texelBb[i] = (*texelBPtr[i] >> 0) & 0x000000ff;
+                    texelBa[i] = (*texelBPtr[i] >> 24) & 0x000000ff;
+
+                    texelCr[i] = (*texelCPtr[i] >> 16) & 0x000000ff;
+                    texelCg[i] = (*texelCPtr[i] >> 8) & 0x000000ff; 
+                    texelCb[i] = (*texelCPtr[i] >> 0) & 0x000000ff;
+                    texelCa[i] = (*texelCPtr[i] >> 24) & 0x000000ff;
+
+                    texelDr[i] = (*texelDPtr[i] >> 16) & 0x000000ff;
+                    texelDg[i] = (*texelDPtr[i] >> 8) & 0x000000ff; 
+                    texelDb[i] = (*texelDPtr[i] >> 0) & 0x000000ff;
+                    texelDa[i] = (*texelDPtr[i] >> 24) & 0x000000ff;
+                }
+            }
+
+            for(u32 i = 0;
+                i < 4;
+                ++i)
+            {
+                if(shouldFill[i])
+                {
+                    // NOTE : Convert from sRGB255 to Linear 0 to 1
+                    texelAr[i] = oneOver255Sq*texelAr[i]*texelAr[i];
+                    texelAg[i] = oneOver255Sq*texelAg[i]*texelAg[i];
+                    texelAb[i] = oneOver255Sq*texelAb[i]*texelAb[i];
+                    texelAa[i] = oneOver255*texelAa[i];
+
+                    texelBr[i] = oneOver255Sq*texelBr[i]*texelBr[i];
+                    texelBg[i] = oneOver255Sq*texelBg[i]*texelBg[i];
+                    texelBb[i] = oneOver255Sq*texelBb[i]*texelBb[i];
+                    texelBa[i] = oneOver255*texelBa[i];
+
+                    texelCr[i] = oneOver255Sq*texelCr[i]*texelCr[i];
+                    texelCg[i] = oneOver255Sq*texelCg[i]*texelCg[i];
+                    texelCb[i] = oneOver255Sq*texelCb[i]*texelCb[i];
+                    texelCa[i] = oneOver255*texelCa[i];
+
+                    texelDr[i] = oneOver255Sq*texelDr[i]*texelDr[i];
+                    texelDg[i] = oneOver255Sq*texelDg[i]*texelDg[i];
+                    texelDb[i] = oneOver255Sq*texelDb[i]*texelDb[i];
+                    texelDa[i] = oneOver255*texelDa[i];
+
+                    r32 invLinearXt = 1.0f-linearXt[i];
+                    r32 invLinearYt = 1.0f-linearYt[i];
+
+                    // NOTE : Interpolate Linear to get the blended color
+                    texelr[i] = invLinearYt*invLinearXt*texelAr[i] + invLinearYt*linearXt[i]*texelBr[i] + linearYt[i]*invLinearXt*texelCr[i] + linearYt[i]*linearXt[i]*texelDr[i];
+                    texelg[i] = invLinearYt*invLinearXt*texelAg[i] + invLinearYt*linearXt[i]*texelBg[i] + linearYt[i]*invLinearXt*texelCg[i] + linearYt[i]*linearXt[i]*texelDg[i];
+                    texelb[i] = invLinearYt*invLinearXt*texelAb[i] + invLinearYt*linearXt[i]*texelBb[i] + linearYt[i]*invLinearXt*texelCb[i] + linearYt[i]*linearXt[i]*texelDb[i];
+                    texela[i] = invLinearYt*invLinearXt*texelAa[i] + invLinearYt*linearXt[i]*texelBa[i] + linearYt[i]*invLinearXt*texelCa[i] + linearYt[i]*linearXt[i]*texelDa[i];
+
+                    // NOTE : Hadamard with color value
+                    texelr[i] = texelr[i]*color.r;
+                    texelg[i] = texelg[i]*color.g;
+                    texelb[i] = texelb[i]*color.b;
+                    texela[i] = texela[i]*color.a;
+
+                    texelr[i] = Clamp01(texelr[i]);
+                    texelg[i] = Clamp01(texelg[i]);
+                    texelb[i] = Clamp01(texelb[i]);
+
+                    // NOTE : Unpack dest texel
+                    destr[i] = (*(pixel + i) >> 16) & 0x000000f;
+                    destg[i] = (*(pixel + i) >> 8) & 0x000000ff;
+                    destb[i] = (*(pixel + i) >> 0) & 0x000000ff;
+                    desta[i] = (*(pixel + i) >> 24) & 0x000000ff; 
+
+                    // NOTE : Convert dest texel from sRGB to linear 01
+                    destr[i] = oneOver255Sq*destr[i]*destr[i];
+                    destg[i] = oneOver255Sq*destg[i]*destg[i];
+                    destb[i] = oneOver255Sq*destb[i]*destb[i];
+                    desta[i] = oneOver255*desta[i];
+
+                    // NOTE : Blend between texel and dest texel
+                    r32 InvSourceA = 1.0f - texela[i];
+                    // NOTE : Source R, G, B are pre multiplied by the SourceA
+                    resultr[i] = Clamp01(destr[i]*InvSourceA + texelr[i]);
+                    resultg[i] = Clamp01(destg[i]*InvSourceA + texelg[i]);
+                    resultb[i] = Clamp01(destb[i]*InvSourceA + texelb[i]);
+                    resulta[i] = desta[i]*InvSourceA + texela[i]; 
+
+                    // NOTE : Convert result from linear 01 to sRGB255
+                    resultr[i] = 255.0f*SquareRoot2(resultr[i]);
+                    resultg[i] = 255.0f*SquareRoot2(resultg[i]);
+                    resultb[i] = 255.0f*SquareRoot2(resultb[i]);
+                    resulta[i] = 255.0f*resulta[i];
+                }
+            }
+            for(u32 i = 0;
+                i < 4;
+                ++i)
+            {
+                if(shouldFill[i])
+                {
+                    // NOTE : Pack the result to pixel
+                    *(pixel+i) = (RoundR32ToUInt32(resulta[i]) << 24 |
+                            (RoundR32ToUInt32(resultr[i]) << 16) |
+                            (RoundR32ToUInt32(resultg[i]) << 8) |
+                            (RoundR32ToUInt32(resultb[i]) << 0));
+                }
+            }
+
+            pixel += 4;
         }
 
         row += destBuffer->pitch;

@@ -8,7 +8,7 @@ COMPILER_FLAGS = -g -Wall -O0 -std=c++11 -D MONSOON_DEBUG=1 -D COMPILER_LLVM=1
 COMPILER_IGNORE_WARNINGS = -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-writable-strings -Wno-switch -Wno-objc-missing-super-calls -Wno-missing-braces
 UNIVERSAL_CODE_PATH = ../code
 
-MACOS_BUILD_PATH = ../build
+MACOS_BUILD_PATH = ../../build
 MACOS_APP_NAME = fox.app
 MACOS_EXE_PATH = $(MACOS_BUILD_PATH)/$(MACOS_APP_NAME)/Contents/MacOS
 MACOS_RESOURCE_PATH = $(MACOS_BUILD_PATH)/$(MACOS_APP_NAME)/Contents/Resources

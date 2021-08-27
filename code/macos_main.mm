@@ -843,13 +843,13 @@ int main(int argc, char **argv)
             game_state *gameState = (game_state *)(GameMemory.permanentStorage);
             game_input_raw *newInput = inputManager.rawInputs + inputManager.newInputIndex;
 
+            // TODO : Use copy function instead!
             int DynamicLibraryLock = open("DynamicLibraryLockPath", O_RDONLY);
             if(DynamicLibraryLock != 0)
             {
                 MacOSGetGameCode(&GameCode, DynamicLibraryPath);
                 close(DynamicLibraryLock);
             }
-
 
             MacOShandleEvents(App, &inputManager, &DEBUGInputRecord, gameState);
 

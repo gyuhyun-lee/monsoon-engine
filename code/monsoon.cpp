@@ -403,7 +403,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 
         state->treeBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/monsoon-engine/data/test2/tree00.bmp");
 
-        state->sampleBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/monsoon-engine/data/sample.bmp");
+        state->sampleBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/monsoon-engine/data/temp.bmp");
 
         state->headBMP = DEBUGLoadBMP(PlatformAPI->DEBUGReadEntireFile, "/Volumes/work/monsoon-engine/data/test/test_hero_front_head.bmp",
                                         V2(0, 34));
@@ -615,8 +615,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         {
             case EntityType_Wall:
             {
-                PushBMP(&renderGroup, &state->treeBMP, entity->p, entity->dim,
-                        V4(1, 1, 1, alphaBasedOnZ));
+                PushBMP(&renderGroup, &state->treeBMP, entity->p, entity->dim,V4(1, 1, 1, alphaBasedOnZ));
             }break;
 
             case EntityType_Player: 
@@ -641,6 +640,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
                 PushBMP(&renderGroup, &state->capeBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
                         xAxis, yAxis);
                 /*
+                 *
                 PushBMP(&renderGroup, &state->headBMP, entity->p + 1.0f*V3(Cos(state->theta), 0, 0), bitmapDimInMeter,
                         V2(1, 0), V2(0, 1),
                         &state->sphereNormalMap, state->envMaps);

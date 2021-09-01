@@ -643,15 +643,12 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
     r32 oneOver255Sq = oneOver255*oneOver255;
     
     float32x4_t v255 = vdupq_n_f32(255.0f);
-    float32x4_t v255Sq = vdupq_n_f32(255.0f*255.0f);
     float32x4_t zero_128 = vdupq_n_f32(0.0f); // _mm_set_ps
     float32x4_t one_128 = vdupq_n_f32(1.0f); // _mm_set_ps
     float32x4_t oneOver255_128 = vdupq_n_f32(oneOver255); // _mm_set_ps
     float32x4_t oneOver255Sq_128 = vdupq_n_f32(oneOver255Sq); // _mm_set_ps
 
     uint32x4_t mask_0x000000ff = vdupq_n_u32(0x000000ff); // _mm_set_ps
-    uint32x4_t mask_0x00ff00ff = vdupq_n_u32(0x00ff00ff); // _mm_set_ps
-    uint32x4_t mask_0xff00ff00 = vdupq_n_u32(0xff00ff00); // _mm_set_ps
 
     r32 lengthOfXAxis = Length(xAxis);
     r32 lengthOfYAxis = Length(yAxis);
@@ -713,8 +710,6 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
     DrawRectangle(destBuffer, V2(minX, minY), dim, 1, 0, 0);
 #endif
 
-    u32 *sourceBufferMemory = (u32 *)sourceBuffer->memory;
-    i32 sourceBufferWidth = sourceBuffer->width;
     u8 *row = (u8 *)destBuffer->memory + 
                     destBuffer->pitch*minY + 
                     destBuffer->bytesPerPixel*minX;
@@ -765,11 +760,11 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
                 if(GSu32(shouldFill, i))
                 {
                     // NOTE : Bilinear Sampling
-                    u32 *texelAPtr = sourceBufferMemory + GSu32(truncatedTextureCoordY, i)*sourceBuffer->width + GSu32(truncatedTextureCoordX, i);
+                    u32 *texelAPtr = (u32 *)sourceBuffer->memory + GSu32(truncatedTextureCoordY, i)*sourceBuffer->width + GSu32(truncatedTextureCoordX, i);
                     GSu32(texelA, i) = *texelAPtr;
                     GSu32(texelB, i) = *(texelAPtr + 1);
-                    GSu32(texelC, i) = *(texelAPtr + sourceBufferWidth);
-                    GSu32(texelD, i) = *(texelAPtr + sourceBufferWidth + 1);
+                    GSu32(texelC, i) = *(texelAPtr + sourceBuffer->width);
+                    GSu32(texelD, i) = *(texelAPtr + sourceBuffer->width + 1);
                 }
             }
 
@@ -778,23 +773,14 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             texelC = vandq_u32(shouldFill, texelC);
             texelD = vandq_u32(shouldFill, texelD);
 
-            // TODO : Unpack in 16bit value(R-B, G-A) to work on 8lanes simultaneously? Check the performance first,
-            // and then work on it!
             float32x4_t texelAr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelA, 16), mask_0x000000ff));
             float32x4_t texelAg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelA, 8), mask_0x000000ff));
             float32x4_t texelAb = vcvtq_f32_u32(vandq_u32(texelA, mask_0x000000ff));
             float32x4_t texelAa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelA, 24), mask_0x000000ff));
 
-#if 1
-            uint16x8_t texelAbr = (uint16x8_t)vandq_u32(texelA, mask_0x00ff00ff);
-            uint16x8_t texelAag = (uint16x8_t)vandq_u32(texelA, mask_0xff00ff00);
-#else
-            uint32x4_t texelArb = vandq_u32(texelA, mask_0x00ff00ff);`
-            uint32x4_t texelAga = vandq_u32(texelA, mask_0xff00ff00);
-#endif
-
             float32x4_t texelBr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 16), mask_0x000000ff));
-            float32x4_t texelBg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 8), mask_0x000000ff)); float32x4_t texelBb = vcvtq_f32_u32(vandq_u32(texelB, mask_0x000000ff));
+            float32x4_t texelBg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 8), mask_0x000000ff));
+            float32x4_t texelBb = vcvtq_f32_u32(vandq_u32(texelB, mask_0x000000ff));
             float32x4_t texelBa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 24), mask_0x000000ff));
 
             float32x4_t texelCr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelC, 16), mask_0x000000ff));
@@ -807,22 +793,26 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             float32x4_t texelDb = vcvtq_f32_u32(vandq_u32(texelD, mask_0x000000ff));
             float32x4_t texelDa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelD, 24), mask_0x000000ff));
 
-            // NOTE : Convert from sRGB255 to 0 to 255^2 space(except alpha value)
-            texelAr = mulSquare_r32(texelAr);
-            texelAg = mulSquare_r32(texelAg);
-            texelAb = mulSquare_r32(texelAb);
+            // NOTE : Convert from sRGB255 to Linear 0 to 1
+            texelAr = mulSquare_r32(vmulq_f32(oneOver255_128, texelAr));
+            texelAg = mulSquare_r32(vmulq_f32(oneOver255_128, texelAg));
+            texelAb = mulSquare_r32(vmulq_f32(oneOver255_128, texelAb));
+            texelAa = vmulq_f32(oneOver255_128, texelAa);
 
-            texelBr = mulSquare_r32(texelBr);
-            texelBg = mulSquare_r32(texelBg);
-            texelBb = mulSquare_r32(texelBb);
+            texelBr = mulSquare_r32(vmulq_f32(oneOver255_128, texelBr));
+            texelBg = mulSquare_r32(vmulq_f32(oneOver255_128, texelBg));
+            texelBb = mulSquare_r32(vmulq_f32(oneOver255_128, texelBb));
+            texelBa = vmulq_f32(oneOver255_128, texelBa);
 
-            texelCr = mulSquare_r32(texelCr);
-            texelCg = mulSquare_r32(texelCg);
-            texelCb = mulSquare_r32(texelCb);
+            texelCr = mulSquare_r32(vmulq_f32(oneOver255_128, texelCr));
+            texelCg = mulSquare_r32(vmulq_f32(oneOver255_128, texelCg));
+            texelCb = mulSquare_r32(vmulq_f32(oneOver255_128, texelCb));
+            texelCa = vmulq_f32(oneOver255_128, texelCa);
 
-            texelDr = mulSquare_r32(texelDr);
-            texelDg = mulSquare_r32(texelDg);
-            texelDb = mulSquare_r32(texelDb);
+            texelDr = mulSquare_r32(vmulq_f32(oneOver255_128, texelDr));
+            texelDg = mulSquare_r32(vmulq_f32(oneOver255_128, texelDg));
+            texelDb = mulSquare_r32(vmulq_f32(oneOver255_128, texelDb));
+            texelDa = vmulq_f32(oneOver255_128, texelDa);
 
             float32x4_t invLinearXt = vsubq_f32(one_128, linearXt);
             float32x4_t invLinearYt = vsubq_f32(one_128, linearYt);
@@ -850,17 +840,14 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
                                 );
             
             // NOTE : Hadamard with color value
-            // (because the color are 0 to 1 space, even if the texel rgb is in 0 to 255^2 space, it doesn't matter)
             texelr = vmulq_f32(texelr, colorr_128);
             texelg = vmulq_f32(texelg, colorg_128);
-
-            // NOTE : Clamp r, g, b
-            texelr = Clamp(zero_128, texelr, v255Sq);
-
             texelb = vmulq_f32(texelb, colorb_128);
             texela = vmulq_f32(texela, colora_128);
-            texelg = Clamp(zero_128, texelg, v255Sq); 
-            texelb = Clamp(zero_128, texelb, v255Sq);
+
+            // NOTE : Clamp01 r, g, b
+            texelr = Clamp01(texelr);
+            texelg = Clamp01(texelg); texelb = Clamp01(texelb);
 
             // NOTE : Load dest pixels
             uint32x4_t dest = vld1q_u32(pixel);
@@ -870,22 +857,26 @@ DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
             float32x4_t destg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(dest, 8), mask_0x000000ff));
             float32x4_t destb = vcvtq_f32_u32(vandq_u32(dest, mask_0x000000ff));
             float32x4_t desta = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(dest, 24), mask_0x000000ff));
-            // NOTE : Convert dest texel from sRGB to 0-255^2 space
-            destr = mulSquare_r32(destr);
-            destg = mulSquare_r32(destg);
-            destb = mulSquare_r32(destb);
+
+            // NOTE : Convert dest texel from sRGB to linear 01
+            destr = vmulq_f32(vmulq_f32(oneOver255_128, destr), vmulq_f32(oneOver255_128, destr));
+            destg = vmulq_f32(vmulq_f32(oneOver255_128, destg), vmulq_f32(oneOver255_128, destg));
+            destb = vmulq_f32(vmulq_f32(oneOver255_128, destb), vmulq_f32(oneOver255_128, destb));
+            desta = vmulq_f32(oneOver255_128, desta);
 
             // NOTE : Blend between texel and dest texel
-            float32x4_t invSourceA = vsubq_f32(one_128, vmulq_f32(oneOver255_128, texela)); // NOTE : Source R, G, B are pre multiplied by the SourceA
-            float32x4_t resultr = Clamp(zero_128, vaddq_f32(vmulq_f32(destr, invSourceA), texelr), v255Sq);
-            float32x4_t resultg = Clamp(zero_128, vaddq_f32(vmulq_f32(destg, invSourceA), texelg), v255Sq);
-            float32x4_t resultb = Clamp(zero_128, vaddq_f32(vmulq_f32(destb, invSourceA), texelb), v255Sq);
-            float32x4_t resulta = Clamp(zero_128, vaddq_f32(vmulq_f32(desta, invSourceA), texela), v255);
+            float32x4_t invSourceA = vsubq_f32(one_128, texela);
+            // NOTE : Source R, G, B are pre multiplied by the SourceA
+            float32x4_t resultr = Clamp01(vaddq_f32(vmulq_f32(destr, invSourceA), texelr));
+            float32x4_t resultg = Clamp01(vaddq_f32(vmulq_f32(destg, invSourceA), texelg));
+            float32x4_t resultb = Clamp01(vaddq_f32(vmulq_f32(destb, invSourceA), texelb));
+            float32x4_t resulta = Clamp01(vaddq_f32(vmulq_f32(desta, invSourceA), texela));
 
             // NOTE : Convert result from linear 01 to sRGB255
-            resultr = vsqrtq_f32(resultr);
-            resultg = vsqrtq_f32(resultg);
-            resultb = vsqrtq_f32(resultb);
+            resultr = vmulq_f32(v255, vsqrtq_f32(resultr));
+            resultg = vmulq_f32(v255, vsqrtq_f32(resultg));
+            resultb = vmulq_f32(v255, vsqrtq_f32(resultb));
+            resulta = vmulq_f32(v255, resulta);
 
             // NOTE : Because we know that the result value is in 0~255 range,
             // we don't have to mask them before shifting left

@@ -1,0 +1,277 @@
+
+// NOTE : p is ALWAYS the pixel p based on the entity p.
+// only the alignment can be used to adjust the bmp drawing position.
+// NOTE : p and the two axises are in pixel!
+internal void
+DrawBMPQuickly_ARM(pixel_buffer_32 *destBuffer, pixel_buffer_32 *sourceBuffer,
+        v2 p, v4 color = V4(1, 1, 1, 1), v2 xAxis = V2(1, 0), v2 yAxis = V2(0, 1))
+
+{
+    Assert(sourceBuffer);
+    color.rgb *= color.a;
+
+    float32x4_t colorr_128 = vdupq_n_f32(color.r); // _mm_set_ps
+    float32x4_t colorg_128 = vdupq_n_f32(color.g); // _mm_set_ps
+    float32x4_t colorb_128 = vdupq_n_f32(color.b); // _mm_set_ps
+    float32x4_t colora_128 = vdupq_n_f32(color.a); // _mm_set_ps
+
+    r32 oneOver255 = 1.0f/255.0f;
+    r32 oneOver255Sq = oneOver255*oneOver255;
+    
+    float32x4_t v255 = vdupq_n_f32(255.0f);
+    float32x4_t zero_128 = vdupq_n_f32(0.0f); // _mm_set_ps
+    float32x4_t one_128 = vdupq_n_f32(1.0f); // _mm_set_ps
+    float32x4_t oneOver255_128 = vdupq_n_f32(oneOver255); // _mm_set_ps
+    float32x4_t oneOver255Sq_128 = vdupq_n_f32(oneOver255Sq); // _mm_set_ps
+
+    uint32x4_t mask_0x000000ff = vdupq_n_u32(0x000000ff); // _mm_set_ps
+
+    r32 lengthOfXAxis = Length(xAxis);
+    r32 lengthOfYAxis = Length(yAxis);
+    r32 lengthOfXAxisOverYAxis = lengthOfXAxis/lengthOfYAxis;
+    r32 LengthSquareOfXAxis = LengthSquare(xAxis);
+    r32 LengthSquareOfYAxis = LengthSquare(yAxis);
+    float32x4_t xAxisX = vdupq_n_f32(xAxis.x);
+    float32x4_t yAxisX = vdupq_n_f32(xAxis.y);
+    float32x4_t xAxisY = vdupq_n_f32(yAxis.x);
+    float32x4_t yAxisY = vdupq_n_f32(yAxis.y);
+    float32x4_t oneOverLengthSquareOfXAxis = vdupq_n_f32(1/LengthSquareOfXAxis);
+    float32x4_t oneOverLengthSquareOfYAxis = vdupq_n_f32(1/LengthSquareOfYAxis);
+
+    // TODO : Do we even need this alignment value?
+    // because we always starts at p - halfDim to p + halfdim, and
+    // the bmp will just fill up the space that we requested.
+    // If it turns out that we need this alignment value, we have to adjust
+    // the value based on the dim?
+    //p += alignment;
+    v2 p0 = p;
+    v2 p1 = p + xAxis;
+    v2 p2 = p + yAxis;
+    v2 p3 = p + xAxis + yAxis;
+
+    i32 minX = RoundR32ToInt32(Minimum(Minimum(p0.x, p1.x), Minimum(p2.x, p3.x)));
+    i32 minY = RoundR32ToInt32(Minimum(Minimum(p0.y, p1.y), Minimum(p2.y, p3.y)));
+    i32 maxX = RoundR32ToInt32(Maximum(Maximum(p0.x, p1.x), Maximum(p2.x, p3.x)));
+    i32 maxY = RoundR32ToInt32(Maximum(Maximum(p0.y, p1.y), Maximum(p2.y, p3.y)));
+
+    i32 maxDestWidth = destBuffer->width - 4;
+    i32 maxDestHeight = destBuffer->height - 4;
+    
+    // TODO : Don't trunacte this!
+    float32x4_t sourceWidth_4x = vdupq_n_f32((r32)sourceBuffer->width - 4.0f);
+    float32x4_t sourceHeight_4x = vdupq_n_f32((r32)sourceBuffer->height - 4.0f);
+
+    if(minX < 0) 
+    {
+        minX = 0;
+    }
+    if(maxX > maxDestWidth)
+    {
+        maxX = maxDestWidth;
+    }
+    if(minY < 0)
+    {
+        minY = 0;
+    }
+    if(maxY > maxDestHeight)
+    {
+        maxY = maxDestHeight;
+    }   
+
+    r32 originpDotXAxis = Dot(p, xAxis);
+    r32 originpDotYAxis = Dot(p, yAxis);
+
+#if 0
+    // NOTE : To see the region of the whole BMP, enable this.
+    DrawRectangle(destBuffer, V2(minX, minY), dim, 1, 0, 0);
+#endif
+
+    u8 *row = (u8 *)destBuffer->memory + 
+                    destBuffer->pitch*minY + 
+                    destBuffer->bytesPerPixel*minX;
+    for(i32 y = minY;
+        y < maxY;
+        ++y)
+    {
+        u32 *pixel = (u32 *)row;
+        for(i32 x = minX;
+            x < maxX;
+            x += 4)
+        {
+            float32_t originRelX = x - p.x;
+            float32_t originRelY = y - p.y;
+            float32_t xi[] = {originRelX, originRelX+1, originRelX+2, originRelX+3};
+            float32x4_t px = vld1q_f32(xi);
+            float32x4_t py = vdupq_n_f32(originRelY);
+
+             // TODO : if the p has fractional value, it might make the dot value
+            // to be sligtly off(i.e -0.33333f), and the pixel can fail the test below.
+            // What will be a proper way to handle this?(Round?)
+            // NOTE : This will also handle what the 'sourceOffset' value was doing
+            float32x4_t u = vmulq_f32(vaddq_f32(vmulq_f32(px, xAxisX), vmulq_f32(py, xAxisY)), oneOverLengthSquareOfXAxis);
+            float32x4_t v = vmulq_f32(vaddq_f32(vmulq_f32(px, yAxisX), vmulq_f32(py, yAxisY)), oneOverLengthSquareOfYAxis);
+
+            // NOTE : Check whether the pixel is inside the drawing bound
+            // by dotting with each axis and comparing with the length square of each axis
+            uint32x4_t shouldFill = vandq_u32(vandq_u32(vcgeq_f32(u, zero_128), vcleq_f32(u, one_128)), 
+                                            vandq_u32(vcgeq_f32(v, zero_128), vcleq_f32(v, one_128)));
+
+            float32x4_t textureCoordX = vaddq_f32(vmulq_f32(u, sourceWidth_4x), one_128);
+            float32x4_t textureCoordY = vaddq_f32(vmulq_f32(v, sourceHeight_4x), one_128);
+            uint32x4_t truncatedTextureCoordX = vcvtq_u32_f32(textureCoordX);
+            uint32x4_t truncatedTextureCoordY = vcvtq_u32_f32(textureCoordY);
+
+            float32x4_t linearXt = vsubq_f32(textureCoordX, vcvtq_f32_u32(truncatedTextureCoordX));
+            float32x4_t linearYt = vsubq_f32(textureCoordY, vcvtq_f32_u32(truncatedTextureCoordY));
+
+            // NOTE : Bilinear Sampling
+            uint32x4_t texelA;
+            uint32x4_t texelB;
+            uint32x4_t texelC;
+            uint32x4_t texelD;
+            for(u32 i = 0;
+                i < 4;
+                ++i)
+            {
+                if(GSu32(shouldFill, i))
+                {
+                    // NOTE : Bilinear Sampling
+                    u32 *texelAPtr = (u32 *)sourceBuffer->memory + GSu32(truncatedTextureCoordY, i)*sourceBuffer->width + GSu32(truncatedTextureCoordX, i);
+                    GSu32(texelA, i) = *texelAPtr;
+                    GSu32(texelB, i) = *(texelAPtr + 1);
+                    GSu32(texelC, i) = *(texelAPtr + sourceBuffer->width);
+                    GSu32(texelD, i) = *(texelAPtr + sourceBuffer->width + 1);
+                }
+            }
+
+            texelA = vandq_u32(shouldFill, texelA);
+            texelB = vandq_u32(shouldFill, texelB);
+            texelC = vandq_u32(shouldFill, texelC);
+            texelD = vandq_u32(shouldFill, texelD);
+
+            float32x4_t texelAr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelA, 16), mask_0x000000ff));
+            float32x4_t texelAg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelA, 8), mask_0x000000ff));
+            float32x4_t texelAb = vcvtq_f32_u32(vandq_u32(texelA, mask_0x000000ff));
+            float32x4_t texelAa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelA, 24), mask_0x000000ff));
+
+            float32x4_t texelBr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 16), mask_0x000000ff));
+            float32x4_t texelBg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 8), mask_0x000000ff));
+            float32x4_t texelBb = vcvtq_f32_u32(vandq_u32(texelB, mask_0x000000ff));
+            float32x4_t texelBa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelB, 24), mask_0x000000ff));
+
+            float32x4_t texelCr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelC, 16), mask_0x000000ff));
+            float32x4_t texelCg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelC, 8), mask_0x000000ff));
+            float32x4_t texelCb = vcvtq_f32_u32(vandq_u32(texelC, mask_0x000000ff));
+            float32x4_t texelCa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelC, 24), mask_0x000000ff));
+
+            float32x4_t texelDr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelD, 16), mask_0x000000ff));
+            float32x4_t texelDg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelD, 8), mask_0x000000ff));
+            float32x4_t texelDb = vcvtq_f32_u32(vandq_u32(texelD, mask_0x000000ff));
+            float32x4_t texelDa = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(texelD, 24), mask_0x000000ff));
+
+            // NOTE : Convert from sRGB255 to Linear 0 to 1
+            texelAr = mulSquare_r32(vmulq_f32(oneOver255_128, texelAr));
+            texelAg = mulSquare_r32(vmulq_f32(oneOver255_128, texelAg));
+            texelAb = mulSquare_r32(vmulq_f32(oneOver255_128, texelAb));
+            texelAa = vmulq_f32(oneOver255_128, texelAa);
+
+            texelBr = mulSquare_r32(vmulq_f32(oneOver255_128, texelBr));
+            texelBg = mulSquare_r32(vmulq_f32(oneOver255_128, texelBg));
+            texelBb = mulSquare_r32(vmulq_f32(oneOver255_128, texelBb));
+            texelBa = vmulq_f32(oneOver255_128, texelBa);
+
+            texelCr = mulSquare_r32(vmulq_f32(oneOver255_128, texelCr));
+            texelCg = mulSquare_r32(vmulq_f32(oneOver255_128, texelCg));
+            texelCb = mulSquare_r32(vmulq_f32(oneOver255_128, texelCb));
+            texelCa = vmulq_f32(oneOver255_128, texelCa);
+
+            texelDr = mulSquare_r32(vmulq_f32(oneOver255_128, texelDr));
+            texelDg = mulSquare_r32(vmulq_f32(oneOver255_128, texelDg));
+            texelDb = mulSquare_r32(vmulq_f32(oneOver255_128, texelDb));
+            texelDa = vmulq_f32(oneOver255_128, texelDa);
+
+            float32x4_t invLinearXt = vsubq_f32(one_128, linearXt);
+            float32x4_t invLinearYt = vsubq_f32(one_128, linearYt);
+
+            // NOTE : Interpolate Linear to get the blended color
+            float32x4_t texelr = vaddq_f32(
+                                vaddq_f32(vmulq_f32(vmulq_f32(invLinearYt, invLinearXt), texelAr), vmulq_f32(vmulq_f32(invLinearYt, linearXt), texelBr)), 
+                                vaddq_f32(vmulq_f32(vmulq_f32(linearYt, invLinearXt), texelCr), vmulq_f32(vmulq_f32(linearYt, linearXt), texelDr))
+                                );
+
+            float32x4_t texelg = vaddq_f32(
+                                vaddq_f32(vmulq_f32(vmulq_f32(invLinearYt, invLinearXt), texelAg), vmulq_f32(vmulq_f32(invLinearYt, linearXt), texelBg)), 
+
+                                vaddq_f32(vmulq_f32(vmulq_f32(linearYt, invLinearXt), texelCg), vmulq_f32(vmulq_f32(linearYt, linearXt), texelDg))
+                                );
+
+            float32x4_t texelb = vaddq_f32(
+                                vaddq_f32(vmulq_f32(vmulq_f32(invLinearYt, invLinearXt), texelAb), vmulq_f32(vmulq_f32(invLinearYt, linearXt), texelBb)), 
+                                vaddq_f32(vmulq_f32(vmulq_f32(linearYt, invLinearXt), texelCb), vmulq_f32(vmulq_f32(linearYt, linearXt), texelDb))
+                                );
+
+            float32x4_t texela = vaddq_f32(
+                                vaddq_f32(vmulq_f32(vmulq_f32(invLinearYt, invLinearXt), texelAa), vmulq_f32(vmulq_f32(invLinearYt, linearXt), texelBa)), 
+                                vaddq_f32(vmulq_f32(vmulq_f32(linearYt, invLinearXt), texelCa), vmulq_f32(vmulq_f32(linearYt, linearXt), texelDa))
+                                );
+            
+            // NOTE : Hadamard with color value
+            texelr = vmulq_f32(texelr, colorr_128);
+            texelg = vmulq_f32(texelg, colorg_128);
+            texelb = vmulq_f32(texelb, colorb_128);
+            texela = vmulq_f32(texela, colora_128);
+
+            // NOTE : Clamp01 r, g, b
+            texelr = Clamp01(texelr);
+            texelg = Clamp01(texelg); texelb = Clamp01(texelb);
+
+            // NOTE : Load dest pixels
+            uint32x4_t dest = vld1q_u32(pixel);
+
+            // NOTE : Divide the dest pixels to r, g, b, a
+            float32x4_t destr = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(dest, 16), mask_0x000000ff));
+            float32x4_t destg = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(dest, 8), mask_0x000000ff));
+            float32x4_t destb = vcvtq_f32_u32(vandq_u32(dest, mask_0x000000ff));
+            float32x4_t desta = vcvtq_f32_u32(vandq_u32(vshrq_n_u32(dest, 24), mask_0x000000ff));
+
+            // NOTE : Convert dest texel from sRGB to linear 01
+            destr = vmulq_f32(vmulq_f32(oneOver255_128, destr), vmulq_f32(oneOver255_128, destr));
+            destg = vmulq_f32(vmulq_f32(oneOver255_128, destg), vmulq_f32(oneOver255_128, destg));
+            destb = vmulq_f32(vmulq_f32(oneOver255_128, destb), vmulq_f32(oneOver255_128, destb));
+            desta = vmulq_f32(oneOver255_128, desta);
+
+            // NOTE : Blend between texel and dest texel
+            float32x4_t invSourceA = vsubq_f32(one_128, texela);
+            // NOTE : Source R, G, B are pre multiplied by the SourceA
+            float32x4_t resultr = Clamp01(vaddq_f32(vmulq_f32(destr, invSourceA), texelr));
+            float32x4_t resultg = Clamp01(vaddq_f32(vmulq_f32(destg, invSourceA), texelg));
+            float32x4_t resultb = Clamp01(vaddq_f32(vmulq_f32(destb, invSourceA), texelb));
+            float32x4_t resulta = Clamp01(vaddq_f32(vmulq_f32(desta, invSourceA), texela));
+
+            // NOTE : Convert result from linear 01 to sRGB255
+            resultr = vmulq_f32(v255, vsqrtq_f32(resultr));
+            resultg = vmulq_f32(v255, vsqrtq_f32(resultg));
+            resultb = vmulq_f32(v255, vsqrtq_f32(resultb));
+            resulta = vmulq_f32(v255, resulta);
+
+            // NOTE : Because we know that the result value is in 0~255 range,
+            // we don't have to mask them before shifting left
+            uint32x4_t resultIntR = vshlq_n_u32(vcvtq_u32_f32(resultr), 16);
+            uint32x4_t resultIntG = vshlq_n_u32(vcvtq_u32_f32(resultg), 8);
+            uint32x4_t resultIntB = vcvtq_u32_f32(resultb);
+            uint32x4_t resultIntA = vshlq_n_u32(vcvtq_u32_f32(resulta), 24);
+
+            uint32x4_t result = vorrq_u32(vorrq_u32(resultIntR, resultIntG), vorrq_u32(resultIntB, resultIntA));
+
+            // TODO : ShouldFill!
+            
+            vst1q_u32(pixel, result);
+
+            pixel += 4;
+        }
+
+        row += destBuffer->pitch;
+    }
+}
+
+

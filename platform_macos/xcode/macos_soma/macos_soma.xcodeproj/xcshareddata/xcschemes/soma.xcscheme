@@ -3,8 +3,8 @@
    LastUpgradeVersion = "1240"
    version = "1.7">
    <BuildAction
-      parallelizeBuildables = "YES"
-      buildImplicitDependencies = "YES">
+      parallelizeBuildables = "NO"
+      buildImplicitDependencies = "NO">
    </BuildAction>
    <TestAction
       buildConfiguration = "Debug"
@@ -28,7 +28,7 @@
       GPUProfilerEnabled = "No">
       <PathRunnable
          runnableDebuggingMode = "0"
-         FilePath = "/Volumes/work/soma/build/fox.app">
+         FilePath = "/Volumes/work/build/fox.app">
       </PathRunnable>
       <LocationScenarioReference
          identifier = "com.apple.dt.IDEFoundation.CurrentLocationScenarioIdentifier"
@@ -47,6 +47,6 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
-      revealArchiveInOrganizer = "YES">
+      revealArchiveInOrganizer = "NO">
    </ArchiveAction>
 </Scheme>

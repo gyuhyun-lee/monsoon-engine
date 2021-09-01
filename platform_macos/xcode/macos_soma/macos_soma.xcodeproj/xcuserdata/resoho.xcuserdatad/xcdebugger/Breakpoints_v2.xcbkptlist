@@ -16,47 +16,15 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "47"
             endingLineNumber = "47"
-            landmarkName = "MoveEntity(SimRegion, Entity, ddP, Speed, dtPerFrame)"
+            landmarkName = "MoveEntity(simRegion, entity, ddP, speed, dtPerFrame)"
             landmarkType = "9">
-            <Locations>
-               <Location
-                  uuid = "A16B165C-C8F5-43E8-9EA3-285DADF8D9AB - 8c79ec735a643e51"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
-                  moduleName = "fox"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "47"
-                  endingLineNumber = "47"
-                  offsetFromSymbolStart = "240">
-               </Location>
-               <Location
-                  uuid = "A16B165C-C8F5-43E8-9EA3-285DADF8D9AB - 6d34c51d2f754cd9"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
-                  moduleName = "monsoon.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "47"
-                  endingLineNumber = "47"
-                  offsetFromSymbolStart = "240">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "13656A57-D7A2-4B35-8AFB-5060F364321E"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../code/monsoon_sim_region.cpp"
@@ -64,38 +32,1553 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "43"
             endingLineNumber = "43"
-            landmarkName = "MoveEntity(SimRegion, Entity, ddP, Speed, dtPerFrame)"
+            landmarkName = "MoveEntity(simRegion, entity, ddP, speed, dtPerFrame)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A7A84B82-2F81-4D20-A6F2-B9F2768CF6E2"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "923"
+            endingLineNumber = "923"
+            landmarkName = "GetRenderGroupCamera(cameraZ, focalLength, monitorWidthInMeter, destBufferWidth, destBufferHeight)"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "13656A57-D7A2-4B35-8AFB-5060F364321E - 8c79ec735a643e70"
+                  uuid = "A7A84B82-2F81-4D20-A6F2-B9F2768CF6E2 - 3c2ff16da560ac5d"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
                   moduleName = "fox"
                   usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "46"
-                  endingLineNumber = "46"
-                  offsetFromSymbolStart = "196">
+                  startingLineNumber = "940"
+                  endingLineNumber = "940"
+                  offsetFromSymbolStart = "9572">
                </Location>
                <Location
-                  uuid = "13656A57-D7A2-4B35-8AFB-5060F364321E - 6d34c51d2f754cf8"
+                  uuid = "A7A84B82-2F81-4D20-A6F2-B9F2768CF6E2 - dd62d803d071c117"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "942"
+                  endingLineNumber = "942"
+                  offsetFromSymbolStart = "9580">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DFFEC4B4-74FB-4F77-BBE3-3715ABD8ED98"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "890"
+            endingLineNumber = "890"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "DFFEC4B4-74FB-4F77-BBE3-3715ABD8ED98 - 3c2ff16da560aa02"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "MoveEntity(sim_region*, sim_entity*, v2, float, float)"
-                  moduleName = "monsoon.dylib"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
                   usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/work/soma/code/monsoon_sim_region.cpp"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "46"
-                  endingLineNumber = "46"
-                  offsetFromSymbolStart = "196">
+                  startingLineNumber = "891"
+                  endingLineNumber = "891"
+                  offsetFromSymbolStart = "7876">
+               </Location>
+               <Location
+                  uuid = "DFFEC4B4-74FB-4F77-BBE3-3715ABD8ED98 - dd62d803d071d88a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "891"
+                  endingLineNumber = "891"
+                  offsetFromSymbolStart = "7844">
+               </Location>
+               <Location
+                  uuid = "DFFEC4B4-74FB-4F77-BBE3-3715ABD8ED98 - dd62d803d071d88a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "891"
+                  endingLineNumber = "891"
+                  offsetFromSymbolStart = "7876">
+               </Location>
+               <Location
+                  uuid = "DFFEC4B4-74FB-4F77-BBE3-3715ABD8ED98 - dd62d803d071d88a"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "891"
+                  endingLineNumber = "891"
+                  offsetFromSymbolStart = "7848">
+               </Location>
+               <Location
+                  uuid = "DFFEC4B4-74FB-4F77-BBE3-3715ABD8ED98 - dd62d803d071d86b"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "890"
+                  endingLineNumber = "890"
+                  offsetFromSymbolStart = "7832">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "67D6F783-298C-42AC-963F-D0314496C188"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "891"
+            endingLineNumber = "891"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "67D6F783-298C-42AC-963F-D0314496C188 - 3c2ff16da560aa02"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "891"
+                  endingLineNumber = "891"
+                  offsetFromSymbolStart = "7844">
+               </Location>
+               <Location
+                  uuid = "67D6F783-298C-42AC-963F-D0314496C188 - dd62d803d071d88a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "891"
+                  endingLineNumber = "891"
+                  offsetFromSymbolStart = "7848">
+               </Location>
+               <Location
+                  uuid = "67D6F783-298C-42AC-963F-D0314496C188 - dd62d803d071d8a5"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "892"
+                  endingLineNumber = "892"
+                  offsetFromSymbolStart = "7864">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C9D0E1A5-B9A8-4047-840B-466AA8E3CCD2"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "892"
+            endingLineNumber = "892"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "C9D0E1A5-B9A8-4047-840B-466AA8E3CCD2 - 3c2ff16da560aa2d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "892"
+                  endingLineNumber = "892"
+                  offsetFromSymbolStart = "7964">
+               </Location>
+               <Location
+                  uuid = "C9D0E1A5-B9A8-4047-840B-466AA8E3CCD2 - dd62d803d071d8a5"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "892"
+                  endingLineNumber = "892"
+                  offsetFromSymbolStart = "7932">
+               </Location>
+               <Location
+                  uuid = "C9D0E1A5-B9A8-4047-840B-466AA8E3CCD2 - dd62d803d071d8a5"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "892"
+                  endingLineNumber = "892"
+                  offsetFromSymbolStart = "7964">
+               </Location>
+               <Location
+                  uuid = "C9D0E1A5-B9A8-4047-840B-466AA8E3CCD2 - dd62d803d071d8a5"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "892"
+                  endingLineNumber = "892"
+                  offsetFromSymbolStart = "8756">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C41E2A36-52CA-4CB4-BB7B-223A447B8FD9"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "747"
+            endingLineNumber = "747"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "51A9AA70-0A93-4898-8174-50421FEC9FE9"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "723"
+            endingLineNumber = "723"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "51A9AA70-0A93-4898-8174-50421FEC9FE9 - 3c2ff16da560905a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "723"
+                  endingLineNumber = "723"
+                  offsetFromSymbolStart = "2520">
+               </Location>
+               <Location
+                  uuid = "51A9AA70-0A93-4898-8174-50421FEC9FE9 - dd62d803d071e2d2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "723"
+                  endingLineNumber = "723"
+                  offsetFromSymbolStart = "2520">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "35EAEBC0-DE4F-4D39-9B5F-57434B0B7A42"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "703"
+            endingLineNumber = "703"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F4C6B4F9-826B-40BE-93D4-6EA3A8B51F21"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "634"
+            endingLineNumber = "634"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "F4C6B4F9-826B-40BE-93D4-6EA3A8B51F21 - 3c2ff16da5608be3"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "634"
+                  endingLineNumber = "634"
+                  offsetFromSymbolStart = "108">
+               </Location>
+               <Location
+                  uuid = "F4C6B4F9-826B-40BE-93D4-6EA3A8B51F21 - dd62d803d071f96b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "634"
+                  endingLineNumber = "634"
+                  offsetFromSymbolStart = "108">
+               </Location>
+               <Location
+                  uuid = "F4C6B4F9-826B-40BE-93D4-6EA3A8B51F21 - dd62d803d071f96b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "634"
+                  endingLineNumber = "634"
+                  offsetFromSymbolStart = "124">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C326A3E9-E6F7-4BCA-B619-4580C4D728BA"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "763"
+            endingLineNumber = "763"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DB6ABE49-253F-4846-A71F-BAC8E3C459BB"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "769"
+            endingLineNumber = "769"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "E364455A-C508-4CE6-9877-C59BA5BBE9CD"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "896"
+            endingLineNumber = "896"
+            landmarkName = "main(argc, argv)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5B34DB11-E77F-4154-9C26-58C6B26A2420"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "895"
+            endingLineNumber = "895"
+            landmarkName = "main(argc, argv)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DF932376-5F08-4FD3-A2E4-AE6B716EDEC1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "893"
+            endingLineNumber = "893"
+            landmarkName = "main(argc, argv)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "397543BC-38C3-4906-8E95-8671DDDDF024"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "788"
+            endingLineNumber = "788"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "9355A4B3-7F26-4590-8979-F1989A3E2721"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "800"
+            endingLineNumber = "800"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BB3B6AF2-76B7-4D80-8271-DFEBD758C518"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "798"
+            endingLineNumber = "798"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "36EB950A-2677-4355-8A8A-799BEAEC25A3"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "826"
+            endingLineNumber = "826"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5CA5A172-4728-4EC7-9BAC-1ACC3E69B2B3"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "831"
+            endingLineNumber = "831"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "17BC8022-B6C2-4F5C-A38D-D627EF3AC24B"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/macos_main.mm"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "825"
+            endingLineNumber = "825"
+            landmarkName = "MacOSInitVulkan(view)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2191F619-54D4-4608-B1CF-36ED9894D575"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "866"
+            endingLineNumber = "866"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "2191F619-54D4-4608-B1CF-36ED9894D575 - 3c2ff16da560a5cb"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "866"
+                  endingLineNumber = "866"
+                  offsetFromSymbolStart = "7864">
+               </Location>
+               <Location
+                  uuid = "2191F619-54D4-4608-B1CF-36ED9894D575 - dd62d803d071d743"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "866"
+                  endingLineNumber = "866"
+                  offsetFromSymbolStart = "7864">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "795"
+            endingLineNumber = "795"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76 - 3c2ff16da5609ecd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4760">
+               </Location>
+               <Location
+                  uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76 - 3c2ff16da5609ecd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4792">
+               </Location>
+               <Location
+                  uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76 - dd62d803d071ec45"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4760">
+               </Location>
+               <Location
+                  uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76 - dd62d803d071ec45"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4792">
+               </Location>
+               <Location
+                  uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76 - dd62d803d071ec45"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4436">
+               </Location>
+               <Location
+                  uuid = "F4E5BF70-A1BC-4F52-BDA8-8586E6194A76 - dd62d803d071ec45"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4468">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "7DB4B0FA-20C5-435F-B13B-8128C55DBAE1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "870"
+            endingLineNumber = "870"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "7DB4B0FA-20C5-435F-B13B-8128C55DBAE1 - 3c2ff16da560a557"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "870"
+                  endingLineNumber = "870"
+                  offsetFromSymbolStart = "8072">
+               </Location>
+               <Location
+                  uuid = "7DB4B0FA-20C5-435F-B13B-8128C55DBAE1 - dd62d803d071d7df"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "870"
+                  endingLineNumber = "870"
+                  offsetFromSymbolStart = "8016">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "58983D28-A6D3-4EBE-941C-F9FE452FEF38"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "721"
+            endingLineNumber = "721"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "58983D28-A6D3-4EBE-941C-F9FE452FEF38 - 3c2ff16da5609018"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "721"
+                  endingLineNumber = "721"
+                  offsetFromSymbolStart = "2500">
+               </Location>
+               <Location
+                  uuid = "58983D28-A6D3-4EBE-941C-F9FE452FEF38 - dd62d803d071e290"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "721"
+                  endingLineNumber = "721"
+                  offsetFromSymbolStart = "2500">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "76E2BC76-357F-4A3C-A6A7-C55B63C858E6"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "845"
+            endingLineNumber = "845"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "76E2BC76-357F-4A3C-A6A7-C55B63C858E6 - 3c2ff16da560a05e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "847"
+                  endingLineNumber = "847"
+                  offsetFromSymbolStart = "7344">
+               </Location>
+               <Location
+                  uuid = "76E2BC76-357F-4A3C-A6A7-C55B63C858E6 - dd62d803d071d2d6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "847"
+                  endingLineNumber = "847"
+                  offsetFromSymbolStart = "7344">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "AD0DEBF7-1356-4F57-8F7E-A68D0C1ECFB5"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "852"
+            endingLineNumber = "852"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "AD0DEBF7-1356-4F57-8F7E-A68D0C1ECFB5 - 3c2ff16da560a705"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "852"
+                  endingLineNumber = "852"
+                  offsetFromSymbolStart = "7404">
+               </Location>
+               <Location
+                  uuid = "AD0DEBF7-1356-4F57-8F7E-A68D0C1ECFB5 - 3c2ff16da560a705"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "852"
+                  endingLineNumber = "852"
+                  offsetFromSymbolStart = "7428">
+               </Location>
+               <Location
+                  uuid = "AD0DEBF7-1356-4F57-8F7E-A68D0C1ECFB5 - dd62d803d071d58d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "852"
+                  endingLineNumber = "852"
+                  offsetFromSymbolStart = "7404">
+               </Location>
+               <Location
+                  uuid = "AD0DEBF7-1356-4F57-8F7E-A68D0C1ECFB5 - dd62d803d071d58d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "852"
+                  endingLineNumber = "852"
+                  offsetFromSymbolStart = "7428">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2C3C2B56-3682-4FD8-9F11-581BA0CF2E7F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "853"
+            endingLineNumber = "853"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "2C3C2B56-3682-4FD8-9F11-581BA0CF2E7F - 3c2ff16da560a766"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "855"
+                  endingLineNumber = "855"
+                  offsetFromSymbolStart = "7432">
+               </Location>
+               <Location
+                  uuid = "2C3C2B56-3682-4FD8-9F11-581BA0CF2E7F - 3c2ff16da560a766"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "855"
+                  endingLineNumber = "855"
+                  offsetFromSymbolStart = "7464">
+               </Location>
+               <Location
+                  uuid = "2C3C2B56-3682-4FD8-9F11-581BA0CF2E7F - dd62d803d071d5ee"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "855"
+                  endingLineNumber = "855"
+                  offsetFromSymbolStart = "7432">
+               </Location>
+               <Location
+                  uuid = "2C3C2B56-3682-4FD8-9F11-581BA0CF2E7F - dd62d803d071d5ee"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "855"
+                  endingLineNumber = "855"
+                  offsetFromSymbolStart = "7464">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "FCC672A5-6962-4EF0-91BF-7F9A4B2B0F9A"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "876"
+            endingLineNumber = "876"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "FCC672A5-6962-4EF0-91BF-7F9A4B2B0F9A - 3c2ff16da560a41d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "876"
+                  endingLineNumber = "876"
+                  offsetFromSymbolStart = "8328">
+               </Location>
+               <Location
+                  uuid = "FCC672A5-6962-4EF0-91BF-7F9A4B2B0F9A - dd62d803d071d695"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "876"
+                  endingLineNumber = "876"
+                  offsetFromSymbolStart = "8328">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "154185D6-8701-4BBD-AF39-3301E1346B86"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "789"
+            endingLineNumber = "789"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "7CC864C5-366B-40B7-A190-91837E0118A9"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "791"
+            endingLineNumber = "791"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "7CC864C5-366B-40B7-A190-91837E0118A9 - 3c2ff16da5609f26"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "791"
+                  endingLineNumber = "791"
+                  offsetFromSymbolStart = "4436">
+               </Location>
+               <Location
+                  uuid = "7CC864C5-366B-40B7-A190-91837E0118A9 - 3c2ff16da5609f26"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "791"
+                  endingLineNumber = "791"
+                  offsetFromSymbolStart = "4468">
+               </Location>
+               <Location
+                  uuid = "7CC864C5-366B-40B7-A190-91837E0118A9 - dd62d803d071edae"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "791"
+                  endingLineNumber = "791"
+                  offsetFromSymbolStart = "4468">
+               </Location>
+               <Location
+                  uuid = "7CC864C5-366B-40B7-A190-91837E0118A9 - dd62d803d071edc9"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "792"
+                  endingLineNumber = "792"
+                  offsetFromSymbolStart = "4356">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "FB98E6CD-4BD4-4B18-9ACF-2CF94BA2EE46"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "770"
+            endingLineNumber = "770"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "FB98E6CD-4BD4-4B18-9ACF-2CF94BA2EE46 - 3c2ff16da5609a6b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "770"
+                  endingLineNumber = "770"
+                  offsetFromSymbolStart = "3764">
+               </Location>
+               <Location
+                  uuid = "FB98E6CD-4BD4-4B18-9ACF-2CF94BA2EE46 - dd62d803d071e8e3"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "770"
+                  endingLineNumber = "770"
+                  offsetFromSymbolStart = "3764">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "7DEB3B38-7DEC-4E2C-887E-E0CED3419FC3"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "777"
+            endingLineNumber = "777"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "7DEB3B38-7DEC-4E2C-887E-E0CED3419FC3 - 3c2ff16da5609950"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "777"
+                  endingLineNumber = "777"
+                  offsetFromSymbolStart = "3912">
+               </Location>
+               <Location
+                  uuid = "7DEB3B38-7DEC-4E2C-887E-E0CED3419FC3 - dd62d803d071ebd8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "777"
+                  endingLineNumber = "777"
+                  offsetFromSymbolStart = "3912">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "EA7D5EC0-CC2F-4470-AEBA-60858D91492C"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "793"
+            endingLineNumber = "793"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "EA7D5EC0-CC2F-4470-AEBA-60858D91492C - 3c2ff16da5609f60"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "793"
+                  endingLineNumber = "793"
+                  offsetFromSymbolStart = "4612">
+               </Location>
+               <Location
+                  uuid = "EA7D5EC0-CC2F-4470-AEBA-60858D91492C - dd62d803d071ede8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "793"
+                  endingLineNumber = "793"
+                  offsetFromSymbolStart = "4612">
+               </Location>
+               <Location
+                  uuid = "EA7D5EC0-CC2F-4470-AEBA-60858D91492C - dd62d803d071ede8"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "793"
+                  endingLineNumber = "793"
+                  offsetFromSymbolStart = "4396">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C24AEC5C-0332-4E7A-A37E-1D7C042EAD93"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "796"
+            endingLineNumber = "796"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "C24AEC5C-0332-4E7A-A37E-1D7C042EAD93 - 3c2ff16da5609ecd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4436">
+               </Location>
+               <Location
+                  uuid = "C24AEC5C-0332-4E7A-A37E-1D7C042EAD93 - 3c2ff16da5609ecd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4468">
+               </Location>
+               <Location
+                  uuid = "C24AEC5C-0332-4E7A-A37E-1D7C042EAD93 - dd62d803d071ec45"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4436">
+               </Location>
+               <Location
+                  uuid = "C24AEC5C-0332-4E7A-A37E-1D7C042EAD93 - dd62d803d071ec45"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "796"
+                  endingLineNumber = "796"
+                  offsetFromSymbolStart = "4468">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5F0B0662-42AC-4E7E-9F7A-F47D61E44BB9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "797"
+            endingLineNumber = "797"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "5F0B0662-42AC-4E7E-9F7A-F47D61E44BB9 - 3c2ff16da5609e0f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "798"
+                  endingLineNumber = "798"
+                  offsetFromSymbolStart = "4444">
+               </Location>
+               <Location
+                  uuid = "5F0B0662-42AC-4E7E-9F7A-F47D61E44BB9 - 3c2ff16da5609e0f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "798"
+                  endingLineNumber = "798"
+                  offsetFromSymbolStart = "4476">
+               </Location>
+               <Location
+                  uuid = "5F0B0662-42AC-4E7E-9F7A-F47D61E44BB9 - dd62d803d071ec87"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "798"
+                  endingLineNumber = "798"
+                  offsetFromSymbolStart = "4476">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "9FC75671-C9FF-46E3-86AF-02011B2B9691"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../code/monsoon_render.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "792"
+            endingLineNumber = "792"
+            landmarkName = "DrawBMPQuickly_ARM(destBuffer, sourceBuffer, p)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "9FC75671-C9FF-46E3-86AF-02011B2B9691 - 3c2ff16da5609f41"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "fox"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "792"
+                  endingLineNumber = "792"
+                  offsetFromSymbolStart = "4404">
+               </Location>
+               <Location
+                  uuid = "9FC75671-C9FF-46E3-86AF-02011B2B9691 - dd62d803d071edc9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2)"
+                  moduleName = "monsoon.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/work/monsoon-engine/code/monsoon_render.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "792"
+                  endingLineNumber = "792"
+                  offsetFromSymbolStart = "4404">
                </Location>
             </Locations>
          </BreakpointContent>

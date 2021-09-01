@@ -13,9 +13,11 @@
 #include "monsoon.cpp"
 #include "macos_keycode.h"
 
-// NOTE : Cocoa.h is already using internal.. so I need to do this :(
-#include <mach/thread_info.h>
+// NOTE : Cocoa.h & iostream are already using internal.. so I need to do this :(
 #undef internal 
+// NOTE : Make sure to add -lc++ inside linker flags to use these things!
+#include <vector>
+#include <mach/thread_info.h>
 #include <Cocoa/Cocoa.h> // APPKIT
 #include <mach/mach_time.h> // mach_absolute_time
 #include <stdio.h> // printf for debugging purpose
@@ -24,7 +26,9 @@
 #include <dlfcn.h>  // dlopen, dlsym for loading dylibs
 #include <IOKit/hid/IOHIDLib.h> //IOHIDManager, IOHIDElement
 #include <AudioUnit/AudioUnit.h> 
-
+#include "../external_libraries/VulkanSDK/macOS/include/vulkan/vulkan.h"
+#include "../external_libraries/VulkanSDK/macOS/include/vulkan/vulkan_macos.h"
+#include "../external_libraries/VulkanSDK/macOS/include/vulkan/vulkan_metal.h"
 
 #define internal static
 #define MACOS_CALLBACK static
@@ -729,9 +733,122 @@ MacOSGetGameCode(game_code *GameCode, char *fileName)
     }
 }
 
+struct renderer
+{
+    void *DrawRectangle;
+    void *DrawBMP;
+};
+
+char *requiredExtensions[] =
+{
+    "VK_KHR_surface",
+    "VK_EXT_metal_surface"
+};
+
+void MacOSInitVulkan(NSView *view)
+{
+    // NOTE : Create instance, which is for building connection 
+    // between my application and the vulkan library
+    VkInstance instance;
+
+    // NOTE : This step is optional, but might give some insight to the driver
+    // while optimizing our application
+    VkApplicationInfo appInfo = {};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "Monsoon_Renderer";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "MonsoonEngine";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0 ,0);
+    appInfo.apiVersion = VK_API_VERSION_1_0;
+
+    std::vector<char *> extensions;
+    for(u32 extensionIndex = 0;
+        extensionIndex < ArrayCount(requiredExtensions);
+        ++extensionIndex)
+    {
+        extensions.push_back(requiredExtensions[extensionIndex]);
+    }
+
+    // NOTE : This is is not optional
+    VkInstanceCreateInfo instanceInfo = {};
+    instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceInfo.pApplicationInfo = &appInfo;
+    instanceInfo.enabledExtensionCount = extensions.size();
+    instanceInfo.ppEnabledExtensionNames = extensions.data();
+    instanceInfo.enabledLayerCount = 0;//1; // validation layer
+    instanceInfo.ppEnabledLayerNames = 0;//&validationLayerName; // validation layer
+    instanceInfo.pNext = 0;//(VkDebugUtilsMessengerCreateInfoEXT*) &DEBUGMessengerCreateInfo;
+    // NOTE : vkCreateInstance will actaully forward to the Loader,
+    // and the loader will call the CreateInstance functions from all the layers
+    // which will initialize each of dispatch chain.
+    if(vkCreateInstance(&instanceInfo, 0, &instance) != VK_SUCCESS)
+    {
+        // TODO : Logging!
+        printf("Creating Instance Failed\n");
+        Assert(0);
+    }
+    VkMetalSurfaceCreateInfoEXT surfaceCreateInfo = {};
+    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+    surfaceCreateInfo.pNext = 0;
+    surfaceCreateInfo.flags = 0;
+    //surfaceCreateInfo.pLayer;
+
+#if 0
+    VkSurfaceKHR surface;
+    VkResult result = vkCreateMetalSurfaceEXT(
+    VkInstance                                  instance,
+    const VkMetalSurfaceCreateInfoEXT*          pCreateInfo,
+    const VkAllocationCallbacks*                pAllocator,
+    VkSurfaceKHR*                               pSurface);
+#endif
+
+    // NOTE : Get Physical Devices
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    u32 physicalDeviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, 0);
+    if(physicalDeviceCount == 0)
+    {
+        printf("Failed To Find Any CPU/GPU With Vulkan Support\n");
+        Assert(0);
+    }
+
+        // Check The Physical Devices With Our Requirements
+    std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
+    vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
+    for(const VkPhysicalDevice &
+        testPhysicalDevice : physicalDevices)
+    {
+        // NOTE : Check physical device's property and feature
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+        vkGetPhysicalDeviceProperties(testPhysicalDevice, &physicalDeviceProperties);
+        VkPhysicalDeviceFeatures physicalDeviceFeatures;
+        vkGetPhysicalDeviceFeatures(testPhysicalDevice, &physicalDeviceFeatures);
+
+        VkPhysicalDeviceType deviceType = physicalDeviceProperties.deviceType;
+
+        //if((deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || 
+        //   deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU))
+        // NOTE : For now, any type of physical device is fine for us.
+        if(true)
+        {
+            physicalDevice = testPhysicalDevice;
+        }
+    }
+
+    int a = 1;
+#if 0
+    if(vkCreateMacOSSurfaceMVK(instance, &surfaceCreateInfo, 0, &surface) != VK_SUCCESS)
+    {
+        printf("Failed To Create MacOS Surface");
+        Assert(0);
+    }
+#endif
+}
 
 int main(int argc, char **argv)
 {
+
+    
     // TODO : How to 'build' a path that works no matter where the library is.
     char *DynamicLibraryPath = "/Volumes/work/build/fox.app/Contents/Resources/monsoon.dylib";
     char *DynamicLibraryLockPath = "/Volumes/work/build/fox.app/Contents/Resources/monsoon.lock";
@@ -830,8 +947,13 @@ int main(int argc, char **argv)
         [Window setTitle:AppName];
         [Window makeKeyAndOrderFront:0];
 
+        NSView *contentView = [Window contentView];
+        //MacOSInitVulkan(contentView);
+
+#if 1
         macos_opengl_info MacOSOpenGLInfo = {};
         MacOSOpenGLInfo = PrepareDisplayingWithOpenGL(Window, &WindowFrameRect, MacOSBuffer.width, MacOSBuffer.height, MacOSBuffer.memory); 
+#endif
 
         [App activateIgnoringOtherApps:YES];
 
@@ -922,6 +1044,7 @@ int main(int argc, char **argv)
 
             // Rendering loop with OpenGL.
             {
+#if 1
                 glClear(GL_COLOR_BUFFER_BIT);
                 glBindTexture(GL_TEXTURE_2D, MacOSOpenGLInfo.TextureID);
                 glTexImage2D(GL_TEXTURE_2D, 0, 
@@ -956,6 +1079,7 @@ int main(int argc, char **argv)
                 glBindTexture(GL_TEXTURE_2D, 0);
 
                 [MacOSOpenGLInfo.OpenGLContext flushBuffer]; // This will call glFlush() internally
+#endif
             }
 
             // NOTE : because nanosleep is so accurate, we have to UNDERSLEEP by some amount,

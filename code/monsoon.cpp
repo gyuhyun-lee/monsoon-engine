@@ -1,5 +1,5 @@
 /*
- * Monsoon Engine is a 3D engine built by Joon Lee.
+ * Monsoon Engine is a 3D engine built by Gyuhyun "Joon" Lee.
  */
 #include "monsoon_platform_independent.h"
 #include "monsoon_intrinsic.h"
@@ -118,9 +118,6 @@ MakeSphereNormalMap(memory_arena *arena, i32 width, i32 height, r32 roughness)
     return buffer;
 }
 #endif
-
-
-
 
 /*
  * TODO : 
@@ -610,12 +607,13 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         {
             alphaBasedOnZ = Clamp01(1.0f - (zDiff - clipPlaneZ)/clipPlaneZ);
         }
-
         switch(entity->type)
         {
             case EntityType_Wall:
             {
                 PushBMP(&renderGroup, &state->treeBMP, entity->p, entity->dim,V4(1, 1, 1, alphaBasedOnZ));
+                //PushBMP(&renderGroup, &state->sampleBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ), V2(1, 0), V2(0, 1));
+                //PushRect(&renderGroup, entity->p, entity->dim, V4(1, 1, 0, 1), V2(1, 0), V2(0, 1));
             }break;
 
             case EntityType_Player: 
@@ -632,19 +630,26 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
                 v2 yAxis = V2(0, 1);
 #endif
 
-                PushRect(&renderGroup, entity->p, entity->dim, V4(1, 1, 0, 1), xAxis, yAxis);
+#if 1
                 PushBMP(&renderGroup, &state->headBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
                         xAxis, yAxis);
                 PushBMP(&renderGroup, &state->torsoBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
                         xAxis, yAxis);
                 PushBMP(&renderGroup, &state->capeBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
                         xAxis, yAxis);
+#else
+                PushBMP(&renderGroup, &state->sampleBMP, entity->p,entity->dim, V4(1, 1, 1, alphaBasedOnZ),
+                        xAxis, yAxis);
+#endif
                 /*
                  *
-                PushBMP(&renderGroup, &state->headBMP, entity->p + 1.0f*V3(Cos(state->theta), 0, 0), bitmapDimInMeter,
+                 *
+                    PushBMP(&renderGroup, &state->headBMP, entity->p + 1.0f*V3(Cos(state->theta), 0, 0), bitmapDimInMeter,
                         V2(1, 0), V2(0, 1),
                         &state->sphereNormalMap, state->envMaps);
                         */
+
+                PushRect(&renderGroup, entity->p, entity->dim, V4(1, 1, 0, 1), xAxis, yAxis);
             }break;
         }
     }

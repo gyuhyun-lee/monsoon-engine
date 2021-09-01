@@ -3,6 +3,71 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "DEBUGLoadBMP(debug_platform_read_file_result (*)(char*), char*):monsoon.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "CanonicalizeWorldPos(world*, world_position*):monsoon_world.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "WorldPos-&gt;P.Y">
+            </PersistentString>
+            <PersistentString
+               value = "World-&gt;ChunkDim.Y">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "DrawBMPQuickly_ARM(pixel_buffer_32*, pixel_buffer_32*, v2, v4, v2, v2):monsoon_render.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "pixel">
+            </PersistentString>
+            <PersistentString
+               value = "b">
+            </PersistentString>
+            <PersistentString
+               value = "texelAr">
+            </PersistentString>
+            <PersistentString
+               value = "*pixel">
+            </PersistentString>
+            <PersistentString
+               value = "a">
+            </PersistentString>
+            <PersistentString
+               value = "*sourceBufferMemory">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CanonicalizeWorldPos(world*, world_position*):monsoon_tile.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "WorldPositionDifferenceInMeter(world*, world_position*, world_position*):monsoon_tile.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "MacOSHandleEvents(NSApplication*, game_input_manager*, debug_game_input_record*):macos_main.mm">
+      </ContextState>
+      <ContextState
+         contextName = "StartSimRegion(world*, sim_region*, world_position, v2, v2):monsoon_sim_region.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "SimRegion-&gt;EntityCount">
+            </PersistentString>
+            <PersistentString
+               value = "SimRegion">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "DEBUGMacOSPlatformReadFile(char*):macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "FileStat">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "MacOSInitializeAudio():macos_main.mm">
          <PersistentStrings>
             <PersistentString
@@ -11,31 +76,51 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "::GameUpdateAndRender(game_offscreen_buffer *, game_memory *, game_input_raw *, game_platform_api *, r32):monsoon.cpp">
+         contextName = "AddLowEntity(game_state*, entity_type, unsigned int, unsigned int, unsigned int, v2):monsoon.cpp">
          <PersistentStrings>
-            <PersistentString
-               value = "State-&gt;EntityCount">
-            </PersistentString>
-            <PersistentString
-               value = "Memory-&gt;PermanentStorageSize">
-            </PersistentString>
-            <PersistentString
-               value = "sizeof(game_state)">
-            </PersistentString>
-            <PersistentString
-               value = "State-&gt;CameraPos">
-            </PersistentString>
-            <PersistentString
-               value = "State">
-            </PersistentString>
-            <PersistentString
-               value = "X">
-            </PersistentString>
             <PersistentString
                value = "State-&gt;WorldArena">
             </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
+      </ContextState>
+      <ContextState
+         contextName = "PushSize(memory_arena, unsigned long):monsoon_platform_independent.h">
+      </ContextState>
+      <ContextState
+         contextName = "main:macos_main.mm">
+         <PersistentStrings>
             <PersistentString
-               value = "Y">
+               value = "(game_state *)(InputRecord.Memory)">
+            </PersistentString>
+            <PersistentString
+               value = "((u32 *)FileMemory)[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ControllerInputDetected(void*, int, void*, __IOHIDValue*):macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "ValueInInt, b">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ControllerConnectionDetected(void*, int, void*, __IOHIDDevice*):macos_main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "device">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "DrawBackground(game_state*, game_offscreen_buffer*):monsoon.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "State-&gt;GroundBMP">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -57,20 +142,6 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "DEBUGLoadBMP(debug_platform_read_file_result (*)(char*), char*):monsoon.cpp">
-      </ContextState>
-      <ContextState
-         contextName = "CanonicalizeWorldPos(world*, world_position*):monsoon_world.cpp">
-         <PersistentStrings>
-            <PersistentString
-               value = "WorldPos-&gt;P.Y">
-            </PersistentString>
-            <PersistentString
-               value = "World-&gt;ChunkDim.Y">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
          contextName = "GetWorldChunk(world*, unsigned int, unsigned int, unsigned int):monsoon_world.cpp">
          <PersistentStrings>
             <PersistentString
@@ -79,84 +150,36 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "StartSimRegion(world*, sim_region*, world_position, v2, v2):monsoon_sim_region.cpp">
+         contextName = "::GameUpdateAndRender(game_offscreen_buffer *, game_memory *, game_input_raw *, game_platform_api *, r32):monsoon.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "SimRegion-&gt;EntityCount">
+               value = "Memory-&gt;PermanentStorageSize">
             </PersistentString>
             <PersistentString
-               value = "SimRegion">
+               value = "State">
             </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "ControllerConnectionDetected(void*, int, void*, __IOHIDDevice*):macos_main.mm">
-         <PersistentStrings>
             <PersistentString
-               value = "device">
+               value = "sizeof(game_state)">
             </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "AddLowEntity(game_state*, entity_type, unsigned int, unsigned int, unsigned int, v2):monsoon.cpp">
-         <PersistentStrings>
+            <PersistentString
+               value = "State-&gt;EntityCount">
+            </PersistentString>
+            <PersistentString
+               value = "State-&gt;CameraPos">
+            </PersistentString>
+            <PersistentString
+               value = "X">
+            </PersistentString>
             <PersistentString
                value = "State-&gt;WorldArena">
             </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "DrawBackground(game_state*, game_offscreen_buffer*):monsoon.cpp">
-         <PersistentStrings>
             <PersistentString
-               value = "State-&gt;GroundBMP">
+               value = "Y">
             </PersistentString>
          </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "main:macos_main.mm">
-         <PersistentStrings>
-            <PersistentString
-               value = "(game_state *)(InputRecord.Memory)">
-            </PersistentString>
-            <PersistentString
-               value = "((u32 *)FileMemory)[0]">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "WorldPositionDifferenceInMeter(world*, world_position*, world_position*):monsoon_tile.cpp">
-      </ContextState>
-      <ContextState
-         contextName = "CanonicalizeWorldPos(world*, world_position*):monsoon_tile.cpp">
       </ContextState>
       <ContextState
          contextName = "EndSimRegion(world*, memory_arena*, sim_region*):monsoon_sim_region.cpp">
-      </ContextState>
-      <ContextState
-         contextName = "MacOSHandleEvents(NSApplication*, game_input_manager*, debug_game_input_record*):macos_main.mm">
-      </ContextState>
-      <ContextState
-         contextName = "PushSize(memory_arena, unsigned long):monsoon_platform_independent.h">
-      </ContextState>
-      <ContextState
-         contextName = "DEBUGMacOSPlatformReadFile(char*):macos_main.mm">
-         <PersistentStrings>
-            <PersistentString
-               value = "FileStat">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "MacOSRenderAudio(void*, unsigned int*, AudioTimeStamp const*, unsigned int, unsigned int, AudioBufferList*):macos_main.mm">
-      </ContextState>
-      <ContextState
-         contextName = "ControllerInputDetected(void*, int, void*, __IOHIDValue*):macos_main.mm">
-         <PersistentStrings>
-            <PersistentString
-               value = "ValueInInt, b">
-            </PersistentString>
-         </PersistentStrings>
       </ContextState>
    </ContextStates>
 </VariablesViewState>
